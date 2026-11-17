@@ -2,54 +2,119 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Project status
+## Specification
 
-Golem is a Sokoban-style sandbox in which an AI agent writes, runs, monitors and rewrites its own Lua program that drives a robot through puzzle levels. The repository is at the design stage: it holds only `README.md`, `LICENSE` (MIT) and a Python `.gitignore`. There is no code yet, so there are no build, lint or test commands. Add them here as soon as the first phase lands.
+Read these before planning work. They are the project's contract with itself.
 
-The design is in `specification/concept.en.md`, with a Ukrainian version of the same text in `specification/concept.uk.md`. The two files have the same sections in the same order; when the design changes, update both. Read the English spec before starting any component: it is the source for everything below.
+- **[specification/VISION.md](specification/VISION.md)**: what Golem is, for whom, the principles (one core, the agent's isolation, determinism), the non-goals and the glossary. A request that violates a non-goal is a conversation, not a task.
+- **[specification/ARCHITECTURE.md](specification/ARCHITECTURE.md)**: the components, the world and the rules, the robot language and the sandbox, execution and budgets, stops and swaps, the validator and the journal, the HTTP API and the CLI, the agent's isolation, the **contracts**, configuration, security, and the acceptance gates.
+- **[specification/ROADMAP.md](specification/ROADMAP.md)**: eight versions (v1 Game core … v8 Several agents), one per phase of the concept. Each phase `vA.B` has a Goal, Tasks, a DoD and Tests. Build phases strictly in order and check each against its DoD before moving on.
+
+**Languages of the specification.**
+
+- **English is the only maintained language.** Never create Ukrainian versions of the specification files.
+- **`specification/concept.uk.md` is frozen.** Never update it, never treat it as a source of truth, and never require changes to stay in sync with it.
+- **`specification/concept.en.md` is the original concept and the short overview.** VISION, ARCHITECTURE and ROADMAP are the source of truth. When a change touches something the concept states (a component, a command, the robot API, a phase), update the concept too.
 
 ## Names
 
 - **Golem**: the project, and the robot inside the game world.
 - **Scribe**: the first agent, which writes the robot's Lua program.
 
-## Architecture (planned)
+## Project status
 
-One Python server holds the game rules and the world state. The game screen and the agent are separate processes that reach the server only through its interface.
+Design stage: the repository holds only the specification. Golem is a Sokoban-style sandbox in which an AI agent writes, runs and rewrites its own Lua program that drives a robot through puzzle levels.
 
-- **Game core**: pure Python with no dependencies and no graphics, deterministic, with save and restore of the world state. Human arrow-key moves and robot program commands both go through this one core, so they follow the same rules.
-- **Server**: FastAPI on uvicorn. It serves the HTTP API for the CLI and a WebSocket for the game screen.
-- **`golem` CLI**: Typer plus httpx, a thin wrapper that turns commands into HTTP requests. Every response is JSON. Commands: `levels`, `run <level> <program>`, `state`, `continue`, `swap <program>`, `validate <program>`.
-- **Interpreter**: Lua through `lupa` (the choice of Lua is still open). Each robot command is a coroutine yield, so execution can stop after any move. Step and instruction budgets are counted through `debug.sethook`, so an infinite loop ends as a report entry rather than a hang. The sandbox disables `io`, `os` and `require`.
-- **Validator and journal**: run a program over level sets. Runs and program versions go to SQLite; traces go to JSON files. Each program version is stored with the reason for the change, so a rollback is possible.
-- **Levels**: text files in the standard Sokoban format, split into training and hidden sets.
-- **Game screen**: one HTML page with canvas and plain JavaScript, no frameworks. It also replays recorded program runs.
-- **Agent**: Claude Code in non-interactive mode, launched as a subprocess by a small Python orchestrator that enforces the version and time limits and keeps the journal.
+Latest release: none yet.
 
-### Invariants that the design depends on
+| Version | Phases | What it delivers |
+|---|---|---|
+| `v1` Game core | v1.1 skeleton + level format · v1.2 rules · v1.3 save, restore, replay | the rules as pure Python; the gates and CI |
+| `v2` Game for a human | v2.1 server + WebSocket · v2.2 game screen | the owner plays with the arrow keys |
+| `v3` Language and interpreter | v3.1 Lua sandbox (lupa spike first) · v3.2 execution, budgets, report | a hand-written program passes a tier-one level |
+| `v4` Stops and swap | v4.1 swap prototype · v4.2 stops + snapshot | the riskiest design step, prototyped first |
+| `v5` Validator and journal | v5.1 HTTP API + CLI · v5.2 validator + journal · v5.3 replay | `golem` from the shell; every version and run kept |
+| `v6` Agent | v6.1 orchestrator + isolation · v6.2 Scribe | the agent passes tier one without hints |
+| `v7` Experiments | v7.1 tiers 2–3 + hidden sets · v7.2 metrics | where the agent stops coping |
+| `v8` Several agents | outline, fixed after v7 | two agents pass what one cannot |
 
-- **Isolation of the agent.** The agent sees the game only through `golem` commands. It must not be able to read hidden levels or the world state. For hidden levels, `validate` returns only passed or failed; for training levels it returns the full report.
-- **Partial view.** The robot sees only its own cell and the four neighbouring cells. The program never receives the full map and has to build it in `memory`.
-- **`memory` lives outside the program.** The interpreter owns the `memory` table for the whole level. A `swap` starts the new program from the current world state with the same `memory` and the remaining budget. The level never restarts, so every wrong push has a lasting cost.
-- **Determinism.** The same program on the same level always gives the same result.
-- **Stops, not per-step calls.** The interpreter stops on events the agent sets: a Lua error, a deadlock, a `give_up` call, half the budget spent with no box on a goal, or a repeated world state. At a stop the agent gets a snapshot (memory, latest actions, stop reason, remaining budget) and either continues or swaps the program. The agent does not get a model call per move.
+## Layout and commands (planned)
 
-### Robot API inside the Lua sandbox
+See ARCHITECTURE.md §Repository layout for the full tree. The commands, with the phase that adds each one:
 
-| Command | Returns |
-| --- | --- |
-| `move(dir)` with `dir` in N, E, S, W; pushes a box if the cell behind it is free | `true` or `false` |
-| `look(dir)` | `wall`, `box`, `goal`, `box_on_goal` or `empty` |
-| `here()` | `goal` or `empty` |
-| `boxes_left()` | number of boxes not on goals |
-| `give_up(reason)` | stops the run; the reason goes into the report |
+- Server (v2.1): `uv run golem-server`, which listens on `http://127.0.0.1:8700`. The game screen is at `/`.
+- Local runner (v3.2, interactive at stops from v4.2): `uv run golem-local run <level> <program.lua> [--stop-on …]`.
+- The CLI (v5.1): `uv run golem levels | run | state | continue | swap | validate | versions | show`.
+- Orchestrator (v6.1): `uv run golem-orchestrate --set training/tier1 [--max-versions N] [--max-minutes M]`.
+- Owner tools: `uv run golem-levels check [--hidden]` (v7.1) and `uv run golem-metrics` (v7.2).
 
-A level is lost when the step budget runs out, the instruction budget runs out, or a box is pushed into a corner that has no goal.
+## Acceptance gates
 
-The run report is the agent's only source of information about a run. Per level it contains the status, step and instruction counts, the error text, the robot's last 20 actions and the final map.
+Automated gates need no network and no model:
 
-## Implementation order
+- the core is pure;
+- the server and the CLI are tested in-process (`TestClient`, an httpx ASGI transport);
+- lupa runs for real (it is local and deterministic);
+- the agent is a fake script.
 
-The spec defines eight phases: core, human game, language and interpreter, stops and program swap, validator and journal, agent, experiments, several agents. The agent appears only in phase 6, so every earlier part must be testable by hand without a model. Each phase has a "done when" criterion in the spec; use it as the acceptance test.
+| Gate | Command | When |
+|---|---|---|
+| Lint | `uv run ruff check .` | any Python change |
+| Tests | `uv run pytest` (one test: `uv run pytest tests/test_x.py::test_name`) | any Python change |
 
-Phase 4 (stops and program swap) decides how `memory` and the interpreter are built. The spec says to prototype it right after phase 3, before polishing anything else.
+- **Before v1.1** there is no `pyproject.toml`, so the gates are `n/a`, not passed. ruff and pytest are dev dependencies, added by the issue that creates `pyproject.toml`.
+- **Manual gates:** the ROADMAP DoD items marked **Manual (owner)** need a person or a live model.
+  - Claude may start the server locally and run `golem` or `curl` commands against `127.0.0.1` to check its own work.
+  - Playing on the game screen, swapping a program by hand and watching a replay are done or confirmed by the owner.
+  - A live Scribe session spends the owner's Claude subscription, so Claude never launches one unless the owner asks.
+  - A manual check counts as passed only once the owner confirms it.
+
+## Rules that are easy to break
+
+The full mechanisms live in ARCHITECTURE.md. These are the invariants most often broken by accident:
+
+- **One core.** Every rule (moves, pushes, steps, the corner rule, the win) lives in `golem/core/` and nowhere else: not in the screen's JavaScript, not in the interpreter, not in the validator. `golem/core` imports only the standard library.
+- **The agent's isolation.**
+  - No API route returns a hidden level's text, a hidden trace or the live world state. Only the snapshot and the run report leave the server.
+  - `run` refuses hidden ids, and `validate` reports hidden levels as passed or failed only.
+  - The CLI sends program text, never paths, and reads programs only inside `GOLEM_WORKSPACE`.
+  - The agent's workspace is outside the repository.
+- **The sandbox is an allowlist.** The program's environment is a fresh table, never `_G`.
+  - There is no `io`, `os`, `require`, `load`, `debug`, `pcall`, `coroutine`, `next`, metatables or `python`.
+  - The runtime is created with `register_eval=False` and `register_builtins=False`, and no Python object is ever passed into Lua.
+  - Programs are loaded as text only (mode `"t"`).
+- **The budget error is a sentinel**, compared by identity. A program's own `error("…")` is never a budget loss.
+- **Determinism.**
+  - No clock and no unseeded randomness.
+  - `pairs` iterates in a fixed order, `table.sort` is the stable merge sort, `tostring` prints no addresses.
+  - Every collection that reaches JSON is sorted.
+  - The lupa version and `lupa.lua54` are pinned.
+  - A fixture program run twice must give byte-identical traces.
+- **`memory` belongs to the run**, not to the program. A swap shares the same table, carries over the counters, and never restarts the level.
+- **Keep decisions pure:** the rules, the parser, the stop decisions, the `memory` conversion, report assembly, version deduplication and metrics are functions over plain data.
+- **Failures are report entries.** A Lua error, an exhausted budget or the memory cap ends the program, never the server.
+- **Secrets stay out.**
+  - Never read, print, copy or commit anything under `levels/hidden/`. Tests use `tests/fixtures/hidden/`.
+  - Never print `.env` (`GOLEM_OWNER_TOKEN`) or anything under `data/`.
+  - The agent's environment never contains `GOLEM_OWNER_TOKEN` or any `ANTHROPIC_*` variable.
+
+## Contracts
+
+The list of contracts lives in **ARCHITECTURE.md §Contracts**: the level format and ids, the rules, the robot API, the sandbox, the stops, the JSON shapes, the routes and CLI commands, the WebSocket messages, the journal schema, the trace format, the env var names, the workspace and the tool rules. Changing one updates ARCHITECTURE.md (and `concept.en.md` where it states the same thing) and the test that pins it, in the same commit.
+
+## Delivery workflow (skills)
+
+`.claude/skills/` holds a spec-driven pipeline adapted from the matrix-agora project.
+
+- **Issues:** each ROADMAP phase `vA.B` becomes `specification/implementation/vA.B-issues.md`. Issue ids are `GOLEM-###`, numbered globally and never reset.
+- **Implementation:** each issue is one commit. Each phase is then reviewed, and the fix-now findings are fixed.
+- **Releases:** phase `vA.B` ships as `A.B.0` (tag `vA.B.0`). Post-release fixes bump the last digit (`A.B.1`, …).
+- **GitHub flow:** `/ship-phase <selector>` (a phase `vA.B`, a version `vA`, or a range) runs `/generate-issues` → `/upload-issues` → `/execute-issues` → `/review-and-fix-issues` → `/release-version` for each phase, then `/harden-findings` at the end of the run.
+- **Offline flow:** `/ship-solution` runs `/reconcile-issues` → `/execute-issues-file` → `/review-and-fix-issues` → `/release-version` over issues files that already exist.
+- **Who releases:** versions are bumped and tagged only by `/release-version`, `/ship-phase`, `/ship-solution` or `/harden-findings --release`.
+
+## Constraints
+
+- The server binds `127.0.0.1` only. Nothing in this project listens on the network.
+- The Lua choice is open until the v3.1 spike confirms lupa. If the spike fails, the owner decides the alternative.
+- v4.1 (the swap prototype) must prove the swap design before anything is built on it. Do not polish v2 or v3 beyond their DoD before v4.1.
