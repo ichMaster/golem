@@ -110,6 +110,8 @@ The list of contracts lives in **ARCHITECTURE.md §Contracts**: the level format
 - **Implementation:** each issue is one commit. Each phase is then reviewed, and the fix-now findings are fixed.
 - **Releases:** phase `vA.B` ships as `A.B.0` (tag `vA.B.0`). Post-release fixes bump the last digit (`A.B.1`, …).
 - **GitHub flow:** `/ship-phase <selector>` (a phase `vA.B`, a version `vA`, or a range) runs `/generate-issues` → `/upload-issues` → `/execute-issues` → `/review-and-fix-issues` → `/release-version` for each phase, then `/harden-findings` at the end of the run.
+  - Each version `vA` is built on its own branch, `version/vA`, created from `main`. Nothing is committed to `main` directly.
+  - After each release (and after the hardening sweep), `main` is fast-forwarded to the version branch and pushed. No merge commits, rebases or force-pushes.
 - **Offline flow:** `/ship-solution` runs `/reconcile-issues` → `/execute-issues-file` → `/review-and-fix-issues` → `/release-version` over issues files that already exist.
 - **Who releases:** versions are bumped and tagged only by `/release-version`, `/ship-phase`, `/ship-solution` or `/harden-findings --release`.
 
