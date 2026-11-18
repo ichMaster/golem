@@ -16,14 +16,14 @@ and the ARCHITECTURE.md text these issues changed.
 
 | # | Severity | Finding | Recommendation | Status |
 |---|----------|---------|----------------|--------|
-| 1 | 🟠 MEDIUM | `from_json` accepts a robot or box outside the walls, and the robot can then walk off the map | FIX NOW | ⏳ pending |
-| 2 | 🟡 LOW | The parser accepts boxes and goals the robot can never reach, so an unsolvable level loads | FIX NOW | ⏳ pending |
-| 3 | 🟡 LOW | Documentation drift: the layout omits `levels.py`; ROADMAP §v1.3 shows the old `replay` signature | FIX NOW | ⏳ pending |
-| 4 | 🟡 LOW | `levels_root()` resolves `levels` against the working directory; from elsewhere the listing is silently empty | DEFER → v2.1 | ⏳ pending |
-| 5 | 🟡 LOW | `from_json` accepts states that contradict themselves (playing past the budget, solved with a box off a goal) | DEFER → backlog | ⏳ pending |
-| 6 | 🟡 LOW | A level file with a UTF-8 BOM or CR-only line ends gives a confusing error | DEFER → v7.1 | ⏳ pending |
-| 7 | 🟡 LOW | `load_level` with a non-string id raises `AttributeError`, not `UnknownLevel` | DEFER → v2.1 | ⏳ pending |
-| 8 | 🟡 LOW | The direction offsets are defined twice (`level.DIRECTIONS`, `world.OFFSETS`) | DEFER → cleanup (/simplify) | ⏳ pending |
+| 1 | 🟠 MEDIUM | `from_json` accepts a robot or box outside the walls, and the robot can then walk off the map | FIX NOW | ✅ FIXED — 7462ba0 |
+| 2 | 🟡 LOW | The parser accepts boxes and goals the robot can never reach, so an unsolvable level loads | FIX NOW | ✅ FIXED — 3f143e1 |
+| 3 | 🟡 LOW | Documentation drift: the layout omits `levels.py`; ROADMAP §v1.3 shows the old `replay` signature | FIX NOW | ✅ FIXED — 6b2e8d5 |
+| 4 | 🟡 LOW | `levels_root()` resolves `levels` against the working directory; from elsewhere the listing is silently empty | DEFER → v2.1 | ⏳ deferred |
+| 5 | 🟡 LOW | `from_json` accepts states that contradict themselves (playing past the budget, solved with a box off a goal) | DEFER → backlog | ⏳ deferred |
+| 6 | 🟡 LOW | A level file with a UTF-8 BOM or CR-only line ends gives a confusing error | DEFER → v7.1 | ⏳ deferred |
+| 7 | 🟡 LOW | `load_level` with a non-string id raises `AttributeError`, not `UnknownLevel` | DEFER → v2.1 | ⏳ deferred |
+| 8 | 🟡 LOW | The direction offsets are defined twice (`level.DIRECTIONS`, `world.OFFSETS`) | DEFER → cleanup (/simplify) | ⏳ deferred |
 
 No 🔴 HIGH finding:
 - nothing reaches JSON unsorted;
@@ -167,8 +167,59 @@ stay in step.
   save, restore and continue matches an uninterrupted run over 60 seeded sequences that end in every
   status except solved (the solutions cover solved).
 
+## Fixes applied
+
+All three fixes are on `v1-dev`. After the last one: lint clean, 272 tests green, and CI green on 7462ba0,
+3f143e1 and 6b2e8d5.
+
+### #1 — `from_json` keeps the robot and the boxes inside the walls (7462ba0)
+
+- **Change:**
+  - the parser's flood fill now returns the robot's area, kept as `Level.inside`;
+  - `_saved_cell` refuses a cell that is a wall ("is a wall") or that is not in `inside` ("is outside the
+    map"), instead of checking only the bounding box.
+- **Regression tests:**
+  - `tests/test_world_json.py::test_from_json_refuses_a_cell_outside_the_walls`: the robot and the boxes,
+    on two cells beyond the ragged level's walls and two beyond its bounds;
+  - `tests/test_level.py::test_inside_holds_the_robots_area_and_nothing_outside_the_walls`.
+- **Verification:** against the old code, the new test fails on the four cells beyond the walls (the
+  out-of-bounds ones were already refused). With the fix, 270 tests passed.
+
+### #2 — unreachable boxes and goals are a `LevelError` (3f143e1)
+
+- **Change:** after the flood fill, the first box, then the first goal, outside `inside` (in row and
+  column order) raises a `LevelError` at its own cell.
+- **Regression tests:**
+  - `tests/test_level.py::test_a_goal_outside_the_walls_is_an_error` (line 1, column 4);
+  - `tests/test_level.py::test_a_box_in_a_sealed_pocket_is_an_error` (line 2, column 6).
+
+  Both fail against the old parser. The three committed training levels still parse.
+- **Verification:** 272 tests passed.
+
+### #3 — documentation drift (6b2e8d5)
+
+- **Change:**
+  - ARCHITECTURE §Repository layout lists `levels.py` under `golem/core/`;
+  - ROADMAP §v1.3 shows `replay(level, moves, budget)`.
+- **Regression test:** none; the change is documentation only.
+
+## Architecture impact
+
+- **`Level.inside`** is a new field of the level (ARCHITECTURE §World and rules, the `parse_level` line). It
+  holds every non-wall cell the robot's start reaches without crossing a wall; a robot or a box can only
+  ever stand in it. v2.1's screen and v3.2's interpreter can rely on it.
+- **Level validity** (a contract) gained one rule: every box and goal lies in the robot's area. A box or
+  goal outside it is a `LevelError` at its own cell. This matters for the owner's hidden levels (v5.2),
+  which have no recorded solution.
+- **`from_json`** refuses robot and box cells outside `inside`, as ARCHITECTURE.md already promised for
+  "outside the map".
+
 ## Suggested next actions
 
-1. Fix #1, #2 and #3, each in its own commit with its regression test (none for #3), and push.
-2. Release v1 as `1.3.0` (`/release-version 1.3.0`, run by `/ship-phase`).
-3. Carry #4 and #7 into v2.1's issues, #6 into v7.1's, #5 to the backlog, and #8 to a `/simplify` pass.
+1. Release v1 as `1.3.0` with `/release-version 1.3.0`, run by `/ship-phase v1`.
+2. Carry the deferred findings into their homes:
+   - #4 (resolve `GOLEM_LEVELS_DIR` once at server start, and fail loudly) and #7 (a non-string level id)
+     go into v2.1's issues;
+   - #6 (BOM and CR-only line ends) goes into v7.1's;
+   - #5 (self-contradicting saved states) goes to the backlog;
+   - #8 (one definition of the direction offsets) goes to a `/simplify` pass.
