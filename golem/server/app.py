@@ -18,6 +18,7 @@ from starlette.exceptions import HTTPException
 from golem.core.level import LevelError
 from golem.core.levels import BudgetsError, budget_for, list_levels, load_budgets, load_level
 from golem.server.config import ConfigError, Settings, load_settings
+from golem.server.ws import install_ws
 
 LOG = logging.getLogger("golem")
 LOG_FILE = "server.log"
@@ -40,6 +41,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.state.settings = settings
     _install_error_handlers(app)
     _install_level_routes(app, settings.levels_dir)
+    install_ws(app, settings.levels_dir)
     return app
 
 

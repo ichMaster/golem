@@ -57,7 +57,7 @@ There are no other listeners and no other outbound connections. The game itself 
 |---|---|---|
 | Python 3.12+ with uv | everything except the screen | one language; dependencies pinned in `pyproject.toml` and `uv.lock` |
 | Python standard library only | game core | rules with no dependencies, testable on their own |
-| FastAPI + uvicorn | server | the HTTP API and the WebSocket in one process |
+| FastAPI + uvicorn (with websockets) | server | the HTTP API and the WebSocket in one process |
 | lupa, Lua 5.4 runtime (`lupa.lua54`) | interpreter | the sandbox, coroutines and `debug.sethook`. Lua is the concept's choice, confirmed or replaced in the v3.1 spike |
 | Typer + httpx | `golem` CLI | a thin wrapper that turns commands into HTTP requests and prints JSON |
 | `sqlite3` (standard library) | journal | sessions, versions, runs and validations, with no database server |
@@ -323,7 +323,11 @@ A training level that doesn't parse gives `500 level_error` with the parse error
 - `{"type": "move", "dir": "N"}`;
 - `{"type": "restart"}`.
 
-The server answers each message with `{"type": "state", "level": …, "map": […], "steps": n, "budget": n, "status": "playing" | "solved" | "lost", "reason": …}`, or with `{"type": "error", "detail": …}`, and the connection stays open. The server holds one human game at a time.
+The server answers each message with `{"type": "state", "level": …, "map": […], "steps": n, "budget": n, "status": "playing" | "solved" | "lost", "reason": …}`, or with `{"type": "error", "detail": …}`, and the connection stays open. Every state comes from the core: `map` is `render(world)`, `budget` is the step budget, and `reason` is the loss reason or `null`.
+
+- **One game, kept in the server.** The server holds one human game at a time. When a game is loaded, a client that connects first receives its current `state`, so a page that reconnects finds the game where it was.
+- **`load` refuses alike.** A hidden id, an id not in the training listing and an id that is not a string all get the same `{"type": "error", "detail": "unknown level"}`, so a reply never tells a hidden id from a missing one.
+- **Errors.** Also answered with `error`: text that is not JSON or not a JSON object, a missing or unknown `type`, a direction other than `N`, `E`, `S` or `W`, `move` or `restart` before any `load`, and a binary frame. An error leaves the game as it was, and its detail never echoes the message.
 
 ## The agent and its isolation
 
@@ -471,7 +475,7 @@ golem/
   CLAUDE.md                 # instructions for Claude Code (the developer, not Scribe)
   LICENSE
   README.md
-  pyproject.toml            # v1.1: uv; no runtime deps in v1; fastapi + uvicorn + python-dotenv (v2.1),
+  pyproject.toml            # v1.1: uv; no runtime deps in v1; fastapi + uvicorn + websockets + python-dotenv (v2.1),
                             # lupa (v3.1), typer + httpx (v5.1); dev: ruff, pytest, httpx2 (TestClient)
   .env.example              # v1.1: see §Configuration and secrets
   specification/

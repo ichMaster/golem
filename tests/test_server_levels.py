@@ -1,9 +1,7 @@
 """GET /api/levels: the training levels with their tier, size and budgets (a contract)."""
 
-import shutil
 from pathlib import Path
 
-import pytest
 from fastapi.testclient import TestClient
 
 from golem.core.level import parse_level
@@ -19,17 +17,6 @@ HIDDEN_FIXTURE = REPO / "tests" / "fixtures" / "hidden" / "tier1" / "h-01.txt"
 def client_for(levels_dir: Path, tmp_path: Path) -> TestClient:
     settings = Settings("127.0.0.1", 8700, levels_dir, tmp_path / "logs")
     return TestClient(create_app(settings))
-
-
-@pytest.fixture
-def root_with_hidden(tmp_path: Path) -> Path:
-    """A levels root with the committed training set, budgets, and the fixture hidden level."""
-    root = tmp_path / "levels"
-    shutil.copytree(LEVELS / "training", root / "training")
-    shutil.copy(LEVELS / "budgets.toml", root / "budgets.toml")
-    (root / "hidden" / "tier1").mkdir(parents=True)
-    shutil.copy(HIDDEN_FIXTURE, root / "hidden" / "tier1" / "h-01.txt")
-    return root
 
 
 def test_the_fixture_hidden_level_is_a_valid_level():
