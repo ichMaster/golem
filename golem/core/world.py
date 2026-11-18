@@ -65,12 +65,12 @@ def move(world: World, direction: str) -> tuple[World, bool]:
 
     walls = world.level.walls
     target = (world.robot[0] + dr, world.robot[1] + dc)
-    robot, boxes, moved = world.robot, world.boxes, False
+    robot, boxes, moved, pushed = world.robot, world.boxes, False, None
     if target in world.boxes:
         behind = (target[0] + dr, target[1] + dc)
         if behind not in walls and behind not in world.boxes:
             boxes = (world.boxes - {target}) | {behind}
-            robot, moved = target, True
+            robot, moved, pushed = target, True, behind
     elif target not in walls:
         robot, moved = target, True
 
@@ -78,7 +78,21 @@ def move(world: World, direction: str) -> tuple[World, bool]:
     status, reason = PLAYING, None
     if boxes <= world.level.goals:
         status = SOLVED
+    elif pushed is not None and in_corner(world.level, pushed):
+        status, reason = LOST, "deadlock"
     elif steps >= world.step_budget:
         status, reason = LOST, "steps"
     return replace(world, robot=robot, boxes=boxes, steps=steps, status=status,
                    loss_reason=reason), moved
+
+
+def in_corner(level: Level, cell: Cell) -> bool:
+    """The corner rule: a cell that is not a goal, with walls on two orthogonal sides."""
+    if cell in level.goals:
+        return False
+    r, c = cell
+    north = (r - 1, c) in level.walls
+    east = (r, c + 1) in level.walls
+    south = (r + 1, c) in level.walls
+    west = (r, c - 1) in level.walls
+    return (north and east) or (east and south) or (south and west) or (west and north)

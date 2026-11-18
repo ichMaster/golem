@@ -176,3 +176,92 @@ def test_budget_for_a_tier_without_a_budget_is_an_error():
     with pytest.raises(BudgetsError) as caught:
         budget_for("training/tier9/x", {"tier1": Budget(200, 1000)})
     assert "tier9" in str(caught.value)
+
+
+# --- the corner rule ---------------------------------------------------------------------------
+
+
+def room(robot, boxes, goals, height=5, width=6) -> str:
+    """A walled room; the interior is rows 1..height-2 and columns 1..width-2."""
+    rows = []
+    for r in range(height):
+        row = ""
+        for c in range(width):
+            cell = (r, c)
+            if r in (0, height - 1) or c in (0, width - 1):
+                row += "#"
+            elif cell == robot:
+                row += "+" if cell in goals else "@"
+            elif cell in boxes:
+                row += "*" if cell in goals else "$"
+            else:
+                row += "." if cell in goals else " "
+        rows.append(row)
+    return "\n".join(rows) + "\n"
+
+
+CORNER_PUSHES = [
+    # (robot, box, direction, the corner the box ends in)
+    ((3, 4), (2, 4), "N", (1, 4)),  # north and east walls
+    ((1, 2), (1, 3), "E", (1, 4)),
+    ((1, 4), (2, 4), "S", (3, 4)),  # east and south walls
+    ((3, 2), (3, 3), "E", (3, 4)),
+    ((1, 1), (2, 1), "S", (3, 1)),  # south and west walls
+    ((3, 3), (3, 2), "W", (3, 1)),
+    ((3, 1), (2, 1), "N", (1, 1)),  # west and north walls
+    ((1, 3), (1, 2), "W", (1, 1)),
+]
+
+
+@pytest.mark.parametrize(("robot", "box", "direction", "corner"), CORNER_PUSHES)
+def test_a_push_into_a_corner_off_a_goal_loses_on_deadlock(robot, box, direction, corner):
+    world, moved = move(world_of(room(robot, {box}, {(2, 2)})), direction)
+    assert moved is True
+    assert world.boxes == frozenset({corner})
+    assert (world.status, world.loss_reason) == ("lost", "deadlock")
+
+
+@pytest.mark.parametrize(("robot", "box", "direction", "corner"), CORNER_PUSHES)
+def test_a_push_into_a_corner_on_a_goal_is_no_loss(robot, box, direction, corner):
+    start = world_of(room(robot, {box, (2, 3)}, {corner, (2, 2)}))
+    world, moved = move(start, direction)
+    assert moved is True
+    assert corner in world.boxes
+    assert (world.status, world.loss_reason) == ("playing", None)
+
+
+def test_walls_on_opposite_sides_are_not_a_corner():
+    corridor_east_west = world_of("#######\n#@$  .#\n#######\n")
+    world, _ = move(corridor_east_west, "E")
+    assert world.status == "playing"
+
+    corridor_north_south = world_of("###\n#@#\n#$#\n# #\n#.#\n###\n")
+    world, _ = move(corridor_north_south, "S")
+    assert world.boxes == frozenset({(3, 1)})
+    assert world.status == "playing"
+
+
+def test_another_box_is_not_a_wall():
+    start = world_of(room((3, 2), {(2, 2), (1, 3)}, {(3, 3), (3, 4)}))
+    world, moved = move(start, "N")  # the box stops with a wall north and a box east
+    assert moved is True
+    assert world.boxes == frozenset({(1, 2), (1, 3)})
+    assert world.status == "playing"
+
+
+def test_a_box_that_starts_in_a_corner_is_no_loss_until_pushed():
+    start = world_of(room((3, 3), {(1, 1)}, {(2, 2)}))
+    assert start.status == "playing"
+    world, _ = play(start, "NW")
+    assert world.status == "playing"
+
+
+def test_a_deadlock_on_the_last_step_of_the_budget_is_a_deadlock():
+    world, _ = move(world_of(room((3, 4), {(2, 4)}, {(2, 2)}), steps=1), "N")
+    assert (world.status, world.loss_reason) == ("lost", "deadlock")
+
+
+def test_no_move_after_a_deadlock():
+    ended, _ = move(world_of(room((3, 4), {(2, 4)}, {(2, 2)})), "N")
+    world, moved = move(ended, "S")
+    assert (world, moved) == (ended, False)
