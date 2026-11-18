@@ -14,14 +14,14 @@ Many DoD items need a person or a live model: playing levels on the game screen,
 
 ## Status
 
-v1 is built and released. Latest release: v1.3.0 (v1.1–v1.3).
+v1 and v2.1 are built and released. Latest release: v2.1.0 (v2.1).
 
 | Phase | Title | Status | Release |
 |---|---|---|---|
 | v1.1 | Project skeleton and the level format | ✅ released | v1.3.0 |
 | v1.2 | World state and the rules | ✅ released | v1.3.0 |
 | v1.3 | Save, restore and replay | ✅ released | v1.3.0 |
-| v2.1 | The server and the human game over WebSocket | ⏳ planned | — |
+| v2.1 | The server and the human game over WebSocket | ✅ released | v2.1.0 |
 | v2.2 | The game screen | ⏳ planned | — |
 | v3.1 | The Lua sandbox (with the lupa spike) | ⏳ planned | — |
 | v3.2 | Step-by-step execution, budgets and the run report | ⏳ planned | — |
@@ -105,7 +105,7 @@ A human plays the training levels with the arrow keys, through the same core the
 
 ### v2.1 — The server and the human game over WebSocket
 
-**Status:** ⏳ planned.
+**Status:** ✅ released in v2.1.0.
 
 **Goal:** one server process holds a human game and applies arrow-key moves through the core.
 
