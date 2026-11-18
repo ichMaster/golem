@@ -201,7 +201,7 @@ Write `specification/implementation/vA.B-execution-report.md`:
 **Date:** {date}
 **Branch:** {branch}
 **Label:** vA.B::phase
-**Target release:** vA.B.0
+**Target release:** {the release that will cover this phase, e.g. v1.3.0 for any phase of /ship-phase v1}
 **Executed by:** Claude Code
 
 ## Summary

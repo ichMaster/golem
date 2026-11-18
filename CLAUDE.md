@@ -108,10 +108,13 @@ The list of contracts lives in **ARCHITECTURE.md §Contracts**: the level format
 
 - **Issues:** each ROADMAP phase `vA.B` becomes `specification/implementation/vA.B-issues.md`. Issue ids are `GOLEM-###`, numbered globally and never reset.
 - **Implementation:** each issue is one commit. Each phase is then reviewed, and the fix-now findings are fixed.
-- **Releases:** phase `vA.B` ships as `A.B.0` (tag `vA.B.0`). Post-release fixes bump the last digit (`A.B.1`, …).
-- **GitHub flow:** `/ship-phase <selector>` (a phase `vA.B`, a version `vA`, or a range) runs `/generate-issues` → `/upload-issues` → `/execute-issues` → `/review-and-fix-issues` → `/release-version` for each phase, then `/harden-findings` at the end of the run.
-  - Each version `vA` is built on its own branch, `version/vA`, created from `main`. Nothing is committed to `main` directly.
-  - After each release (and after the hardening sweep), `main` is fast-forwarded to the version branch and pushed. No merge commits, rebases or force-pushes.
+- **Releases:** a release covers the phases built since the previous release and is numbered after the last of them. v1.1–v1.3 shipped together are `1.3.0` (tag `v1.3.0`); a release of one phase `vA.B` is `A.B.0`. Post-release fixes bump the last digit (`1.3.1`, …).
+- **GitHub flow:** `/ship-phase <selector>` (a phase `vA.B`, a version `vA`, or a range) works one version at a time.
+  - For each phase of the version it runs `/generate-issues` → `/upload-issues` → `/execute-issues`.
+  - Then it stops so that the owner can test the version, and the problems found are fixed together.
+  - After the owner says testing is finished, it runs `/review-and-fix-issues` and one `/release-version` for the version.
+  - `/harden-findings` runs at the end of the run.
+- **Branches are the owner's.** The skills commit, push and tag on the checked-out branch, and never create, switch, merge or delete a branch.
 - **Offline flow:** `/ship-solution` runs `/reconcile-issues` → `/execute-issues-file` → `/review-and-fix-issues` → `/release-version` over issues files that already exist.
 - **Who releases:** versions are bumped and tagged only by `/release-version`, `/ship-phase`, `/ship-solution` or `/harden-findings --release`.
 

@@ -18,9 +18,10 @@ Bump the project version, update every version reference, write release notes, c
   notes.
 
 **Version scheme (`A.B.C`):** `A` = roadmap version (v1→1 … v8→8), `B` = phase within it, `C` = a
-post-release fix on that phase. ROADMAP phase `vA.B` → release `A.B.0`, tag `vA.B.0`; a later fix on it
-bumps `C` (`A.B.1`, …). Releases are cut per phase. A version beyond the roadmap is a decision the owner
-makes explicitly.
+post-release fix. A release covers the phases built since the previous release and takes the number of the
+last of them: `/ship-phase v1` releases v1.1–v1.3 together as `1.3.0` (tag `v1.3.0`), and a release of one
+phase `vA.B` is `A.B.0`. A later fix bumps `C` (`1.3.1`, …). A version beyond the roadmap is a decision the
+owner makes explicitly.
 
 **Never change the version without explicit user confirmation**; running this skill, or an orchestrator
 that calls it, is that confirmation.
@@ -41,10 +42,13 @@ that calls it, is that confirmation.
    else treat it as none.
 4. **No downgrade:** refuse if the target is less than or equal to the current version (compare as the
    `A.B.C` tuple; phases release in roadmap order).
-5. **Phase releases** (`A.B.0`): check the phase's execution report
+5. **Phase releases** (`A.B.0`): the release covers every phase after the previous release tag, up to and
+   including `vA.B`. Check that each covered phase's execution report
    (`specification/implementation/vA.B-execution-report.md`) has no failed, skipped or `awaiting owner`
-   issues. Its manual DoD checks must be confirmed by the owner. If they aren't, stop and say what is
-   missing; the owner can waive it explicitly, and the waiver goes into the release notes.
+   issues, and that their manual DoD checks are confirmed by the owner. When `/ship-phase` runs it, also
+   check that `specification/implementation/vA-owner-test.md` records the owner's word that testing is
+   finished. If anything is missing, stop and say what; the owner can waive it explicitly, and the waiver
+   goes into the release notes.
 
 ### Step 2: Generate the changelog (if not provided)
 
