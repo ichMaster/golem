@@ -105,6 +105,10 @@ def parse_level(text: str, level_id: str) -> Level:
 
     robot = robots[0]
     inside = _inside_cells(rows, walls, robot, error_at)
+    for kind, cells in (("box", boxes), ("goal", goals)):
+        unreachable = sorted(cells - inside)
+        if unreachable:
+            raise error_at(unreachable[0], f"a {kind} outside the area the robot can reach")
 
     return Level(
         id=level_id,

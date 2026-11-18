@@ -172,3 +172,18 @@ def test_inside_holds_the_robots_area_and_nothing_outside_the_walls():
     assert level.inside == frozenset({(1, 3), (1, 4), (2, 1), (2, 2), (2, 3), (2, 4)})
     assert level.robot in level.inside and level.boxes <= level.inside
     assert not level.inside & level.walls
+
+
+# --- code review #2: boxes and goals the robot can never reach -----------------------------------
+
+
+def test_a_goal_outside_the_walls_is_an_error():
+    error = error_of("   .\n#####\n#@$ #\n#####\n")
+    assert (error.line, error.column) == (1, 4)
+    assert "goal outside the area the robot can reach" in error.message
+
+
+def test_a_box_in_a_sealed_pocket_is_an_error():
+    error = error_of("#######\n#@ .#$#\n#######\n")
+    assert (error.line, error.column) == (2, 6)
+    assert "box outside the area the robot can reach" in error.message
