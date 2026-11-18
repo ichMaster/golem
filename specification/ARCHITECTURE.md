@@ -98,7 +98,7 @@ The rules are classic Sokoban. Every rule below is implemented once, in `golem/c
 | `@` | robot |
 | `+` | robot on a goal |
 
-Lines that start with `;` are comments. Rows may differ in length; a cell past the end of a row is outside the map. A level is valid when it has exactly one robot, at least one box, as many goals as boxes, and walls that close it, so that the robot cannot walk off the map. A parse error names the line and the column.
+Lines that start with `;` are comments, and blank lines before and after the map are ignored. Rows may differ in length; a cell past the end of a row is outside the map. A level is valid when it has exactly one robot, at least one box, as many goals as boxes, and walls that close it, so that the robot cannot walk off the map (a flood fill from the robot over every non-wall cell never leaves the map). A parse error (`LevelError`) names the level id, the line and the column, both counted from 1 in the file's own lines, comment lines included. An error about the whole level, such as a missing robot or unequal counts, names the first map line, column 1; a second robot is named at its own cell, and an open map at the last cell inside it.
 
 **Rules.**
 
@@ -111,7 +111,7 @@ Lines that start with `;` are comments. Rows may differ in length; a cell past t
 
 **Budgets.** Each level has a step budget and an instruction budget, set per tier in `levels/budgets.toml`. The human game uses the step budget only.
 
-**The core's interface** works on plain data:
+**The core's interface** works on plain data. A cell is a `(row, column)` pair counted from 0, where row 0 is the first map line after comments.
 
 - `parse_level(text, level_id) -> Level`: an immutable level with its size, walls, goals, starting boxes and robot cell.
 - `World`: a frozen dataclass with the level, the robot cell, the box cells (a frozenset), the step count, the status (`playing`, `solved` or `lost`) and the loss reason.
