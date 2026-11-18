@@ -17,6 +17,13 @@ levels and are ignored.
   [hidden/README.md](hidden/README.md).
 - `budgets.toml`: the step and instruction budgets per tier.
 
+## Recorded solutions
+
+Every training level has a recorded solution in `tests/fixtures/solutions/<level id>.txt`: a move string
+of `N`, `E`, `S` and `W`, where lines that start with `;` are comments and whitespace is ignored. A new
+training level needs one; `tests/test_solutions.py` checks that each level has a solution and that each
+solution replays to `solved`.
+
 ## Tiers
 
 1. One box in an open room.

@@ -1,0 +1,2 @@
+; t1-03: push west, step round the box, push south onto the goal
+W NWS
