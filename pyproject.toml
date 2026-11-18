@@ -5,10 +5,18 @@ description = "A Sokoban-style sandbox in which an AI agent writes, runs and rew
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.12"
-dependencies = []
+dependencies = [
+    "fastapi>=0.165.0",
+    "python-dotenv>=1.2.4",
+    "uvicorn>=0.54.0",
+]
+
+[project.scripts]
+golem-server = "golem.server.app:main"
 
 [dependency-groups]
 dev = [
+    "httpx2>=2.16.2",
     "pytest",
     "ruff",
 ]
