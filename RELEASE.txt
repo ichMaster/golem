@@ -1,0 +1,14 @@
+Golem release notes
+===================
+
+Version 1.3.0 (2026-11-19)
+---------------------------
+- v1.1 (GOLEM-001..004): uv project with ruff and pytest gates and GitHub Actions CI; Sokoban level parser
+  with line/column errors; level ids, listing and loading by id; per-tier budgets in levels/budgets.toml;
+  three tier-one training levels.
+- v1.2 (GOLEM-005..007): immutable World with moves, one-box pushes, one step per move, the step budget,
+  the corner rule and the win; look, here, boxes_left and render.
+- v1.3 (GOLEM-008..010): save and restore a world as JSON, state_key, replay of move strings; recorded
+  solutions replay to solved twice with identical JSON.
+- Code review: a restored world keeps the robot and boxes inside the walls; levels with unreachable boxes
+  or goals are refused; documentation drift fixed.

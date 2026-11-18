@@ -23,9 +23,9 @@ Read these before planning work. They are the project's contract with itself.
 
 ## Project status
 
-Design stage: the repository holds only the specification. Golem is a Sokoban-style sandbox in which an AI agent writes, runs and rewrites its own Lua program that drives a robot through puzzle levels.
+v1, the game core, is built and released; v2 (the game for a human) is next. Golem is a Sokoban-style sandbox in which an AI agent writes, runs and rewrites its own Lua program that drives a robot through puzzle levels.
 
-Latest release: none yet.
+Latest release: v1.3.0 (version v1 — game core: phases v1.1–v1.3).
 
 | Version | Phases | What it delivers |
 |---|---|---|

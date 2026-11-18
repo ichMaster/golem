@@ -14,13 +14,13 @@ Many DoD items need a person or a live model: playing levels on the game screen,
 
 ## Status
 
-Nothing is built yet: the repository holds the specification only. Latest release: none.
+v1 is built and released. Latest release: v1.3.0 (v1.1–v1.3).
 
 | Phase | Title | Status | Release |
 |---|---|---|---|
-| v1.1 | Project skeleton and the level format | ⏳ planned | — |
-| v1.2 | World state and the rules | ⏳ planned | — |
-| v1.3 | Save, restore and replay | ⏳ planned | — |
+| v1.1 | Project skeleton and the level format | ✅ released | v1.3.0 |
+| v1.2 | World state and the rules | ✅ released | v1.3.0 |
+| v1.3 | Save, restore and replay | ✅ released | v1.3.0 |
 | v2.1 | The server and the human game over WebSocket | ⏳ planned | — |
 | v2.2 | The game screen | ⏳ planned | — |
 | v3.1 | The Lua sandbox (with the lupa spike) | ⏳ planned | — |
@@ -42,7 +42,7 @@ The world and the Sokoban rules as pure Python with no dependencies and no graph
 
 ### v1.1 — Project skeleton and the level format
 
-**Status:** ⏳ planned.
+**Status:** ✅ released in v1.3.0.
 
 **Goal:** a uv project with green gates locally and in CI, and levels read from the standard Sokoban text format.
 
@@ -64,7 +64,7 @@ The first code: the package, the gates, CI, and the level parser with its valida
 
 ### v1.2 — World state and the rules
 
-**Status:** ⏳ planned.
+**Status:** ✅ released in v1.3.0.
 
 **Goal:** moves and pushes follow classic Sokoban, every step is counted, and the corner rule loses the level.
 
@@ -83,7 +83,7 @@ The first code: the package, the gates, CI, and the level parser with its valida
 
 ### v1.3 — Save, restore and replay
 
-**Status:** ⏳ planned.
+**Status:** ✅ released in v1.3.0.
 
 **Goal:** a world state can be saved and restored exactly, and a recorded sequence of moves always produces the same final state.
 
