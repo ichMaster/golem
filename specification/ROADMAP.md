@@ -89,7 +89,7 @@ The first code: the package, the gates, CI, and the level parser with its valida
 
 **Tasks:**
 - `to_json(world)` and `from_json(data, level)`, with sorted box cells so that the JSON is identical for identical states.
-- `golem/core/replay.py`: `replay(level, moves)` for a move string such as `"NNESW"`, returning the final world and the per-step states.
+- `golem/core/replay.py`: `replay(level, moves, budget)` for a move string such as `"NNESW"`, returning the final world and the per-step states.
 - `state_key(world)` for repeat detection (used in v4.2).
 - Recorded solutions for the committed training levels in `tests/fixtures/solutions/<level>.txt`.
 
