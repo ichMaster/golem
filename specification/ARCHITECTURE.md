@@ -109,7 +109,17 @@ Lines that start with `;` are comments, and blank lines before and after the map
 5. The level is **lost** when the step budget is exhausted, when the instruction budget is exhausted (programs only), or when a push leaves a box on a cell that is not a goal and has walls on two orthogonal sides (north and east, east and south, south and west, or west and north). This **corner rule** is the only deadlock the game detects. Every other dead position is the program's problem.
 6. After the level is solved or lost, no move is applied.
 
-**Budgets.** Each level has a step budget and an instruction budget, set per tier in `levels/budgets.toml`. The human game uses the step budget only.
+**Level ids.** A level's id is `<set>/<tier>/<name>`, for the file `<levels root>/<set>/<tier>/<name>.txt`, where the levels root is `GOLEM_LEVELS_DIR` (`levels`). Each part matches `[a-z0-9][a-z0-9-]*`, and the tier is `tier<N>`. A set's listing holds every such file, sorted by id; other files and directories are ignored. A level is loaded only by an id that appears in its set's listing, never by a path built from the id, and any other id is refused as unknown (`UnknownLevel`).
+
+**Budgets.** Each level has a step budget and an instruction budget, set per tier in `levels/budgets.toml`. The human game uses the step budget only. The file holds one table per tier, named `tier<N>`, with exactly two keys, both positive integers:
+
+```toml
+[tier1]
+steps = 200
+instructions = 1_000_000
+```
+
+A missing key, an unknown key, or a value that is not a positive integer is an error (`BudgetsError`) that names the tier and the key.
 
 **The core's interface** works on plain data. A cell is a `(row, column)` pair counted from 0, where row 0 is the first map line after comments.
 
