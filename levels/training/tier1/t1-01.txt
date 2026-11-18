@@ -1,0 +1,6 @@
+; t1-01: one box and one goal on the robot's row
+#######
+#     #
+# @$ .#
+#     #
+#######

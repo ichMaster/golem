@@ -1,0 +1,7 @@
+; t1-02: the goal is off the box's line, so the box needs pushes in two directions
+########
+#   .  #
+#      #
+#  $   #
+#  @   #
+########

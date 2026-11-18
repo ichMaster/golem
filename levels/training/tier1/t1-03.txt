@@ -1,0 +1,7 @@
+; t1-03: the robot starts east of the box and the goal is south-west of it
+#######
+#     #
+#  $@ #
+# .   #
+#     #
+#######

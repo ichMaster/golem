@@ -1,0 +1,14 @@
+# Step and instruction budgets per tier (ARCHITECTURE.md §World and rules).
+# First estimates, to be tuned in v3.2 (the interpreter) and v7.1 (tiers two and three).
+
+[tier1]
+steps = 200
+instructions = 1_000_000
+
+[tier2]
+steps = 1_000
+instructions = 5_000_000
+
+[tier3]
+steps = 2_000
+instructions = 10_000_000
