@@ -227,3 +227,9 @@ __marimo__/
 
 # The /ship-solution skill's progress file
 .ship-solution-progress.md
+
+# Golem: runtime data, metrics tables and the owner's hidden levels (only their README is committed)
+data/
+reports/
+levels/hidden/*
+!levels/hidden/README.md
