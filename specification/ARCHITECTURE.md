@@ -301,6 +301,15 @@ Every response is JSON. An error is `{"error": "<code>", "detail": "<text>"}` wi
 | `golem versions` | `GET /api/versions` | the session's versions with reasons and latest validation | v5.2 |
 | `golem show <n>` | `GET /api/versions/{n}` | one version's source and reason | v5.2 |
 
+**`GET /api/levels`** (a contract) returns the training set only, sorted by id, and never a map:
+
+```json
+{"levels": [{"id": "training/tier1/t1-01", "tier": "tier1", "width": 7, "height": 5,
+             "budget": {"steps": 200, "instructions": 1000000}}]}
+```
+
+A training level that doesn't parse gives `500 level_error` with the parse error as the detail, and a `budgets.toml` broken while the server runs gives `500 budgets_error`.
+
 `run` accepts training level ids only, so a hidden level is reachable only through `validate`. The session comes from the `X-Golem-Session` header, which the CLI fills from `GOLEM_SESSION`, or is `manual` when the header is absent. When `GOLEM_WORKSPACE` is set, the CLI reads a program file only if its resolved path, after symlinks, lies inside that directory.
 
 **Routes outside the CLI:**

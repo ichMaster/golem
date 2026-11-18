@@ -15,7 +15,8 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException
 
-from golem.core.levels import BudgetsError, load_budgets
+from golem.core.level import LevelError
+from golem.core.levels import BudgetsError, budget_for, list_levels, load_budgets, load_level
 from golem.server.config import ConfigError, Settings, load_settings
 
 LOG = logging.getLogger("golem")
@@ -38,6 +39,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app = FastAPI(title="Golem", docs_url=None, redoc_url=None, openapi_url=None)
     app.state.settings = settings
     _install_error_handlers(app)
+    _install_level_routes(app, settings.levels_dir)
     return app
 
 
@@ -74,6 +76,33 @@ def _setup_logging(log_dir: Path) -> None:
         LOG.addHandler(handler)
     LOG.setLevel(logging.INFO)
     LOG.propagate = False
+
+
+def _install_level_routes(app: FastAPI, levels_dir: Path) -> None:
+    @app.get("/api/levels")
+    def training_levels():
+        """The training levels with their tier, size and budgets; never a map, never a hidden id."""
+        try:
+            budgets = load_budgets(levels_dir)
+        except (BudgetsError, OSError) as error:
+            LOG.error("budgets.toml does not load: %s", error)
+            return error_response(500, "budgets_error", str(error))
+        entries = []
+        for level_id in list_levels("training", levels_dir):
+            try:
+                level = load_level(level_id, levels_dir)
+                budget = budget_for(level_id, budgets)
+            except (LevelError, BudgetsError) as error:
+                LOG.error("training level %s does not load: %s", level_id, error)
+                return error_response(500, "level_error", str(error))
+            entries.append({
+                "id": level_id,
+                "tier": level_id.split("/")[1],
+                "width": level.width,
+                "height": level.height,
+                "budget": {"steps": budget.steps, "instructions": budget.instructions},
+            })
+        return {"levels": entries}
 
 
 def _install_error_handlers(app: FastAPI) -> None:

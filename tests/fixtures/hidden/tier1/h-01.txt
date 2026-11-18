@@ -1,0 +1,6 @@
+; A fixture hidden level, made up for tests. It is not one of the owner's hidden levels.
+#########
+#  .    #
+# $@ $. #
+#       #
+#########
