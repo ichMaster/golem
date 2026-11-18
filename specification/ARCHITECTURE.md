@@ -128,7 +128,16 @@ A missing key, an unknown key, or a value that is not a positive integer is an e
 - `move(world, dir) -> (World, bool)`, `look(world, dir) -> str`, `here(world) -> str`, `boxes_left(world) -> int`. A direction other than `N`, `E`, `S` or `W` is a `ValueError`. After a move on a playing world, the world is solved if every box is on a goal, otherwise lost on `deadlock` if the push triggered the corner rule, otherwise lost on `steps` if the step count has reached the budget. A move on a solved or lost world changes nothing, returns `false` and counts no step.
 - `render(world) -> list[str]`: the current map as Sokoban text lines, which is the report's final map.
 - `to_json(world)` and `from_json(data, level)` save and restore a state. `replay(level, moves)` applies a move string such as `"NNESW"`.
-- `state_key(world)`: the robot cell and the sorted box cells, used for repeat detection.
+- `state_key(world)`: the robot cell and the sorted box cells, used for repeat detection. It ignores the step count.
+
+**The saved world** (a contract) is plain JSON data with its keys in this order and its boxes sorted, so that equal states give byte-identical JSON:
+
+```json
+{"level": "training/tier1/t1-01", "robot": [2, 3], "boxes": [[2, 4]], "steps": 1,
+ "step_budget": 200, "status": "playing", "loss_reason": null}
+```
+
+`from_json` restores it onto the level it names and refuses, with a `ValueError` naming the field, anything inconsistent: another level, a missing or unknown key, a wrong type, a robot or box on a wall or outside the map, two boxes in one cell, the robot on a box, a box count other than the level's, a negative step count, a non-positive step budget, an unknown status, or a `loss_reason` that doesn't fit the status.
 
 Every collection that reaches JSON is serialized in sorted order, so that the output never depends on Python's set or dict ordering.
 

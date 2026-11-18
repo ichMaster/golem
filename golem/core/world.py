@@ -139,3 +139,88 @@ def render(world: World) -> list[str]:
                 chars.append("." if on_goal else " ")
         lines.append("".join(chars).rstrip(" "))
     return lines
+
+
+# --- save, restore and the state key -----------------------------------------------------------
+
+JSON_KEYS = ("level", "robot", "boxes", "steps", "step_budget", "status", "loss_reason")
+LOSS_REASONS = ("steps", "deadlock", "instructions")
+
+
+def to_json(world: World) -> dict:
+    """The state as plain JSON data: keys in a fixed order, boxes sorted."""
+    return {
+        "level": world.level.id,
+        "robot": list(world.robot),
+        "boxes": [list(cell) for cell in sorted(world.boxes)],
+        "steps": world.steps,
+        "step_budget": world.step_budget,
+        "status": world.status,
+        "loss_reason": world.loss_reason,
+    }
+
+
+def from_json(data: object, level: Level) -> World:
+    """Restore a state saved by ``to_json`` onto its level.
+
+    Anything inconsistent with the level or with itself is a ``ValueError`` that names the field.
+    """
+    if not isinstance(data, dict):
+        raise ValueError("saved world: not a JSON object")
+    for key in JSON_KEYS:
+        if key not in data:
+            raise ValueError(f"saved world: missing key {key!r}")
+    extra = sorted(set(data) - set(JSON_KEYS))
+    if extra:
+        raise ValueError(f"saved world: unknown key {extra[0]!r}")
+    if data["level"] != level.id:
+        raise ValueError(f"saved world: level {data['level']!r} is not {level.id!r}")
+
+    robot = _saved_cell(data["robot"], "robot", level)
+    if not isinstance(data["boxes"], list):
+        raise ValueError("saved world: boxes must be a list of cells")
+    boxes = [_saved_cell(cell, "boxes", level) for cell in data["boxes"]]
+    if len(set(boxes)) != len(boxes):
+        raise ValueError("saved world: boxes has two boxes in one cell")
+    if len(boxes) != len(level.boxes):
+        raise ValueError(f"saved world: boxes has {len(boxes)} boxes, the level {len(level.boxes)}")
+    if robot in boxes:
+        raise ValueError("saved world: robot stands on a box")
+
+    steps, step_budget = data["steps"], data["step_budget"]
+    if type(steps) is not int or steps < 0:
+        raise ValueError(f"saved world: steps must be a non-negative integer, not {steps!r}")
+    if type(step_budget) is not int or step_budget <= 0:
+        raise ValueError(
+            f"saved world: step_budget must be a positive integer, not {step_budget!r}"
+        )
+
+    status, reason = data["status"], data["loss_reason"]
+    if status not in (PLAYING, SOLVED, LOST):
+        raise ValueError(f"saved world: unknown status {status!r}")
+    if (status == LOST) != (reason in LOSS_REASONS) or (status != LOST and reason is not None):
+        raise ValueError(f"saved world: loss_reason {reason!r} does not fit status {status!r}")
+
+    return World(level=level, robot=robot, boxes=frozenset(boxes), steps=steps,
+                 step_budget=step_budget, status=status, loss_reason=reason)
+
+
+def _saved_cell(value: object, field: str, level: Level) -> Cell:
+    """A ``[row, column]`` pair inside the level's bounds and not on a wall."""
+    if (
+        not isinstance(value, list | tuple)
+        or len(value) != 2
+        or any(type(part) is not int for part in value)
+    ):
+        raise ValueError(f"saved world: {field} must hold [row, column] pairs, not {value!r}")
+    cell = (value[0], value[1])
+    if not (0 <= cell[0] < level.height and 0 <= cell[1] < level.width):
+        raise ValueError(f"saved world: {field} cell {list(cell)} is outside the map")
+    if cell in level.walls:
+        raise ValueError(f"saved world: {field} cell {list(cell)} is a wall")
+    return cell
+
+
+def state_key(world: World) -> tuple[Cell, tuple[Cell, ...]]:
+    """The position, for repeat detection: the robot cell and the sorted box cells."""
+    return world.robot, tuple(sorted(world.boxes))
