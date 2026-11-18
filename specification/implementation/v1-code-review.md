@@ -19,10 +19,10 @@ and the ARCHITECTURE.md text these issues changed.
 | 1 | 🟠 MEDIUM | `from_json` accepts a robot or box outside the walls, and the robot can then walk off the map | FIX NOW | ✅ FIXED — 7462ba0 |
 | 2 | 🟡 LOW | The parser accepts boxes and goals the robot can never reach, so an unsolvable level loads | FIX NOW | ✅ FIXED — 3f143e1 |
 | 3 | 🟡 LOW | Documentation drift: the layout omits `levels.py`; ROADMAP §v1.3 shows the old `replay` signature | FIX NOW | ✅ FIXED — 6b2e8d5 |
-| 4 | 🟡 LOW | `levels_root()` resolves `levels` against the working directory; from elsewhere the listing is silently empty | DEFER → v2.1 | ⏳ deferred |
+| 4 | 🟡 LOW | `levels_root()` resolves `levels` against the working directory; from elsewhere the listing is silently empty | DEFER → v2.1 | ✅ FIXED in v2.1 — 25873cc (GOLEM-011) |
 | 5 | 🟡 LOW | `from_json` accepts states that contradict themselves (playing past the budget, solved with a box off a goal) | DEFER → backlog | ⏳ deferred |
 | 6 | 🟡 LOW | A level file with a UTF-8 BOM or CR-only line ends gives a confusing error | DEFER → v7.1 | ⏳ deferred |
-| 7 | 🟡 LOW | `load_level` with a non-string id raises `AttributeError`, not `UnknownLevel` | DEFER → v2.1 | ⏳ deferred |
+| 7 | 🟡 LOW | `load_level` with a non-string id raises `AttributeError`, not `UnknownLevel` | DEFER → v2.1 | ✅ FIXED in v2.1 — 5fc4c07 (GOLEM-013) |
 | 8 | 🟡 LOW | The direction offsets are defined twice (`level.DIRECTIONS`, `world.OFFSETS`) | DEFER → cleanup (/simplify) | ⏳ deferred |
 
 No 🔴 HIGH finding:
@@ -100,7 +100,7 @@ an empty set by design.
 **Failure scenario:** `uv run golem-server` started outside the repository serves no levels, and nothing
 says why.
 
-**Home:** v2.1, where the server first reads `.env`. Resolve `GOLEM_LEVELS_DIR` once at startup and refuse
+**Addressed in v2.1** by GOLEM-011 (25873cc): `create_app` refuses a levels root without `training/` or with a missing or broken `budgets.toml`. **Original home:** v2.1, where the server first reads `.env`. Resolve `GOLEM_LEVELS_DIR` once at startup and refuse
 to start when the directory or `budgets.toml` is missing. The tests already pass `root` explicitly.
 
 ### 5. 🟡 `from_json` accepts states that contradict themselves — DEFER → backlog
@@ -137,7 +137,7 @@ Mac files) collapse the level into one line, which then fails as "not closed".
 **Failure scenario:** a JSON message with a numeric level id reaches `load_level` and fails as an internal
 error instead of "unknown level".
 
-**Home:** v2.1, whose WebSocket `load` message is the first outside input. Validate the type there, or
+**Addressed in v2.1** by GOLEM-013 (5fc4c07): a non-string id gets `unknown level`. **Original home:** v2.1, whose WebSocket `load` message is the first outside input. Validate the type there, or
 make `load_level` refuse non-strings as `UnknownLevel`.
 
 ### 8. 🟡 The direction offsets are defined twice — DEFER → cleanup (/simplify)
