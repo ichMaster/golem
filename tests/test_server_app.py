@@ -110,3 +110,33 @@ def test_the_log_file_is_created_and_handlers_are_not_duplicated(tmp_path):
     assert (tmp_path / "logs" / "server.log").is_file()
     ours = [h for h in logging.getLogger("golem").handlers if getattr(h, "golem_handler", False)]
     assert len(ours) == 2  # one file, one console
+
+
+# --- code review #2: .env comes from the working directory only --------------------------------
+
+
+def run_main(monkeypatch, cwd: Path) -> dict:
+    """Run main() in `cwd` with a private copy of the environment; return what uvicorn got."""
+    import os
+
+    monkeypatch.setattr(os, "environ", {k: v for k, v in os.environ.items()
+                                        if not k.startswith("GOLEM_")})
+    os.environ["GOLEM_LEVELS_DIR"] = str(LEVELS)
+    monkeypatch.chdir(cwd)
+    started = {}
+    monkeypatch.setattr("uvicorn.run", lambda app, **kwargs: started.update(kwargs))
+    server_app.main()
+    return started
+
+
+def test_a_parent_directorys_env_is_not_read(tmp_path, monkeypatch):
+    (tmp_path / ".env").write_text("GOLEM_PORT=9999\n")
+    (tmp_path / "work").mkdir()
+    started = run_main(monkeypatch, tmp_path / "work")
+    assert started == {"host": "127.0.0.1", "port": 8700, "log_level": "info"}
+
+
+def test_the_working_directorys_env_is_read(tmp_path, monkeypatch):
+    (tmp_path / ".env").write_text("GOLEM_PORT=8801\n")
+    started = run_main(monkeypatch, tmp_path)
+    assert started["port"] == 8801

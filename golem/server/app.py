@@ -126,9 +126,11 @@ def _install_error_handlers(app: FastAPI) -> None:
 def main() -> None:
     """``uv run golem-server``: read .env, check the settings, and serve on loopback."""
     import uvicorn
-    from dotenv import find_dotenv, load_dotenv
+    from dotenv import load_dotenv
 
-    load_dotenv(find_dotenv(usecwd=True), override=False)
+    env_file = Path.cwd() / ".env"  # this directory only, never a parent's .env
+    if env_file.is_file():
+        load_dotenv(env_file, override=False)
     try:
         settings = load_settings(os.environ)
         app = create_app(settings)
