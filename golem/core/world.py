@@ -96,3 +96,46 @@ def in_corner(level: Level, cell: Cell) -> bool:
     south = (r + 1, c) in level.walls
     west = (r, c - 1) in level.walls
     return (north and east) or (east and south) or (south and west) or (west and north)
+
+
+def look(world: World, direction: str) -> str:
+    """What is in the neighbouring cell: wall, box, goal, box_on_goal or empty."""
+    dr, dc = offset(direction)
+    cell = (world.robot[0] + dr, world.robot[1] + dc)
+    if cell in world.level.walls:
+        return "wall"
+    on_goal = cell in world.level.goals
+    if cell in world.boxes:
+        return "box_on_goal" if on_goal else "box"
+    return "goal" if on_goal else "empty"
+
+
+def here(world: World) -> str:
+    """What is in the robot's own cell: goal or empty."""
+    return "goal" if world.robot in world.level.goals else "empty"
+
+
+def boxes_left(world: World) -> int:
+    """The number of boxes not on goals."""
+    return len(world.boxes - world.level.goals)
+
+
+def render(world: World) -> list[str]:
+    """The current map as Sokoban text lines, without trailing spaces (the report's final map)."""
+    level = world.level
+    lines = []
+    for r in range(level.height):
+        chars = []
+        for c in range(level.width):
+            cell = (r, c)
+            on_goal = cell in level.goals
+            if cell in level.walls:
+                chars.append("#")
+            elif cell == world.robot:
+                chars.append("+" if on_goal else "@")
+            elif cell in world.boxes:
+                chars.append("*" if on_goal else "$")
+            else:
+                chars.append("." if on_goal else " ")
+        lines.append("".join(chars).rstrip(" "))
+    return lines
