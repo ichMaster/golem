@@ -103,6 +103,15 @@ def load_budgets(root: Path | None = None) -> dict[str, Budget]:
     return budgets
 
 
+def budget_for(level_id: str, budgets: dict[str, Budget]) -> Budget:
+    """The budget of a level's tier, the middle part of its id."""
+    parts = level_id.split("/")
+    tier = parts[1] if len(parts) == 3 else ""
+    if tier not in budgets:
+        raise BudgetsError(f"{BUDGETS_FILE}: no budget for tier {tier!r} of level {level_id!r}")
+    return budgets[tier]
+
+
 def _level_files(set_name: str, root: Path) -> dict[str, Path]:
     """Map every level id of a set to its file. ``set_name`` is already validated."""
     found: dict[str, Path] = {}
