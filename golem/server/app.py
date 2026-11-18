@@ -41,7 +41,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.state.settings = settings
     _install_error_handlers(app)
     _install_level_routes(app, settings.levels_dir)
-    install_ws(app, settings.levels_dir)
+    install_ws(app, settings.levels_dir, settings.port)
     return app
 
 

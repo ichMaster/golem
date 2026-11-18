@@ -325,6 +325,7 @@ A training level that doesn't parse gives `500 level_error` with the parse error
 
 The server answers each message with `{"type": "state", "level": …, "map": […], "steps": n, "budget": n, "status": "playing" | "solved" | "lost", "reason": …}`, or with `{"type": "error", "detail": …}`, and the connection stays open. Every state comes from the core: `map` is `render(world)`, `budget` is the step budget, and `reason` is the loss reason or `null`.
 
+- **Origin.** A handshake is accepted only without an `Origin` header (a non-browser client) or from the server's own page: `http://127.0.0.1:<port>`, `http://localhost:<port>` or `http://[::1]:<port>`. Any other origin is closed with code 1008 before it is accepted, so a web page from another site cannot drive the game.
 - **One game, kept in the server.** The server holds one human game at a time. When a game is loaded, a client that connects first receives its current `state`, so a page that reconnects finds the game where it was.
 - **`load` refuses alike.** A hidden id, an id not in the training listing and an id that is not a string all get the same `{"type": "error", "detail": "unknown level"}`, so a reply never tells a hidden id from a missing one.
 - **Errors.** Also answered with `error`: text that is not JSON or not a JSON object, a missing or unknown `type`, a direction other than `N`, `E`, `S` or `W`, `move` or `restart` before any `load`, and a binary frame. An error leaves the game as it was, and its detail never echoes the message.
@@ -448,6 +449,7 @@ The project has no API keys. The things to keep private are `GOLEM_OWNER_TOKEN`,
 | The agent fits its program to the hidden levels | hidden results are passed or failed only; the metrics count hidden validations per session |
 | A hidden level is published | `levels/hidden/` is gitignored; tests use fixture hidden levels in `tests/fixtures/hidden/`; no hidden level text appears in logs, issues or commits |
 | Someone on the network uses the server | it binds `127.0.0.1` only |
+| A web page open in the owner's browser uses the server | the WebSocket accepts only the server's own origin, or no origin; HTTP responses carry no CORS headers, so other pages cannot read them; a `Host` check against DNS rebinding comes with the run routes in v5.1 |
 
 ## Error handling and resilience
 

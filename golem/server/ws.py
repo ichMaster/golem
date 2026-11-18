@@ -100,12 +100,29 @@ def _load(level_id: object, game: Game | None, levels_dir: Path) -> tuple[dict, 
     return state_message(loaded), loaded
 
 
-def install_ws(app: FastAPI, levels_dir: Path) -> None:
-    """Add ``/ws``. The game lives on ``app.state.game``, one per server."""
+def allowed_origins(port: int) -> frozenset[str]:
+    """The server's own page, the only browser origin that may open ``/ws``."""
+    return frozenset(
+        f"http://{host}:{port}" for host in ("127.0.0.1", "localhost", "[::1]")
+    )
+
+
+def install_ws(app: FastAPI, levels_dir: Path, port: int) -> None:
+    """Add ``/ws``. The game lives on ``app.state.game``, one per server.
+
+    A handshake is accepted only without an ``Origin`` header (a non-browser client) or from the
+    server's own page; any other web page is refused with close code 1008 before it is accepted.
+    """
     app.state.game = None
+    origins = allowed_origins(port)
 
     @app.websocket("/ws")
     async def human_game(websocket: WebSocket) -> None:
+        origin = websocket.headers.get("origin")
+        if origin is not None and origin not in origins:
+            LOG.warning("refused a WebSocket from origin %r", origin)
+            await websocket.close(code=1008)
+            return
         await websocket.accept()
         if app.state.game is not None:
             await websocket.send_json(state_message(app.state.game))

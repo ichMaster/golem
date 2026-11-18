@@ -6,6 +6,7 @@ from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
+from starlette.websockets import WebSocketDisconnect
 
 from golem.core.levels import budget_for, load_budgets, load_level
 from golem.core.replay import replay
@@ -177,3 +178,32 @@ def test_handle_leaves_the_game_as_it_was_on_a_bad_message():
     reply, after = handle("{not json", game, LEVELS)
     assert reply["type"] == "error"
     assert after is game
+
+
+# --- code review #1: only the server's own page may open /ws ------------------------------------
+
+
+@pytest.mark.parametrize(
+    "origin",
+    [
+        "https://evil.example",
+        "null",
+        "http://127.0.0.1:9999",
+        "http://127.0.0.1.evil.example:8700",
+        "https://127.0.0.1:8700",
+    ],
+)
+def test_a_foreign_origin_is_refused_before_the_handshake(tmp_path, origin):
+    client = client_for(LEVELS, tmp_path)
+    with pytest.raises(WebSocketDisconnect) as caught:
+        with client.websocket_connect("/ws", headers={"origin": origin}):
+            pass
+    assert caught.value.code == 1008
+
+
+@pytest.mark.parametrize(
+    "origin", ["http://127.0.0.1:8700", "http://localhost:8700", "http://[::1]:8700"]
+)
+def test_the_servers_own_page_may_connect(tmp_path, origin):
+    with client_for(LEVELS, tmp_path).websocket_connect("/ws", headers={"origin": origin}) as ws:
+        assert send(ws, {"type": "load", "level": T1})["type"] == "state"
