@@ -127,7 +127,8 @@ A missing key, an unknown key, or a value that is not a positive integer is an e
 - `World`: a frozen dataclass with the level, the robot cell, the box cells (a frozenset), the step count, the step budget, the status (`playing`, `solved` or `lost`) and the loss reason (`None`, `steps` or `deadlock`; the interpreter sets `instructions`). `new_world(level, budget)` starts a level with the step budget of its tier, which `budget_for(level_id, budgets)` looks up; a level whose boxes all start on goals is solved at once.
 - `move(world, dir) -> (World, bool)`, `look(world, dir) -> str`, `here(world) -> str`, `boxes_left(world) -> int`. A direction other than `N`, `E`, `S` or `W` is a `ValueError`. After a move on a playing world, the world is solved if every box is on a goal, otherwise lost on `deadlock` if the push triggered the corner rule, otherwise lost on `steps` if the step count has reached the budget. A move on a solved or lost world changes nothing, returns `false` and counts no step.
 - `render(world) -> list[str]`: the current map as Sokoban text lines, which is the report's final map.
-- `to_json(world)` and `from_json(data, level)` save and restore a state. `replay(level, moves)` applies a move string such as `"NNESW"`.
+- `to_json(world)` and `from_json(data, level)` save and restore a state.
+- `replay(level, moves, budget)` applies a move string such as `"NNESW"` from the level's start, and `play(world, moves)` from any world. Both return the final world and the list of states: the starting world first, then the world after each move. A character other than `N`, `E`, `S` or `W` is a `ValueError` naming its position, counted from 1, raised before any move is applied.
 - `state_key(world)`: the robot cell and the sorted box cells, used for repeat detection. It ignores the step count.
 
 **The saved world** (a contract) is plain JSON data with its keys in this order and its boxes sorted, so that equal states give byte-identical JSON:
