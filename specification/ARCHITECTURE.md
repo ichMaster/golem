@@ -123,7 +123,7 @@ A missing key, an unknown key, or a value that is not a positive integer is an e
 
 **The core's interface** works on plain data. A cell is a `(row, column)` pair counted from 0, where row 0 is the first map line after comments.
 
-- `parse_level(text, level_id) -> Level`: an immutable level with its size, walls, goals, starting boxes and robot cell.
+- `parse_level(text, level_id) -> Level`: an immutable level with its size, walls, goals, starting boxes and robot cell, and `inside`: every non-wall cell the robot's start reaches without crossing a wall (boxes do not block it), the only cells a robot or a box can ever occupy.
 - `World`: a frozen dataclass with the level, the robot cell, the box cells (a frozenset), the step count, the step budget, the status (`playing`, `solved` or `lost`) and the loss reason (`None`, `steps` or `deadlock`; the interpreter sets `instructions`). `new_world(level, budget)` starts a level with the step budget of its tier, which `budget_for(level_id, budgets)` looks up; a level whose boxes all start on goals is solved at once.
 - `move(world, dir) -> (World, bool)`, `look(world, dir) -> str`, `here(world) -> str`, `boxes_left(world) -> int`. A direction other than `N`, `E`, `S` or `W` is a `ValueError`. After a move on a playing world, the world is solved if every box is on a goal, otherwise lost on `deadlock` if the push triggered the corner rule, otherwise lost on `steps` if the step count has reached the budget. A move on a solved or lost world changes nothing, returns `false` and counts no step.
 - `render(world) -> list[str]`: the current map as Sokoban text lines, which is the report's final map.
@@ -138,7 +138,7 @@ A missing key, an unknown key, or a value that is not a positive integer is an e
  "step_budget": 200, "status": "playing", "loss_reason": null}
 ```
 
-`from_json` restores it onto the level it names and refuses, with a `ValueError` naming the field, anything inconsistent: another level, a missing or unknown key, a wrong type, a robot or box on a wall or outside the map, two boxes in one cell, the robot on a box, a box count other than the level's, a negative step count, a non-positive step budget, an unknown status, or a `loss_reason` that doesn't fit the status.
+`from_json` restores it onto the level it names and refuses, with a `ValueError` naming the field, anything inconsistent: another level, a missing or unknown key, a wrong type, a robot or box on a wall or outside the map (not in the level's `inside`), two boxes in one cell, the robot on a box, a box count other than the level's, a negative step count, a non-positive step budget, an unknown status, or a `loss_reason` that doesn't fit the status.
 
 Every collection that reaches JSON is serialized in sorted order, so that the output never depends on Python's set or dict ordering.
 

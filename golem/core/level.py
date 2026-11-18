@@ -31,7 +31,11 @@ class LevelError(ValueError):
 
 @dataclass(frozen=True)
 class Level:
-    """A parsed, valid level: its size, walls and goals, and where the boxes and the robot start."""
+    """A parsed, valid level: its size, walls and goals, and where the boxes and the robot start.
+
+    ``inside`` holds every non-wall cell the robot's start reaches without crossing a wall (boxes do
+    not block it): the only cells a robot or a box can ever occupy.
+    """
 
     id: str
     width: int
@@ -40,6 +44,7 @@ class Level:
     goals: frozenset[Cell]
     boxes: frozenset[Cell]
     robot: Cell
+    inside: frozenset[Cell]
 
 
 def parse_level(text: str, level_id: str) -> Level:
@@ -99,7 +104,7 @@ def parse_level(text: str, level_id: str) -> Level:
         raise error_at(first, f"{len(boxes)} boxes but {len(goals)} goals; the counts must match")
 
     robot = robots[0]
-    _check_closed(rows, walls, robot, error_at)
+    inside = _inside_cells(rows, walls, robot, error_at)
 
     return Level(
         id=level_id,
@@ -109,10 +114,11 @@ def parse_level(text: str, level_id: str) -> Level:
         goals=frozenset(goals),
         boxes=frozenset(boxes),
         robot=robot,
+        inside=frozenset(inside),
     )
 
 
-def _check_closed(rows: list[str], walls: set[Cell], robot: Cell, error_at) -> None:
+def _inside_cells(rows: list[str], walls: set[Cell], robot: Cell, error_at) -> set[Cell]:
     """Flood-fill from the robot over non-wall cells; stepping outside the map is an error."""
 
     def inside(cell: Cell) -> bool:
@@ -131,3 +137,4 @@ def _check_closed(rows: list[str], walls: set[Cell], robot: Cell, error_at) -> N
                 continue
             seen.add(nxt)
             queue.append(nxt)
+    return seen

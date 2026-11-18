@@ -165,3 +165,10 @@ def test_no_map_lines(text):
     error = error_of(text)
     assert (error.line, error.column) == (1, 1)
     assert "no map lines" in error.message
+
+
+def test_inside_holds_the_robots_area_and_nothing_outside_the_walls():
+    level = parse("  ####\n###  #\n#@$. #\n######\n")
+    assert level.inside == frozenset({(1, 3), (1, 4), (2, 1), (2, 2), (2, 3), (2, 4)})
+    assert level.robot in level.inside and level.boxes <= level.inside
+    assert not level.inside & level.walls

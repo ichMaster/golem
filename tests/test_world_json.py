@@ -147,3 +147,18 @@ def test_state_key_changes_with_the_robot_or_a_box():
     pushed = play(base, "E")  # the east box moves one cell
     assert state_key(pushed)[1] != state_key(base)[1]
     assert hash(state_key(base)) == hash(state_key(play(base, "NS")))
+
+
+# --- code review #1: a saved world cannot put the robot or a box outside the walls ---------------
+
+RAGGED = parse_level("  ####\n###  #\n#@$. #\n######\n", "test/tier1/ragged")
+
+
+@pytest.mark.parametrize("field", ["robot", "boxes"])
+@pytest.mark.parametrize("cell", [[0, 0], [0, 1], [9, 9], [-1, 2]])
+def test_from_json_refuses_a_cell_outside_the_walls(field, cell):
+    data = to_json(new_world(RAGGED, Budget(100, 1000)))
+    data[field] = cell if field == "robot" else [cell]
+    with pytest.raises(ValueError) as caught:
+        from_json(data, RAGGED)
+    assert f"{field} cell {cell} is outside the map" in str(caught.value)

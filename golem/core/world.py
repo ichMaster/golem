@@ -206,7 +206,7 @@ def from_json(data: object, level: Level) -> World:
 
 
 def _saved_cell(value: object, field: str, level: Level) -> Cell:
-    """A ``[row, column]`` pair inside the level's bounds and not on a wall."""
+    """A ``[row, column]`` pair inside the level's walls (in ``level.inside``)."""
     if (
         not isinstance(value, list | tuple)
         or len(value) != 2
@@ -214,10 +214,10 @@ def _saved_cell(value: object, field: str, level: Level) -> Cell:
     ):
         raise ValueError(f"saved world: {field} must hold [row, column] pairs, not {value!r}")
     cell = (value[0], value[1])
-    if not (0 <= cell[0] < level.height and 0 <= cell[1] < level.width):
-        raise ValueError(f"saved world: {field} cell {list(cell)} is outside the map")
     if cell in level.walls:
         raise ValueError(f"saved world: {field} cell {list(cell)} is a wall")
+    if cell not in level.inside:
+        raise ValueError(f"saved world: {field} cell {list(cell)} is outside the map")
     return cell
 
 
