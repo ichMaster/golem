@@ -1,6 +1,24 @@
 Golem release notes
 ===================
 
+Version 2.3.0 (2026-11-20)
+---------------------------
+- v2.3 (GOLEM-018..021): the lupa spike (GO; lupa 2.8 with lupa.lua54 pinned): Python-driven coroutines,
+  per-coroutine count hooks with a sentinel compared in Lua, max_memory, and every determinism problem
+  reproduced and removed by its planned fix.
+- The minimal sandbox: one runtime per run with lupa's python table and the unneeded globals removed; a
+  fresh environment with the robot API (move, look, here, boxes_left, give_up), memory and the
+  deterministic v2.3 subset; text-only loading; text cleaned to valid UTF-8 before it reaches Python.
+- The driver and the short report (level, status, reason, steps, instructions, error): step and
+  instruction budgets, give_up cut to 200 characters, errors with their line and cut to 500 characters,
+  the memory cap, and internal failures, each ending in one report.
+- uv run golem-local run <level> <program.lua>, and fixture programs; t1_solver.lua solves all three
+  tier-one levels.
+- The repository is English only (CLAUDE.md, with a guard test); the roadmap's release marks are checked
+  against VERSION.
+- Open decision for the owner before v4.1: C functions such as the pattern matcher run without the count
+  hook (spike R1).
+
 Version 2.2.0 (2026-11-20)
 ---------------------------
 - v2.2 (GOLEM-014..017): GET / and /screen/... serve the game screen from the package; raw and encoded
