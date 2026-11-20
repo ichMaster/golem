@@ -153,14 +153,14 @@ Implementation goes in eight phases, and the agent appears only in the sixth: be
 | Phase | What we build | Done when |
 | --- | --- | --- |
 | 1. Game core | World state, Sokoban rules, loading levels from the text format, saving and restoring state | A recorded sequence of moves always produces the same final state |
-| 2. Game for a human | Level screen and arrow-key control on top of the core | You pass ten training levels by hand |
-| 3. Language and interpreter | Lua sandbox, robot commands, the memory table, budgets, step-by-step execution on coroutines | A hand-written program passes a tier-one level |
-| 4. Stops and program swap | Stop conditions, snapshot of memory and latest actions, starting a new program from the current state | A program swapped in by hand mid-level finishes it using the old map |
+| 2. Prototype | A text level screen with arrow-key control on top of the core; a minimal Lua sandbox that runs a program step by step on coroutines within its budgets; a prototype of swapping in a new program mid-level with the same memory | You play a level by hand, a hand-written program passes a tier-one level, and a program swapped in mid-level finishes it using the old map |
+| 3. Game screen | The designed level screen: the scene, the panels, the motion; ten training levels | You pass ten training levels by hand |
+| 4. Interpreter and stops | The full Lua sandbox with fixed behaviour, the run report, stop conditions, snapshot of memory and latest actions | A program swapped in by hand at a stop finishes the level using the old map |
 | 5. Validator and journal | HTTP API and command-line tool, runs over level sets, JSON report, traces, program versions, run replay on the game screen | One command gives a report for all levels, and any run can be replayed |
 | 6. Agent | The agent as a separate process that works only through game commands; the plan, program, run, diagnosis loop; an orchestrator with version and time limits | The agent passes the tier-one training levels without hints |
 | 7. Experiments | Tier-two and tier-three levels, hidden levels, metrics per version | There is a metrics table showing where the agent stops coping |
 | 8. Several agents | Several robots on one level, each with its own agent, program and memory; send and receive commands in the robot language; a shared channel where agents negotiate at stops | Two agents pass a level that a single robot cannot |
 
-Phase 4 is the riskiest, because swapping a program from the current state determines how memory and the interpreter are designed. It is worth testing with a simple prototype right after phase 3, before any polishing.
+Swapping a program from the current state is the riskiest step, because it determines how memory and the interpreter are designed. So phase 2 is a prototype of the whole loop with the simplest client, a text page. Running Lua step by step and swapping a program are tried there, before the designed screen and the full interpreter are built.
 
 In phase 8 communication happens at two levels. Robot programs exchange short messages during a move, for example sharing pieces of the map, while the agents at stops agree on who takes which box and who rewrites their program. Levels for this phase must require cooperation, where one robot has to clear the way for another.

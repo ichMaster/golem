@@ -1,5 +1,5 @@
 # Step and instruction budgets per tier (ARCHITECTURE.md §World and rules).
-# First estimates, to be tuned in v3.2 (the interpreter) and v7.1 (tiers two and three).
+# First estimates, to be tuned in v2.3 and v4.1 (the interpreter) and v7.1 (tiers two and three).
 
 [tier1]
 steps = 200

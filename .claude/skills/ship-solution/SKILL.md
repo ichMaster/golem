@@ -81,8 +81,8 @@ A **selector** is a phase (`v1.2` or `1.2`), a version (`v3` = all its phases), 
    - the ordered phases, grouped by version;
    - the filled-in phases, any reordering and the skips;
    - the sizing;
-   - the expected owner pauses: v2.3 (playing ten levels), v2.4 (the motion and the small windows), v4.2 (a swap by hand), v5.2 (hidden levels),
-     v5.3 (a replay), v6.1 (the isolation check), v6.2 and v7 (live Scribe sessions);
+   - the expected owner pauses: v2.2 (playing on the text page), v3.2 (playing ten levels), v3.3 (the motion and the small windows),
+     v4.2 (a swap by hand), v5.2 (hidden levels), v5.3 (a replay), v6.1 (the isolation check), v6.2 and v7 (live Scribe sessions);
    - whether HARDEN runs.
 
    Then run. Don't re-confirm each sub-step.
@@ -117,7 +117,7 @@ Stamp `P_END=$(date +%s)` after the release, and record the phase's row:
 - Start the next phase only after this one is released.
 - Don't report to chat between phases.
 
-**Design gates:** if the v3.1 lupa spike fails, or the v4.1 prototype changes the design, stop and ask the
+**Design gates:** if the v2.3 lupa spike fails, or the v2.4 prototype changes the design, stop and ask the
 owner before going on.
 
 **Every phase boundary ends clean** (and pushed, when a remote exists). This skill stops on failure, and a
@@ -164,7 +164,7 @@ summary to chat.
 - Fastest / slowest phase; average per phase; time spent waiting on the owner, where it can be told apart.
 
 ## Notes
-- Anything held by an escape hatch, anything that stopped early (and what remains), reconcile highlights, design notes (v3.1, v4.1).
+- Anything held by an escape hatch, anything that stopped early (and what remains), reconcile highlights, design notes (v2.3, v2.4).
 ```
 
 Work out durations from the epoch stamps. Every number must trace back to the run: the execution reports,
@@ -187,7 +187,7 @@ review docs and release tags.
 - **Sequential and gated; stop on failure.** Never release a phase with a red gate or unconfirmed owner
   checks.
 - **Pause for the owner and for real decisions:** a missing issues file, an unresolvable selector, a failed
-  lupa spike, a v4.1 design change, a tag collision, a held finding, an ambiguous reconcile, any failure.
+  lupa spike, a v2.4 design change, a tag collision, a held finding, an ambiguous reconcile, any failure.
   Never launch a live Scribe session unless the owner asks.
 - **Delegate, never duplicate.** This skill sequences the sub-skills, gates, times and reports. Each
   sub-skill keeps its own discipline.

@@ -4,7 +4,7 @@
 
 One server process and three kinds of client. **The Golem server** is the only process that knows the rules and the world. It holds the game core, the interpreter that runs robot programs, the validator and the journal. **The game screen** is a browser page that draws the world and sends arrow keys over a WebSocket. **The `golem` CLI** turns commands into HTTP requests, and it is the only way the agent reaches the game. **The orchestrator** launches the agent (Scribe, Claude Code in non-interactive mode) in its own workspace and enforces its limits. Everything runs on the owner's Mac. The only outbound connection is Claude Code's own, to Anthropic.
 
-The parts arrive along the roadmap: the core (v1), then the server's WebSocket and the screen (v2), the interpreter (v3), stops and swaps (v4), the HTTP API, the CLI, the validator and the journal (v5), the orchestrator and Scribe (v6), level sets and metrics (v7), and several robots and agents (v8).
+The parts arrive along the roadmap: the core (v1), then a prototype of the whole loop (v2: the server's WebSocket with a text screen, a first sandbox and driver, and the program swap), the designed screen (v3), the full interpreter with its stops (v4), the HTTP API, the CLI, the validator and the journal (v5), the orchestrator and Scribe (v6), level sets and metrics (v7), and several robots and agents (v8).
 
 ```
 ┌─ the owner's Mac ──────────────────────────────────────────────────────────────┐
@@ -58,7 +58,7 @@ There are no other listeners and no other outbound connections. The game itself 
 | Python 3.12+ with uv | everything except the screen | one language; dependencies pinned in `pyproject.toml` and `uv.lock` |
 | Python standard library only | game core | rules with no dependencies, testable on their own |
 | FastAPI + uvicorn (with websockets) | server | the HTTP API and the WebSocket in one process |
-| lupa, Lua 5.4 runtime (`lupa.lua54`) | interpreter | the sandbox, coroutines and `debug.sethook`. Lua is the concept's choice, confirmed or replaced in the v3.1 spike |
+| lupa, Lua 5.4 runtime (`lupa.lua54`) | interpreter | the sandbox, coroutines and `debug.sethook`. Lua is the concept's choice, confirmed or replaced in the v2.3 spike |
 | Typer + httpx | `golem` CLI | a thin wrapper that turns commands into HTTP requests and prints JSON |
 | `sqlite3` (standard library) | journal | sessions, versions, runs and validations, with no database server |
 | JSON files | traces | one file per run |
@@ -71,12 +71,12 @@ There are no other listeners and no other outbound connections. The game itself 
 ## Components
 
 - **Game core** (`golem/core/`, v1). Pure Python with no dependencies and no I/O beyond reading level text. It parses levels, holds an immutable world state, applies moves and pushes, counts steps, detects the corner deadlock and the win, saves and restores the state, and replays move sequences. Human moves, program commands, the validator and replays all go through it. The rules exist nowhere else.
-- **Server** (`golem/server/`, v2.1 and v5.1). A FastAPI app built by `create_app()` and run by uvicorn on `GOLEM_HOST:GOLEM_PORT` (`127.0.0.1:8700`). It serves the game screen's files, the WebSocket `/ws` for the human game and replays, and the HTTP API under `/api` for the CLI. The routes are thin: they parse input, call the core, the interpreter or the journal, and shape the JSON output.
-- **Game screen** (`golem/screen/`, v2.3–v2.4 and v5.3). One HTML page with its script and stylesheet, two drawing scripts and local fonts, served by the server at `/`. A canvas draws the scene in the "Clay and stone" design. The arrow keys send moves over `/ws`. A level picker, a step gauge and a result panel complete the human game, and a replay mode plays back recorded runs. The page draws what the server sends and contains no game rules.
-- **Interpreter** (`golem/interp/`, v3 and v4). One Lua runtime per run, holding the sandbox environment, the `memory` table and the step and instruction counters. A Python driver resumes the program's coroutine, applies each robot command through the core, checks the stop conditions, and builds snapshots and run reports. Swapping a program loads a new chunk into the same runtime.
+- **Server** (`golem/server/`, v2.1–v2.2, v3.1 and v5.1). A FastAPI app built by `create_app()` and run by uvicorn on `GOLEM_HOST:GOLEM_PORT` (`127.0.0.1:8700`). It serves the game screen's files, the WebSocket `/ws` for the human game and replays, and the HTTP API under `/api` for the CLI. The routes are thin: they parse input, call the core, the interpreter or the journal, and shape the JSON output.
+- **Game screen** (`golem/screen/`, v2.2, v3.2–v3.3 and v5.3). One HTML page served by the server at `/`. In v2.2 it is a plain text page that shows the map in a `<pre>`. From v3.2 it is the designed screen, with its script and stylesheet, two drawing scripts and local fonts, and a canvas draws the scene in the "Clay and stone" design. The arrow keys send moves over `/ws`. A level picker, a step gauge and a result panel complete the human game, and a replay mode plays back recorded runs. The page draws what the server sends and contains no game rules.
+- **Interpreter** (`golem/interp/`, v2.3–v2.4 and v4). The prototype (v2.3–v2.4) builds a minimal sandbox, the driver and the swap; v4 completes the sandbox and adds the stops. One Lua runtime per run, holding the sandbox environment, the `memory` table and the step and instruction counters. A Python driver resumes the program's coroutine, applies each robot command through the core, checks the stop conditions, and builds snapshots and run reports. Swapping a program loads a new chunk into the same runtime.
 - **Validator and journal** (`golem/journal/`, v5.2). The validator runs one program over the training and hidden sets with every stop off. The journal stores sessions, program versions (with the reason for each change), runs and validations in SQLite, and every run's trace as a JSON file.
 - **`golem` CLI** (`golem/cli.py`, v5.1). Typer + httpx. Each command is one HTTP request, and every response is printed as JSON. It reads program files from disk and sends their text, never their paths.
-- **Local runner** (`golem/local.py`, v3.2 and v4.2). `uv run golem-local` drives the interpreter in-process, with no server. It is the developer's and the owner's hand tool for v3 and v4, and it prints the same report and snapshot JSON that `golem` prints later.
+- **Local runner** (`golem/local.py`, v2.3–v2.4 and v4.2). `uv run golem-local` drives the interpreter in-process, with no server. It is the developer's and the owner's hand tool until the `golem` CLI (v5.1), and it prints the same report and snapshot JSON that `golem` prints later.
 - **Orchestrator** (`golem/orchestrator/`, v6.1). Opens a session on the server, prepares the agent's workspace outside the repository, launches the agent with a clean environment and tool rules, kills it at the time limit, keeps its output stream, and closes the session.
 - **Scribe** (`agents/scribe/`, v6.2). The agent's instructions (`CLAUDE.md`) and task prompt. The orchestrator copies them into each workspace. Scribe itself is Claude Code; the repository holds only its instructions.
 - **Levels** (`levels/`). Text files in the standard Sokoban format: training levels committed, hidden levels gitignored, budgets per tier in `levels/budgets.toml`.
@@ -370,6 +370,8 @@ In non-interactive mode a tool call that needs a permission nobody can grant is 
 
 The page draws the map that the server sends: walls, floor, goals, boxes, boxes on goals and the robot. It shows the step count against the budget and the status with its reason. Keys: the arrows move, `R` restarts the level, and a picker loads a training level. The page holds no rules. It never decides whether a move is legal; it sends the key and draws the state that comes back.
 
+**The text page** (v2.2) is the prototype's screen. It shows the map as text in a `<pre>`, the steps against the budget, the status with its reason, and one button per training level from `GET /api/levels`. It reconnects by itself after a drop. The designed screen replaces it in v3.2 and keeps its socket and reconnect.
+
 **The design** is "Clay and stone". Its sources:
 - the brief: `specification/design/game-screen-brief.md`;
 - the designer's handoff: `specification/design/golem-clay/`.
@@ -377,9 +379,9 @@ The page draws the map that the server sends: walls, floor, goals, boxes, boxes 
   - Its `.dc.html` files are references that open in a browser. They load `support.js`, which fetches libraries from a CDN, so they never become part of the page.
 
 The page's parts:
-- `art/golem-art.js` (v2.3) draws the scene from `map` and `inside`. The static layer (room, tray, floor, runes, shadows, walls, blocks) is cached per state, and each frame adds the glows, Golem and the light. It began as a copy of the handoff's renderer, trimmed to the clay direction.
-- `art/golem-fx.js` (v2.4) holds Golem's poses and the effects: dust, impact, rune ignition, flares, the crack and the lock.
-- `screen.js` holds the socket and its reconnect, the input and focus, the panels, and (v2.4) the tweens. It compares the previous state with the new one only to choose what to animate: a move, a push, a bump, a block onto or off a rune, the stuck block. It never decides legality, and input never waits for an animation.
+- `art/golem-art.js` (v3.2) draws the scene from `map` and `inside`. The static layer (room, tray, floor, runes, shadows, walls, blocks) is cached per state, and each frame adds the glows, Golem and the light. It began as a copy of the handoff's renderer, trimmed to the clay direction.
+- `art/golem-fx.js` (v3.3) holds Golem's poses and the effects: dust, impact, rune ignition, flares, the crack and the lock.
+- `screen.js` holds the socket and its reconnect, the input and focus, the panels, and (v3.3) the tweens. It compares the previous state with the new one only to choose what to animate: a move, a push, a bump, a block onto or off a rune, the stuck block. It never decides legality, and input never waits for an animation.
 - `screen.css` holds the design tokens as CSS custom properties. `fonts/` holds Inter as WOFF2, under the OFL.
 
 Every file is served by the server from the package. None references an external URL, and a test checks this.
@@ -429,10 +431,10 @@ All settings live in `.env` (read with python-dotenv) or in `levels/budgets.toml
 |---|---|---|
 | `GOLEM_LEVELS_DIR` | v1.1 | the levels root (`levels`) |
 | `GOLEM_HOST`, `GOLEM_PORT` | v2.1 | where the server listens (`127.0.0.1` / `8700`) |
-| `LUA_MAX_MEMORY` | v3.1 | the Lua memory cap per run, in bytes (64 MiB) |
-| `RANDOM_SEED` | v3.1 | the seed of the sandbox's `math.random` (`0`) |
-| `HOOK_EVERY` | v3.2 | instructions between two calls of the count hook (`1000`) |
-| `LAST_ACTIONS_N` | v3.2 | actions in a report or a snapshot (`20`) |
+| `LUA_MAX_MEMORY` | v2.3 | the Lua memory cap per run, in bytes (64 MiB) |
+| `RANDOM_SEED` | v4.1 | the seed of the sandbox's `math.random` (`0`) |
+| `HOOK_EVERY` | v2.3 | instructions between two calls of the count hook (`1000`) |
+| `LAST_ACTIONS_N` | v4.1 | actions in a report or a snapshot (`20`) |
 | `SNAPSHOT_MEMORY_MAX_BYTES` | v4.2 | the cap on `memory` in a snapshot (`65536`) |
 | `GOLEM_URL` | v5.1 | where the CLI sends requests (`http://127.0.0.1:8700`) |
 | `GOLEM_DATA_DIR` | v5.2 | the journal, traces and logs (`data`) |
@@ -492,7 +494,7 @@ golem/
   LICENSE
   README.md
   pyproject.toml            # v1.1: uv; no runtime deps in v1; fastapi + uvicorn + websockets + python-dotenv (v2.1),
-                            # lupa (v3.1), typer + httpx (v5.1); dev: ruff, pytest, httpx2 (TestClient)
+                            # lupa (v2.3), typer + httpx (v5.1); dev: ruff, pytest, httpx2 (TestClient)
   .env.example              # v1.1: see §Configuration and secrets
   specification/
     VISION.md               # why and for whom, principles, non-goals, glossary
@@ -505,12 +507,12 @@ golem/
   golem/
     core/                   # v1: level.py, levels.py, world.py, replay.py: the rules, stdlib only
     server/                 # v2.1: app.py (create_app, golem-server), config.py, ws.py; api.py (v5.1)
-    screen/                 # v2.3: index.html, screen.js, screen.css; art/ (golem-art.js; golem-fx.js v2.4);
-                            # fonts/ (Inter WOFF2 + OFL licence)
-    interp/                 # v3: sandbox.py, driver.py, report.py; run.py, stops.py, snapshot.py (v4)
+    screen/                 # v2.2: index.html, screen.js (the text page); v3.2: the designed page, screen.css,
+                            # art/ (golem-art.js; golem-fx.js v3.3), fonts/ (Inter WOFF2 + OFL licence)
+    interp/                 # v2.3: sandbox.py, driver.py, report.py; run.py (v2.4); stops.py, snapshot.py (v4.2)
     journal/                # v5.2: db.py, traces.py, validator.py
     cli.py                  # v5.1: the golem CLI
-    local.py                # v3.2: golem-local, the in-process runner
+    local.py                # v2.3: golem-local, the in-process runner
     orchestrator/           # v6.1: golem-orchestrate
     levels_check.py         # v7.1: golem-levels, the owner's solvability check
     metrics.py              # v7.2: golem-metrics
@@ -555,13 +557,13 @@ Before v1.1 there is no `pyproject.toml`, so both gates are `n/a`, not passed.
 
 ## Open decisions
 
-- **Lua through lupa.** The concept leaves the language open. v3.1 starts with a spike that must confirm the following before anything else is built on it:
+- **Lua through lupa.** The concept leaves the language open. v2.3 starts with a spike that must confirm the following before anything else is built on it:
   - lupa installs from wheels on macOS arm64 and Linux;
   - `lupa.lua54` coroutines can be driven from Python;
   - per-coroutine count hooks work;
   - `max_memory` works;
   - each determinism fix in §Robot language works.
 
-  If any of these fails, the owner chooses the alternative before v3.1 continues.
+  If any of these fails, the owner chooses the alternative before v2.3 continues.
 - **The agent in a container.** v6.1 isolates the agent by tool rules and paths. A container with only the workspace mounted would make "cannot reach" hold at the operating-system level. The decision is made after v6.1's isolation check.
 - **Level sources for tiers 2 and 3 and the hidden set.** Which published sets to use, under which licences, is decided in v7.1 and recorded in `levels/README.md`.

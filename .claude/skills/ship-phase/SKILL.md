@@ -57,11 +57,11 @@ ignored.
   then HARDEN and a summary.
 - `/ship-phase v1.2`: the same for phase v1.2 alone (plus any earlier phases that aren't released yet);
   the release is `1.2.0`.
-- `/ship-phase v4,v3 --no-harden`: v3 (v3.1 → v3.2 → test → review → `3.2.0`), then v4 (v4.1 → v4.2 →
-  test → review → `4.2.0`), reordered, with no HARDEN sweep.
+- `/ship-phase v4,v3 --no-harden`: v3 (v3.1 → v3.2 → v3.3 → test → review → `3.3.0`), then v4 (v4.1 →
+  v4.2 → test → review → `4.2.0`), reordered, with no HARDEN sweep.
 
-> **The list is a target, not the whole plan.** The roadmap is cumulative: the interpreter (v3) needs the
-> core (v1), and the stops (v4.2) need the swap prototype (v4.1). So missing earlier phases are **added
+> **The list is a target, not the whole plan.** The roadmap is cumulative: the full interpreter (v4) needs
+> the prototype (v2), and the stops (v4.2) need the full sandbox (v4.1). So missing earlier phases are **added
 > automatically**, and anything already released is skipped. On a repo released through `v4.2.0`,
 > `/ship-phase v5.1` does exactly one phase's work.
 
@@ -101,8 +101,9 @@ ignored.
    - The automated gates are green, or `n/a` before v1.1. Never start on a red suite.
 8. **Flag the owner's work up front.** Every version stops for the owner's test (step 4). Several phases
    also have **Manual (owner)** checks:
-   - v2.3: playing ten levels;
-   - v2.4: the motion, the frame rate and the small windows;
+   - v2.2: playing on the text page;
+   - v3.2: playing ten levels;
+   - v3.3: the motion, the frame rate and the small windows;
    - v4.2: a swap by hand;
    - v5.2: writing the hidden levels;
    - v5.3: a replay;
@@ -124,17 +125,16 @@ ignored.
 
 ```
 selectors : v4.1 · v3
-expanded  : v4.1 | v3.1 v3.2
+expanded  : v4.1 | v3.1 v3.2 v3.3
 filled    : (nothing missing below v4.1 beyond the set)
 skipped   : v1.1–v2.4                ← released (v1.3.0, v2.4.0)
-ordered   : v3.1 → v3.2 → v4.1      (v4.1 was listed first; roadmap order is required)
+ordered   : v3.1 → v3.2 → v3.3 → v4.1   (v4.1 was listed first; roadmap order is required)
 branch    : dev                      ← every commit, push and tag; no other branch is touched
 
-PLAN: v3: v3.1 → v3.2 → ⏸ owner test → review v3 → release 3.2.0
+PLAN: v3: v3.1 → v3.2 → v3.3 → ⏸ owner test → review v3 → release 3.3.0
       v4: v4.1 → ⏸ owner test → review v4.1 → release 4.1.0
       → HARDEN v3-v4 → summary
-Owner stops: the owner test of v3 and of v4; the v3.1 lupa spike if it fails (the Lua choice is the owner's);
-             each phase's Manual (owner) DoD
+Owner stops: the owner test of v3 and of v4; each phase's Manual (owner) DoD
 ```
 
 ### Step 1: BUILD — for each phase of the version, three steps, gated
@@ -143,7 +143,7 @@ Run the phases **strictly in sequence**: phase N+1 is generated only after phase
 each sub-skill through the **Skill tool** and follow its instructions fully.
 
 0. **RECONCILE.** This happens inside `generate-issues` (its Step 0.5). It reads the real code, the
-   earlier execution reports (including the design notes of v3.1 and v4.1), the earlier owner-test notes
+   earlier execution reports (including the design notes of v2.3 and v2.4), the earlier owner-test notes
    and the earlier code-review docs ("Fixes applied", "Architecture impact"). Where fixes moved the code
    away from ARCHITECTURE.md, the code is ground truth.
 1. **`generate-issues vA.B`** writes `specification/implementation/vA.B-issues.md`.
@@ -154,9 +154,9 @@ each sub-skill through the **Skill tool** and follow its instructions fully.
 
 **Design gates.** Two phases decide the design for everything after them:
 
-- **v3.1** opens with the lupa spike. If the spike fails, stop the run and ask the owner to choose the
+- **v2.3** opens with the lupa spike. If the spike fails, stop the run and ask the owner to choose the
   alternative.
-- **v4.1** is the swap prototype. If it changes the design, ARCHITECTURE.md is updated in that phase, and
+- **v2.4** is the swap prototype. If it changes the design, ARCHITECTURE.md is updated in that phase, and
   the run continues only after the update is committed.
 
 ### Step 2: OWNER TEST — stop and let the owner test the version
@@ -168,7 +168,7 @@ When the version's last planned phase is executed, its gates are green and every
    - the gate status;
    - **how to try it:** the exact commands that exercise what the version delivers, taken from the DoD of
      the phases built (for v1, a short `uv run python -c …` that loads a level, plays moves and prints the
-     map; for v2, `uv run golem-server` and the screen at `http://127.0.0.1:8700/`).
+     map; for v2, `uv run golem-server` with the page at `http://127.0.0.1:8700/`, and `uv run golem-local run …`).
 
    Then **end the turn and wait.** Don't start the review.
 2. **Fix together.** For each problem the owner reports:
@@ -267,7 +267,7 @@ stop must never leave work on one machine only.
 - **Pause for the owner.** The owner test, owner-run steps and manual DoD checks are confirmed by the owner,
   never assumed. Never launch a live Scribe session, and never read or write hidden levels, unless the
   owner asks.
-- **Pause for real decisions:** a failed lupa spike, a v4.1 design change, an id or tag collision, an
+- **Pause for real decisions:** a failed lupa spike, a v2.4 design change, an id or tag collision, an
   overwrite-or-append prompt, a held HARDEN finding, a branch that diverged from its upstream, a failure.
   Routine confirmations run straight through.
 - **Delegate, never duplicate.** This skill sequences `generate-issues`, `upload-issues`, `execute-issues`,

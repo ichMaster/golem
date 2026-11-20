@@ -66,22 +66,25 @@ Follow `CLAUDE.md` and ARCHITECTURE.md. Route by component:
 - **`golem/core/`** (v1): the only place the rules exist. Standard library only, an immutable `World`, pure
   functions over plain data, and every collection sorted before it reaches JSON. See ARCHITECTURE.md §World
   and rules.
-- **`golem/interp/`** (v3–v4): lupa is used here and nowhere else.
+- **`golem/interp/`** (v2.3–v2.4, v4): lupa is used here and nowhere else. The v2 prototype's code lives in
+  these final modules, and v4 extends it.
   - The sandbox is an allowlist on a fresh environment table, created with `register_eval=False` and
     `register_builtins=False`. No Python object is passed into Lua, and programs are loaded as text only.
-  - The deterministic `pairs`, the merge-sort `table.sort`, the address-free `tostring` and the seeded
-    `math.random` stay in place.
+  - Until v4.1, the environment holds only names whose behaviour is already deterministic. From v4.1, the
+    deterministic `pairs`, the merge-sort `table.sort`, the address-free `tostring` and `string.format`, and
+    the seeded `math.random` stay in place.
   - The driver yields per robot command. The budget error is a sentinel compared by identity, and the hook
     is reinstalled after every swap.
   - `memory` belongs to the run.
 
   See ARCHITECTURE.md §Robot language, §Execution and §Stops.
-- **`golem/server/`** (v2.1, v5.1): `create_app()`; routes stay thin over the core, the interpreter and the
+- **`golem/server/`** (v2.1–v2.2, v3.1, v5.1): `create_app()`; routes stay thin over the core, the interpreter and the
   journal; it binds `127.0.0.1`; no response carries a hidden level's text, a hidden trace or the live
   world state; errors use `{"error", "detail"}`.
-- **`golem/screen/`** (v2.3–v2.4, v5.3): plain HTML, canvas and JavaScript. It draws what the server sends
-  and holds no rules, and it uses no framework, no build step and no CDN. The look and the motion follow
-  the design handoff in `specification/design/golem-clay/README.md`; its values are final.
+- **`golem/screen/`** (v2.2, v3.2–v3.3, v5.3): plain HTML, canvas and JavaScript. It draws what the server
+  sends and holds no rules, and it uses no framework, no build step and no CDN. v2.2 is a text page with no
+  design. From v3.2, the look and the motion follow the design handoff in
+  `specification/design/golem-clay/README.md`; its values are final.
 - **`golem/cli.py`, `golem/local.py` and the owner tools:** one request per command, JSON out, exit codes
   0/1/2, program text sent (never paths), the `GOLEM_WORKSPACE` restriction applied.
 - **`golem/journal/`** (v5.2): SQLite in transactions, atomic trace writes, versions deduplicated by
@@ -229,7 +232,7 @@ Write `specification/implementation/vA.B-execution-report.md`:
 **Manual (owner):** {each check: confirmed by owner / pending owner}
 
 ## Design notes
-{only for phases that decide a design: the v3.1 spike's answers, the v4.1 prototype's findings}
+{only for phases that decide a design: the v2.3 spike's answers, the v2.4 prototype's findings}
 
 ## Next Steps
 {remaining or awaiting-owner issues, their dependencies, and whether the phase is releasable}

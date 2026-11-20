@@ -66,7 +66,7 @@ defects, not restatements of what works.
     `tostring` address-free? Is `math.random` seeded per run, and `math.randomseed` absent?
   - Is the lupa version pinned, and is `lupa.lua54` used explicitly?
   - Does a run-twice test exist for every fixture program, and are the traces compared byte for byte?
-- **The sandbox (v3.1):**
+- **The sandbox (v2.3, v4.1):**
   - Is the program's environment a fresh table, never `_G`?
   - Is anything outside the allowlist reachable, directly or through a library table (`string.dump`,
     `debug` reached indirectly, `package.loaded`)?
@@ -75,7 +75,7 @@ defects, not restatements of what works.
   - Is loading text-only (mode `"t"`)?
   - Is `max_memory` set?
   - Can a metatable be set on `memory` or on a string?
-- **The driver and the budgets (v3.2):**
+- **The driver and the budgets (v2.3, v4.1):**
   - Does an infinite loop with no robot command end on the instruction budget?
   - Is the budget error a sentinel compared by identity, so that a program's own
     `error("instruction budget exhausted")` is not a loss?
@@ -84,7 +84,7 @@ defects, not restatements of what works.
   - Does a program that returns count as `give_up("program ended")`?
   - Does a driver exception end the run as `failed`/`internal` without taking down the server?
   - Is `last_actions` capped at `LAST_ACTIONS_N`?
-- **Stops and swaps (v4):**
+- **Stops and swaps (v2.4, v4.2):**
   - After a swap, is `memory` the same table, are the counters carried over, and is the old coroutine
     impossible to resume?
   - Are `continue` after `error`/`give_up` and `swap` after `deadlock` refused?

@@ -23,16 +23,16 @@ Read these before planning work. They are the project's contract with itself.
 
 ## Project status
 
-v1 (the game core) and v2.1 (the server and the human game over WebSocket) are built and released; v2.2–v2.4 (the game screen in the "Clay and stone" design) are next. Golem is a Sokoban-style sandbox in which an AI agent writes, runs and rewrites its own Lua program that drives a robot through puzzle levels.
+v1 (the game core) and v2.1 (the server and the human game over WebSocket) are built and released; the rest of v2, the prototype (a text game screen, Lua runs and the program swap), is next. Golem is a Sokoban-style sandbox in which an AI agent writes, runs and rewrites its own Lua program that drives a robot through puzzle levels.
 
 Latest release: v2.1.0 (phase v2.1 — the server and the human game over WebSocket).
 
 | Version | Phases | What it delivers |
 |---|---|---|
 | `v1` Game core | v1.1 skeleton + level format · v1.2 rules · v1.3 save, restore, replay | the rules as pure Python; the gates and CI |
-| `v2` Game for a human | v2.1 server + WebSocket · v2.2 the screen's data + ten levels · v2.3 game screen · v2.4 motion + small windows | the owner plays with the arrow keys |
-| `v3` Language and interpreter | v3.1 Lua sandbox (lupa spike first) · v3.2 execution, budgets, report | a hand-written program passes a tier-one level |
-| `v4` Stops and swap | v4.1 swap prototype · v4.2 stops + snapshot | the riskiest design step, prototyped first |
+| `v2` Prototype | v2.1 server + WebSocket · v2.2 text game screen · v2.3 Lua runs (lupa spike first) · v2.4 swap prototype | the whole loop at its smallest: the owner plays, a program runs, a swapped-in program finishes the level |
+| `v3` Game screen | v3.1 the screen's data + ten levels · v3.2 scene + panels · v3.3 motion + small windows | the owner plays ten levels on the "Clay and stone" screen |
+| `v4` Interpreter | v4.1 full sandbox + run report · v4.2 stops + snapshot | a program swapped in by hand at a stop finishes the level |
 | `v5` Validator and journal | v5.1 HTTP API + CLI · v5.2 validator + journal · v5.3 replay | `golem` from the shell; every version and run kept |
 | `v6` Agent | v6.1 orchestrator + isolation · v6.2 Scribe | the agent passes tier one without hints |
 | `v7` Experiments | v7.1 tiers 2–3 + hidden sets · v7.2 metrics | where the agent stops coping |
@@ -43,7 +43,7 @@ Latest release: v2.1.0 (phase v2.1 — the server and the human game over WebSoc
 See ARCHITECTURE.md §Repository layout for the full tree. The commands, with the phase that adds each one:
 
 - Server (v2.1): `uv run golem-server`, which listens on `http://127.0.0.1:8700`. The game screen is at `/`.
-- Local runner (v3.2, interactive at stops from v4.2): `uv run golem-local run <level> <program.lua> [--stop-on …]`.
+- Local runner (v2.3, `--swap` from v2.4, interactive at stops from v4.2): `uv run golem-local run <level> <program.lua> [--swap <program.lua>] [--stop-on …]`.
 - The CLI (v5.1): `uv run golem levels | run | state | continue | swap | validate | versions | show`.
 - Orchestrator (v6.1): `uv run golem-orchestrate --set training/tier1 [--max-versions N] [--max-minutes M]`.
 - Owner tools: `uv run golem-levels check [--hidden]` (v7.1) and `uv run golem-metrics` (v7.2).
@@ -121,5 +121,5 @@ The list of contracts lives in **ARCHITECTURE.md §Contracts**: the level format
 ## Constraints
 
 - The server binds `127.0.0.1` only. Nothing in this project listens on the network.
-- The Lua choice is open until the v3.1 spike confirms lupa. If the spike fails, the owner decides the alternative.
-- v4.1 (the swap prototype) must prove the swap design before anything is built on it. Do not polish v2 or v3 beyond their DoD before v4.1.
+- The Lua choice is open until the v2.3 spike confirms lupa. If the spike fails, the owner decides the alternative.
+- v2.4 (the swap prototype) must prove the swap design before anything is built on it. v2 is a prototype: do not polish it beyond its DoD. Its code lives in the final modules, and v3 and v4 extend it rather than rewrite it.

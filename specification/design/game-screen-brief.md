@@ -1,7 +1,7 @@
 # Design brief — the Golem game screen
 
 The design made from this brief is "Clay and stone": [golem-clay/README.md](golem-clay/README.md). The
-phases that build it are v2.2–v2.4 in [ROADMAP.md](../ROADMAP.md).
+phases that build it are v3.1–v3.3 in [ROADMAP.md](../ROADMAP.md).
 
 ## The project in one paragraph
 
@@ -129,7 +129,7 @@ Within that, there is plenty of room.
   | `+` | robot standing on a goal | the goal must stay visible under the robot |
 
 - `inside` says which cells lie inside the walls, so the floor can be drawn differently from the
-  surroundings. Its exact shape is fixed when the screen is built (v2.2), for example a mask with the same
+  surroundings. Its exact shape is fixed when the screen is built (v3.1), for example a mask with the same
   rows as `map`.
 - `steps` against `budget`: every key press costs one step, **even when nothing moves** (bumping a wall or
   pushing a blocked box). The level is lost when `steps` reaches `budget`.

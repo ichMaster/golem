@@ -1,6 +1,6 @@
 # Roadmap — Golem
 
-Eight self-contained versions, one for each phase of the concept, built in order: **v1** Game core (the level format, the rules, save and replay) → **v2** Game for a human (the server's WebSocket, the game screen) → **v3** Robot language and interpreter (the Lua sandbox, step-by-step execution and budgets) → **v4** Stops and program swap (the swap prototype first, then the stops and the snapshot) → **v5** Validator and journal (the HTTP API and the `golem` CLI, the validator and the journal, replay on the screen) → **v6** Agent (the orchestrator and the isolated workspace, then Scribe) → **v7** Experiments (tiers two and three and the hidden sets, then the metrics) → **v8** Several agents (several robots, messages between programs, the agents' channel, cooperative levels).
+Eight self-contained versions, one for each phase of the concept, built in order: **v1** Game core (the level format, the rules, save and replay) → **v2** Prototype (a text game screen over the server's WebSocket, Lua programs run step by step, the program swap) → **v3** Game screen (the "Clay and stone" design: the screen's data, the scene and the panels, the motion) → **v4** Interpreter (the full sandbox and the run report, then the stops and the snapshot) → **v5** Validator and journal (the HTTP API and the `golem` CLI, the validator and the journal, replay on the screen) → **v6** Agent (the orchestrator and the isolated workspace, then Scribe) → **v7** Experiments (tiers two and three and the hidden sets, then the metrics) → **v8** Several agents (several robots, messages between programs, the agents' channel, cooperative levels).
 
 Phases inside a version are numbered `vA.B` (A = version, B = phase). Each phase lists a **Goal**, a short description, a **Tasks** list, a **Definition of Done (DoD)**, and the **Tests** that encode its DoD (see [ARCHITECTURE.md](ARCHITECTURE.md) §Testing and CI). Phases are built strictly in file order, and each one builds on the previous one's real code. Each version's DoD includes the concept's "done when" criterion for that phase.
 
@@ -8,7 +8,10 @@ Phases inside a version are numbered `vA.B` (A = version, B = phase). Each phase
 
 Many DoD items need a person or a live model: playing levels on the game screen, swapping a program by hand, watching a replay, and every live Scribe session, which spends the owner's Claude subscription. Those are **Manual (owner)** checks: the owner performs or confirms them, and only then do they count as passed. Everything automated runs with no network and no model: the server and the CLI are tested in-process, lupa runs for real (it is local and deterministic), and the agent is a fake script.
 
-**The riskiest step is v4.** How a swap starts a new program from the current world state decides how `memory` and the interpreter are built. So v4.1 is a bare prototype of the swap, built right after v3, and nothing in v2 or v3 is polished beyond what its DoD asks before v4.1 has proven the design.
+**The riskiest steps come first.** Whether lupa can run a program one robot command at a time (v2.3), and how a swap starts a new program from the current world state (v2.4), decide how `memory` and the interpreter are built. So v2 is a prototype of the whole loop, from a person's arrow keys to a program swapped in mid-level, with the cheapest client: a text page.
+- Nothing in v2 is polished beyond what its DoD asks.
+- The designed screen (v3) and the full interpreter (v4) are built only after v2.4 has proven the swap design.
+- The prototype's code is real code in its final modules. v4 extends it and does not rewrite it.
 
 ---
 
@@ -22,12 +25,13 @@ v1 and v2.1 are built and released. Latest release: v2.1.0 (v2.1).
 | v1.2 | World state and the rules | ✅ released | v1.3.0 |
 | v1.3 | Save, restore and replay | ✅ released | v1.3.0 |
 | v2.1 | The server and the human game over WebSocket | ✅ released | v2.1.0 |
-| v2.2 | The screen's data from the server, and ten levels | ⏳ planned | — |
-| v2.3 | The game screen: the scene and the panels | ⏳ planned | — |
-| v2.4 | The game screen: motion, the atlas and small windows | ⏳ planned | — |
-| v3.1 | The Lua sandbox (with the lupa spike) | ⏳ planned | — |
-| v3.2 | Step-by-step execution, budgets and the run report | ⏳ planned | — |
-| v4.1 | The swap prototype: `memory` outside the program | ⏳ planned | — |
+| v2.2 | The text game screen | ⏳ planned | — |
+| v2.3 | Lua runs: the lupa spike, a minimal sandbox and the driver | ⏳ planned | — |
+| v2.4 | The swap prototype: `memory` outside the program | ⏳ planned | — |
+| v3.1 | The screen's data from the server, and ten levels | ⏳ planned | — |
+| v3.2 | The game screen: the scene and the panels | ⏳ planned | — |
+| v3.3 | The game screen: motion, the atlas and small windows | ⏳ planned | — |
+| v4.1 | The full sandbox and the run report | ⏳ planned | — |
 | v4.2 | Stops and the snapshot | ⏳ planned | — |
 | v5.1 | The HTTP API and the `golem` CLI | ⏳ planned | — |
 | v5.2 | The validator and the journal | ⏳ planned | — |
@@ -101,15 +105,14 @@ The first code: the package, the gates, CI, and the level parser with its valida
 
 **Tests:** unit tests cover the JSON round trip; replay of every recorded solution to `solved`; save, restore and continue against an uninterrupted run over seeded random move sequences; and `state_key` equality and inequality.
 
-## v2 — Game for a human: the server's WebSocket and the game screen
+## v2 — Prototype: a text game screen, Lua runs and the program swap
 
-A human plays the training levels with the arrow keys, through the same core the robot will use. This version introduces the server process that every later client reaches. Depends on: v1.
+The whole loop at its smallest, each part only as large as it must be to prove that it works:
+- a person plays the training levels with the arrow keys on a text page, over the server's WebSocket;
+- a hand-written Lua program drives the robot through the same core;
+- a second program, swapped in mid-level, finishes the level with the `memory` that the first one built.
 
-The screen follows the "Clay and stone" design:
-- the brief: [design/game-screen-brief.md](design/game-screen-brief.md);
-- the designer's handoff: [design/golem-clay/README.md](design/golem-clay/README.md), whose layout, tokens and motion values are final.
-
-It takes three phases: what the screen needs from the server (v2.2), a playable screen with every panel (v2.3), and its motion and smaller layouts (v2.4).
+This version introduces the server process that every later client reaches. The designed screen comes in v3 and the full interpreter in v4. Depends on: v1.
 
 ### v2.1 — The server and the human game over WebSocket
 
@@ -131,7 +134,127 @@ It takes three phases: what the screen needs from the server (v2.2), a playable 
 
 **Tests:** `TestClient` WebSocket tests for `load`, `move`, `restart` and every error path; `/api/levels` against the level files; a check that the default bind is `127.0.0.1`.
 
-### v2.2 — The screen's data from the server, and ten levels
+### v2.2 — The text game screen
+
+**Status:** ⏳ planned.
+
+**Goal:** the owner plays the training levels with the arrow keys on a plain text page that the server serves.
+
+A deliberately plain page: no design, no canvas and no animation. It proves the serving, the socket and the reconnect, which the designed screen (v3.2) keeps.
+
+**Tasks:**
+- **Serving.** `GET /` answers `golem/screen/index.html`, and `/screen/…` serves the files under `golem/screen/` with their content types and nothing outside that directory. The files are found through the package, not the working directory.
+- **The page.** `golem/screen/index.html` and `screen.js`: plain HTML and JavaScript, with no framework, no build step, no CDN and no rules in JavaScript. It shows:
+  - the map as text in a `<pre>`, exactly as the state's `map`;
+  - the level id, `steps / budget`, and the status with its reason: solved, lost on steps, or lost on deadlock;
+  - the training levels from `GET /api/levels`, one button each, which sends `load`;
+  - the key hints, and a line for an `error` reply.
+- **Keys.** The arrow keys send `move` and `R` sends `restart`.
+- **The socket.** The page connects to `/ws` when it opens and draws every `state` it receives. On a drop it shows "Reconnecting…" and ignores keys without queuing them. It retries at 0.5, 1, 2 and 4 s, then every 5 s, and the server sends the current state on reconnect.
+
+**DoD** (the concept's phase 2, first part):
+- (Manual, owner) The owner passes t1-01 … t1-03 by hand on the page.
+- (Manual, owner) A push into a corner shows lost on deadlock, and running out of steps shows lost on steps.
+- (Manual, owner) When the server restarts, the page shows that it is reconnecting, then continues the game where it was.
+
+**Tests:**
+- `GET /` and every file the page references are served with their content types;
+- a path outside `golem/screen/` gets 404, encoded traversal included;
+- no file under `golem/screen/` references an external URL.
+
+### v2.3 — Lua runs: the lupa spike, a minimal sandbox and the driver
+
+**Status:** ⏳ planned.
+
+**Goal:** a hand-written Lua program drives the robot through the core one command at a time, within its step and instruction budgets, and every run ends in a short report.
+
+The concept leaves the choice of Lua open, so this phase starts with a spike. Everything after it depends on the spike's answers. The sandbox is minimal but safe from the first line; v4.1 completes it.
+
+**Tasks:**
+- **Spike first**, recorded in `specification/implementation/v2.3-lupa-spike.md`. It confirms that:
+  - lupa installs from wheels on macOS arm64 and on CI's Linux;
+  - `lupa.lua54` coroutines can be driven from Python;
+  - count hooks work per coroutine;
+  - `max_memory` works;
+  - each determinism problem in ARCHITECTURE §Robot language and the sandbox can be reproduced and is removed by its fix. The fixes themselves are built in v4.1.
+
+  If any of these fails, stop and ask the owner to choose the alternative.
+- Add the dependency `lupa`, pinned to an exact version, and use `lupa.lua54`.
+- `golem/interp/sandbox.py`, the minimal sandbox:
+  - create the runtime with `register_eval=False`, `register_builtins=False` and `max_memory=LUA_MAX_MEMORY`;
+  - give each program a fresh environment table, never `_G`, holding the robot API, `memory` and only the allowlist names whose behaviour is already deterministic. `pairs`, `tostring`, `string.format`, `table.sort` and `math.random` wait for their deterministic versions in v4.1;
+  - load programs as text only (`load(src, "=program", "t", env)`);
+  - create one `memory` table per runtime.
+- The five robot commands as Lua wrappers that `coroutine.yield({cmd, arg})`.
+- `golem/interp/driver.py`, the driver loop from ARCHITECTURE §Execution, budgets and the report:
+  - resume the program, apply its command through the core, and resume it with the result;
+  - the step budget through the core, and the instruction budget through the count hook with `HOOK_EVERY` and the sentinel budget error;
+  - `give_up(reason)`, with the reason cut to 200 characters; a program that returns counts as `give_up("program ended")`;
+  - Lua errors, at load and at run time, with their line;
+  - a driver exception ends the run as `failed` with `reason: internal`.
+- `golem/interp/report.py`: the short report, which holds the run report's `level`, `status`, `reason`, `steps`, `instructions` and `error` (ARCHITECTURE §Execution, budgets and the report). v2.4 and v4.1 add the other fields.
+- `golem/local.py`, run as `uv run golem-local run <level> <program.lua>`: runs in-process and prints the report as JSON. It is the hand tool for the interpreter until the `golem` CLI (v5.1).
+- Hand-written test programs in `tests/fixtures/programs/`:
+  - `t1_solver.lua`, which solves a tier-one level;
+  - an infinite loop;
+  - a syntax error;
+  - a call to `give_up`;
+  - a program that calls `error("instruction budget exhausted")` itself.
+
+**DoD** (the concept's phase 2, second part):
+- A hand-written program passes a tier-one level: `golem-local run training/tier1/t1-01 tests/fixtures/programs/t1_solver.lua` reports `solved`.
+- An infinite loop with no robot command ends as lost on instructions, and the runner survives.
+- A syntax error and a run-time error are reported with their line, and `give_up("x")` appears in the report.
+- A program's own `error("instruction budget exhausted")` is reported as `failed` on `error`, not as a budget loss.
+- Inside a program, `python`, `io`, `os`, `require`, `load`, `debug`, `pcall`, `coroutine`, `next` and `setmetatable` are `nil`, and a bytecode chunk is refused.
+- Every fixture program run twice gives byte-identical reports.
+
+**Tests:** driver tests over the fixture programs, with real lupa; the step budget through `move`; the instruction budget, including a loop with no robot command; the names that must be absent and the bytecode refusal; and the run-twice check.
+
+### v2.4 — The swap prototype: `memory` outside the program
+
+**Status:** ⏳ planned.
+
+**Goal:** a second program, started mid-level from the current world state, finishes the level with the `memory` that the first program built.
+
+A deliberately small phase: prove the swap design before anything is built on it. If the prototype shows that the design in ARCHITECTURE must change, update ARCHITECTURE in this phase, before v3 and v4 build on it.
+
+**Tasks:**
+- `golem/interp/run.py`: a `Run` object holding the runtime, the shared `memory` table, the world, the counters and the list of versions.
+- `swap(run, source)`:
+  - loads the new chunk with a new environment that shares `memory`;
+  - drops the old coroutine;
+  - installs the count hook on the new coroutine;
+  - carries the counters over.
+- Two fixture programs: `explore.lua` maps a tier-one level into `memory` and calls `give_up("mapped")`; `finish.lua` reads the map from `memory` and solves the level without exploring.
+- The report gains `versions`, the program versions that drove the run.
+- `golem-local run <level> <first.lua> --swap <second.lua>`: when the first program gives up or returns, the second one takes over. This lets the owner try the swap before the stops of v4.2.
+- A short design note in the phase's execution report: what the prototype confirmed or changed.
+
+**DoD** (the concept's phase 2, third part):
+- Running `explore.lua` and then swapping in `finish.lua` solves the level. The step count continues from the swap point, and the old coroutine can no longer be resumed.
+- `golem-local run training/tier1/t1-01 tests/fixtures/programs/explore.lua --swap tests/fixtures/programs/finish.lua` reports `solved` with `versions` `[1, 2]`.
+- ARCHITECTURE §Stops, snapshots and program swaps matches what the prototype built.
+
+**Tests:**
+- the explore-then-finish swap;
+- the counters carried over;
+- the old coroutine dead;
+- the instruction hook active after the swap: an infinite loop swapped in ends on the instruction budget;
+- `golem-local --swap`;
+- the swapped run run twice, with byte-identical reports.
+
+## v3 — Game screen: the "Clay and stone" design
+
+The text page of v2.2 becomes the designed game screen, on which the owner plays the training levels. Depends on: v2 (the server, the page's serving, its socket and its reconnect).
+
+The screen follows the "Clay and stone" design:
+- the brief: [design/game-screen-brief.md](design/game-screen-brief.md);
+- the designer's handoff: [design/golem-clay/README.md](design/golem-clay/README.md), whose layout, tokens and motion values are final.
+
+It takes three phases: what the screen needs from the server (v3.1), a playable screen with every panel (v3.2), and its motion and smaller layouts (v3.3).
+
+### v3.1 — The screen's data from the server, and ten levels
 
 **Status:** ⏳ planned.
 
@@ -155,23 +278,19 @@ It takes three phases: what the screen needs from the server (v2.2), a playable 
 - `/api/levels` unchanged;
 - the ten solutions replay to `solved`.
 
-### v2.3 — The game screen: the scene and the panels
+### v3.2 — The game screen: the scene and the panels
 
 **Status:** ⏳ planned.
 
-**Goal:** the owner plays the ten training levels on the "Clay and stone" screen. Every state is drawn at once; motion comes in v2.4.
+**Goal:** the owner plays the ten training levels on the "Clay and stone" screen. Every state is drawn at once; motion comes in v3.3.
 
 **Tasks:**
-- **Serving.** `GET /` answers `golem/screen/index.html`, and `/screen/…` serves the files under `golem/screen/` with their content types and nothing outside that directory. The files are found through the package, not the working directory.
-- **The files.** `golem/screen/index.html`, `screen.css` and `screen.js`, plus `art/golem-art.js`, the handoff's renderer trimmed to the clay direction. No frameworks, no build step, no CDN, and no rules in JavaScript.
+- **The files.** `golem/screen/index.html` and `screen.js` replace the text page of v2.2, and `screen.css` joins them. `art/golem-art.js` is the handoff's renderer, trimmed to the clay direction. They are served as v2.2 serves the page. No frameworks, no build step, no CDN, and no rules in JavaScript.
 - **The look.** The handoff's tokens become CSS custom properties in `screen.css`. Nocturne's `.btn` and `.seg` classes are copied in without its Google Fonts `@import`. Inter Regular, Medium and SemiBold ship as WOFF2 under `golem/screen/fonts/` with their OFL licence.
 - **The scene.** One canvas at the device pixel ratio, drawn in the handoff's order: the room, the tray, the floor where `inside` is set, the runes, the shadows, the walls and blocks, Golem facing the last move, and the light.
   - The static layer is cached per state.
   - The cell size, the board insets and the three levels of detail follow the handoff, in the wide layout (≥ 1200 px).
-- **The socket.**
-  - On every open the page asks for `levels` and draws the state the server sends.
-  - It sends `load`, `move` and `restart`.
-  - On a drop it shows "Reconnecting…" and ignores keys without queuing them. It retries at 0.5, 1, 2 and 4 s, then every 5 s.
+- **The socket.** The page keeps v2.2's socket and reconnect. On every open it also asks for `levels`.
 - **Keys and focus,** as in the handoff's table:
   - the arrows act only while the board has focus, and `event.repeat` is ignored;
   - `R` restarts;
@@ -186,18 +305,17 @@ It takes three phases: what the screen needs from the server (v2.2), a playable 
   - the title screen.
 - **What changed.** The page compares the previous state with the new one only to name what happened: a move, a push, a bump, a block onto or off a rune, the stuck block of a deadlock. It never decides whether a move is legal. In this phase the stuck block is marked without animation.
 
-**DoD** (the concept's phase 2):
+**DoD** (the concept's phase 3):
 - (Manual, owner) The owner passes the ten training levels by hand on the screen.
 - (Manual, owner) A push into a corner shows lost on deadlock with the stuck block marked, and running out of steps shows lost on steps.
 - (Manual, owner) When the server restarts, the screen shows that it is reconnecting, then continues the game where it was.
 
 **Tests:**
 - `GET /` and every file the page references are served with their content types;
-- a path outside `golem/screen/` gets 404, encoded traversal included;
 - no file under `golem/screen/` references an external URL;
 - the fonts' licence ships with them.
 
-### v2.4 — The game screen: motion, the atlas and small windows
+### v3.3 — The game screen: motion, the atlas and small windows
 
 **Status:** ⏳ planned.
 
@@ -224,91 +342,48 @@ It takes three phases: what the screen needs from the server (v2.2), a playable 
 
 **Tests:** the fixture root's large level parses and loads over the WebSocket; the served files still reference no external URL.
 
-## v3 — Robot language and interpreter: the Lua sandbox, execution and budgets
+## v4 — Interpreter: the full sandbox, the run report, the stops and the snapshot
 
-A Lua program drives the robot one command at a time, inside a sandbox, within its budgets, and every run ends in a report. Depends on: v1. (v2 is not needed by the interpreter, but it comes first in the build order.)
+The prototype interpreter of v2.3–v2.4 becomes the full one:
+- the complete sandbox, with every determinism fix;
+- the full run report;
+- the stops. At a stop, the agent continues the program or swaps in a new one that starts from the current world with the same `memory` and the remaining budget. The level never restarts.
 
-### v3.1 — The Lua sandbox (with the lupa spike)
+Depends on: v2 (the prototype it extends).
+
+### v4.1 — The full sandbox and the run report
 
 **Status:** ⏳ planned.
 
-**Goal:** a Lua program runs in a sandbox that offers only the robot API, `memory` and safe Lua, and the same program always behaves the same way.
-
-The concept leaves the choice of Lua open, so this phase starts with a spike. Everything after it depends on the spike's answers.
+**Goal:** a program sees exactly the allowlist in ARCHITECTURE, the same program always behaves the same way, and the run report is complete.
 
 **Tasks:**
-- **Spike first**, recorded in `specification/implementation/v3.1-lupa-spike.md`. It confirms that:
-  - lupa installs from wheels on macOS arm64 and on CI's Linux;
-  - `lupa.lua54` coroutines can be driven from Python;
-  - count hooks work per coroutine;
-  - `max_memory` works;
-  - each determinism problem in ARCHITECTURE §Robot language and the sandbox can be reproduced and is removed by its fix.
-
-  If any of these fails, stop and ask the owner to choose the alternative.
-- Add the dependency `lupa`, pinned to an exact version.
-- `golem/interp/sandbox.py`:
-  - create the runtime with `register_eval=False`, `register_builtins=False` and `max_memory=LUA_MAX_MEMORY`;
-  - build the environment allowlist;
-  - add the deterministic `pairs`, the merge-sort `table.sort`, the address-free `tostring`, and `math.random` seeded with `RANDOM_SEED`;
-  - load programs as text only (`load(src, "=program", "t", env)`);
-  - create one `memory` table per runtime.
-- The five robot commands as Lua wrappers that `coroutine.yield({cmd, arg})`.
+- `golem/interp/sandbox.py` completes the environment allowlist from ARCHITECTURE §Robot language and the sandbox:
+  - the deterministic `pairs`;
+  - the merge-sort `table.sort`;
+  - the address-free `tostring` and the `string.format` wrapper;
+  - `math.random` seeded with `RANDOM_SEED`, with no `math.randomseed`;
+  - the `string` library without `string.dump`, which is also the strings' `__index`.
+- The memory cap: a program that allocates past `LUA_MAX_MEMORY` ends with a report entry, never with the runner.
+- `golem/interp/report.py` completes the run report with `last_actions` (the last `LAST_ACTIONS_N`) and `final_map`, pinned by a contract test.
+- Fixture programs for the escape attempts and for determinism.
 
 **DoD:**
-- Every global outside the allowlist is `nil` inside a program, and none of these escape attempts succeeds: `python`, `io.open`, `os.time`, `require`, `load`, `string.dump`, `debug`, `pcall`, `coroutine`, `next`, `setmetatable`, or loading a bytecode chunk.
-- The same program run in two fresh runtimes gives identical results, including over `pairs` and `table.sort` on more than 100 elements.
-
-**Tests:** an allowlist test that lists the environment; one test per escape attempt; the `pairs` order over mixed keys; `table.sort` stability and fixed instruction count; `tostring` of a table; seeded `math.random`; and the memory cap.
-
-### v3.2 — Step-by-step execution, budgets and the run report
-
-**Status:** ⏳ planned.
-
-**Goal:** a program drives the robot through the core one command at a time, within its step and instruction budgets, and every run ends in a report.
-
-**Tasks:**
-- `golem/interp/driver.py`, the driver loop from ARCHITECTURE §Execution, budgets and the report:
-  - resume the program, apply its command through the core, resume with the result;
-  - the count hook with `HOOK_EVERY` and the sentinel budget error;
-  - `give_up(reason)`, with a program that returns treated as `give_up("program ended")`;
-  - Lua errors with their line;
-  - a driver exception ending the run as `failed` with `reason: internal`.
-- `golem/interp/report.py`: the run report (status, reason, steps, instructions, error, the last `LAST_ACTIONS_N` actions, the final map, versions).
-- `golem/local.py`, run as `uv run golem-local run <level> <program.lua>`: runs in-process with every stop off and prints the report as JSON. It is the hand tool for this version, and its output matches the later `golem run`.
-- Hand-written test programs in `tests/fixtures/programs/`: one solving a tier-one level, one infinite loop, one with a syntax error, one calling `give_up`, and one that calls `error("instruction budget exhausted")` itself.
-
-**DoD** (the concept's phase 3):
-- A hand-written program passes a tier-one level: `golem-local run training/tier1/t1-01 tests/fixtures/programs/t1_solver.lua` reports `solved`.
-- An infinite loop ends as lost on instructions, and the server process (here, the runner) survives.
-- A syntax error and a run-time error are reported with their line, and `give_up("x")` appears in the report.
-- A program's own `error("instruction budget exhausted")` is reported as `failed` on `error`, not as a budget loss.
+- Every global outside the allowlist is `nil` inside a program, and none of these escape attempts succeeds: `python`, `io.open`, `os.time`, `require`, `load`, `string.dump` (also as `("").dump`), `debug`, `pcall`, `coroutine`, `next`, `setmetatable`, or loading a bytecode chunk.
+- The same program run in two fresh runtimes gives identical results, including over `pairs`, `table.sort` on more than 100 elements, `tostring` and `string.format` of a table, and `math.random`.
+- A program past the memory cap ends with a report entry, and the runner survives.
 - Every fixture program run twice gives byte-identical reports.
 
-**Tests:** driver tests over the fixture programs; the step budget through `move`; the instruction budget, including a loop with no robot command; the report shape (a contract test); and the determinism check.
-
-## v4 — Stops and program swap: the prototype first, then the stops
-
-The level never restarts: at a stop, the agent continues the program or swaps in a new one that starts from the current world with the same `memory` and the remaining budget. This version decides how `memory` and the interpreter are built, so its first phase is a prototype. Depends on: v3.
-
-### v4.1 — The swap prototype: `memory` outside the program
-
-**Status:** ⏳ planned.
-
-**Goal:** a second program, started mid-level from the current world state, finishes the level with the `memory` that the first program built.
-
-A deliberately small phase: prove the swap design before anything is built on it. If the prototype shows that the design in ARCHITECTURE must change, update ARCHITECTURE in this phase, before v4.2.
-
-**Tasks:**
-- `golem/interp/run.py`: a `Run` object holding the runtime, the shared `memory` table, the world, the counters and the list of versions.
-- `swap(run, source)`: loads the new chunk with a new environment that shares `memory`, drops the old coroutine, installs the count hook on the new one, and carries the counters over.
-- Two fixture programs: `explore.lua` maps a tier-one level into `memory` and calls `give_up("mapped")`; `finish.lua` reads the map from `memory` and solves the level without exploring.
-- A short design note in the phase's execution report: what the prototype confirmed or changed.
-
-**DoD:**
-- Running `explore.lua` and then swapping in `finish.lua` solves the level. The step count continues from the swap point, and the old coroutine can no longer be resumed.
-- ARCHITECTURE §Stops, snapshots and program swaps matches what the prototype built.
-
-**Tests:** the explore-then-finish swap; counters carried over; the old coroutine dead; the instruction hook active after the swap; and determinism of the swapped run (run twice, identical traces).
+**Tests:**
+- an allowlist test that lists the environment;
+- one test per escape attempt;
+- the `pairs` order over mixed keys;
+- `table.sort` stability and fixed instruction count;
+- `tostring` and `string.format` of a table;
+- seeded `math.random`;
+- the memory cap;
+- the report shape (a contract test);
+- the run-twice check.
 
 ### v4.2 — Stops and the snapshot
 
@@ -391,7 +466,7 @@ The game becomes reachable from the shell. Every program version and every run i
 **Tasks:**
 - `GET /api/runs` (training runs, newest first) and `GET /api/runs/{id}/frames`: the server rebuilds every world state from the trace through the core. A hidden run answers 404.
 - A replay mode in the screen: a run picker, play, pause, single steps, speed, a timeline with stops and swaps marked, the list of actions, and the robot's view (cells seen so far; the rest greyed out).
-- The replay follows the replay sketch in the design handoff ([design/golem-clay/README.md](design/golem-clay/README.md)), whose layout v2.3 already leaves room for. The frames come with the level's `inside`, as the WebSocket state does.
+- The replay follows the replay sketch in the design handoff ([design/golem-clay/README.md](design/golem-clay/README.md)), whose layout v3.2 already leaves room for. The frames come with the level's `inside`, as the WebSocket state does.
 
 **DoD** (the concept's phase 5, second half):
 - Any run can be replayed: the frames rebuilt from a trace end in the state that the run's report records.

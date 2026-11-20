@@ -67,8 +67,8 @@ fixes and hardening in earlier phases may have moved the code away from the docs
    `budgets.toml`, never `levels/hidden/`), `tests/`, `pyproject.toml` and `.env.example`. Note the actual
    module and function names, signatures, JSON fields, config keys and env var names.
 2. Read the earlier phases' `specification/implementation/*-execution-report.md` and `*code-review*.md`,
-   especially their **"Fixes applied"** and **"Architecture impact"** notes. For v3.2 onwards, read the
-   v3.1 lupa spike note; for v4.2 onwards, the v4.1 design note.
+   especially their **"Fixes applied"** and **"Architecture impact"** notes. From v2.4 on, read the
+   v2.3 lupa spike note; from v3.1 on, the v2.4 design note.
 3. Where ARCHITECTURE.md or ROADMAP.md is stale relative to a landed fix, the **code is ground truth** for
    this phase's issues. Note the drift, and put the ARCHITECTURE.md correction into the issue that touches
    that contract.
@@ -79,7 +79,7 @@ fixes and hardening in earlier phases may have moved the code away from the docs
 
 ### Step 1: Decompose the phase
 
-Turn the phase's tasks into a small set of issues, typically **2–5**. A small phase such as v4.1 may be one
+Turn the phase's tasks into a small set of issues, typically **2–5**. A small phase such as v2.4 may be one
 or two issues. Don't pad. Each issue is a coherent, independently verifiable slice:
 
 - **Size** by complexity:
@@ -100,7 +100,7 @@ or two issues. Don't pad. Each issue is a coherent, independently verifiable sli
   - `docs`: the `specification/` files, README.md, CLAUDE.md.
   - `ops`: steps the owner performs: playing on the screen, writing hidden levels, live Scribe sessions.
 - **Order by dependency.** The first issue is usually the gate that everything builds on. In v1.1 that is
-  the project skeleton with the gates and CI; in v3.1 it is the lupa spike; in v5.2 it is the journal schema.
+  the project skeleton with the gates and CI; in v2.3 it is the lupa spike; in v5.2 it is the journal schema.
 - **Tests in every code issue.** Keep decision logic pure so it can be unit-tested with plain data: the
   rules, the level parser, the stop decisions, the `memory` conversion, report assembly, version
   deduplication, metrics. No test touches the network or a model: the server and the CLI are tested
@@ -118,7 +118,7 @@ or two issues. Don't pad. Each issue is a coherent, independently verifiable sli
     `127.0.0.1`).
   - Name any repo artifact the issue produces (e.g. `levels/hidden/README.md`). Hidden levels themselves are
     never a repo artifact.
-- **Stay within the phase.** No stops in v3.2, no journal in v5.1, no live model before v6.2, nothing from
+- **Stay within the phase.** No stops in v2.3, no designed screen in v2.2, no journal in v5.1, no live model before v6.2, nothing from
   VISION.md's non-goals.
 
 ### Step 2: Write the issues file
