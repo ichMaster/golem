@@ -12,9 +12,11 @@ from pathlib import Path
 
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
 from starlette.exceptions import HTTPException
 
+import golem
 from golem.core.level import LevelError
 from golem.core.levels import BudgetsError, budget_for, list_levels, load_budgets, load_level
 from golem.server.config import ConfigError, Settings, load_settings
@@ -25,6 +27,8 @@ LOG_FILE = "server.log"
 LOG_MAX_BYTES = 1_000_000
 LOG_BACKUPS = 3
 HTTP_ERROR_CODES = {404: "not_found", 405: "method_not_allowed"}
+# Found through the package, so the server serves the same page from any working directory.
+SCREEN_DIR = Path(golem.__file__).resolve().parent / "screen"
 
 
 class StartupError(RuntimeError):
@@ -41,6 +45,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.state.settings = settings
     _install_error_handlers(app)
     _install_level_routes(app, settings.levels_dir)
+    _install_screen_routes(app)
     install_ws(app, settings.levels_dir, settings.port)
     return app
 
@@ -105,6 +110,20 @@ def _install_level_routes(app: FastAPI, levels_dir: Path) -> None:
                 "budget": {"steps": budget.steps, "instructions": budget.instructions},
             })
         return {"levels": entries}
+
+
+def _install_screen_routes(app: FastAPI) -> None:
+    """``GET /`` is the page; ``/screen/…`` serves the files of ``golem/screen/`` and nothing else.
+
+    ``StaticFiles`` refuses a path that resolves outside its directory, lists no directory, and
+    raises the 404 that the app's handler turns into ``{"error", "detail"}``.
+    """
+
+    @app.api_route("/", methods=["GET", "HEAD"], include_in_schema=False)
+    def screen_page() -> FileResponse:
+        return FileResponse(SCREEN_DIR / "index.html", media_type="text/html")
+
+    app.mount("/screen", StaticFiles(directory=SCREEN_DIR), name="screen")
 
 
 def _install_error_handlers(app: FastAPI) -> None:
