@@ -1,6 +1,7 @@
 """The game screen's files (a contract): ``GET /`` is the page, ``/screen/…`` serves
 ``golem/screen/`` from the package and nothing outside it, and no page file has an external URL."""
 
+import json
 import re
 from html.parser import HTMLParser
 from pathlib import Path
@@ -154,3 +155,59 @@ def test_no_screen_file_references_an_external_url():
     for path in files:
         for number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), start=1):
             assert not EXTERNAL_URL.search(line), f"{path.relative_to(SCREEN_DIR)}:{number}: {line}"
+
+
+# --- The text page (v2.2) -------------------------------------------------------------------------
+
+SCRIPT = SCREEN_DIR / "screen.js"
+SOLUTIONS = REPO / "tests" / "fixtures" / "solutions"
+
+
+def test_the_page_loads_scripts_and_styles_only_from_screen():
+    references = page_references()
+    assert references
+    for reference in references:
+        assert reference.startswith("/screen/"), reference
+        assert (SCREEN_DIR / reference.removeprefix("/screen/")).is_file(), reference
+
+
+def test_the_script_builds_the_socket_url_from_the_page_location():
+    text = SCRIPT.read_text(encoding="utf-8")
+    for literal in ("127.0.0.1", "localhost", "[::1]", "8700"):
+        assert literal not in text, literal
+    assert 'new URL("/ws", location.href)' in text
+
+
+def script_messages() -> set[str]:
+    return set(re.findall(r"""\btype:\s*["'](\w+)["']""", SCRIPT.read_text(encoding="utf-8")))
+
+
+def script_keys() -> dict[str, str]:
+    block = re.search(r"KEY_DIRECTIONS\s*=\s*\{(.*?)\}", SCRIPT.read_text(encoding="utf-8"), re.S)
+    assert block, "screen.js has no KEY_DIRECTIONS table"
+    return dict(re.findall(r"""(\w+)\s*:\s*["']([NESW])["']""", block.group(1)))
+
+
+def test_the_page_sends_only_the_contract_messages():
+    assert script_messages() == {"load", "move", "restart"}
+    assert script_keys() == {"ArrowUp": "N", "ArrowRight": "E", "ArrowDown": "S", "ArrowLeft": "W"}
+
+
+def recorded_moves(level_id: str) -> str:
+    path = SOLUTIONS / f"{level_id}.txt"
+    lines = path.read_text(encoding="utf-8").splitlines()
+    return "".join(line.strip() for line in lines if line.strip() and not line.startswith(";"))
+
+
+def test_the_page_messages_play_a_level_to_solved(tmp_path):
+    level_id = "training/tier1/t1-01"
+    with client_for(tmp_path).websocket_connect("/ws") as ws:
+        ws.send_text(json.dumps({"type": "load", "level": level_id}))
+        start = ws.receive_json()
+        assert start["type"] == "state" and start["status"] == "playing"
+        for direction in recorded_moves(level_id):
+            ws.send_text(json.dumps({"type": "move", "dir": direction}))
+            state = ws.receive_json()
+        assert state["status"] == "solved"
+        ws.send_text(json.dumps({"type": "restart"}))
+        assert ws.receive_json() == start
