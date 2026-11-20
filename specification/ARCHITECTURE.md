@@ -220,9 +220,13 @@ loop:
 }
 ```
 
-- `status` is `solved`, `lost` (with `reason` = `steps`, `instructions` or `deadlock`), `failed` (the program ended with its stop switched off: `reason` = `error` or `give_up`, with the text in `error`) or `abandoned` (the agent left the run at a stop).
+- `status` is `solved`, `lost` (with `reason` = `steps`, `instructions` or `deadlock`), `failed` (the program ended with its stop switched off: `reason` = `error` or `give_up`, with the text in `error`; or `internal` when the driver itself failed, with `error` = `"internal error"` and the traceback in the server log only) or `abandoned` (the agent left the run at a stop).
+- `error` holds a Lua error's message with its `program:<line>:` prefix, `"not enough memory"` for the memory cap, `"program ended"` for a program that returned, or the `give_up` reason. An error value that is not a string becomes `"(error object is a <type> value)"`, never an address.
+- `instructions` counts in steps of `HOOK_EVERY`, so a program shorter than that reports `0`.
 - `last_actions` holds the last `LAST_ACTIONS_N` (20) robot commands with their results.
 - `versions` lists the program versions that drove the run.
+
+**The short report** (v2.3) is the first six fields, `level` through `error`, in that order. v2.4 adds `versions`, and v4.1 adds `last_actions` and `final_map`.
 
 For a hidden level the report is only `{"level": "hidden/tier2/h-07", "passed": false}`.
 
