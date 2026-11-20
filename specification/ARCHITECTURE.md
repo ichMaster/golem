@@ -530,7 +530,8 @@ golem/
   tests/
     fixtures/               # recorded solutions, test programs, fixture hidden levels
   .github/workflows/ci.yml  # v1.1: the gates on every push and pull request
-  data/                     # gitignored: journal, traces, session streams, logs
+  scripts/                  # v2.2: start.sh, stop.sh, restart.sh: the owner runs golem-server in the background
+  data/                     # gitignored: journal, traces, session streams, logs, the saved human game
   reports/                  # gitignored: metrics tables (v7.2)
 ```
 
