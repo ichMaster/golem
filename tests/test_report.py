@@ -59,3 +59,7 @@ def test_the_core_decides_a_solved_or_lost_world():
 
 def test_a_give_up_reason_is_cut_to_200_characters():
     assert gave_up("é" * 500).error == "é" * 200
+
+
+def test_an_error_text_is_cut_to_500_characters():
+    assert lua_error("program:1: " + "x" * 10_000).error == "program:1: " + "x" * 489

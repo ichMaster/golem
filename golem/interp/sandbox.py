@@ -108,7 +108,7 @@ end
 -- load_program(source) -> the chunk, or nil and the error message ("program:<line>: ...")
 local function load_program(source)
   local chunk, message = load(source, "=program", "t", new_environment())
-  if chunk == nil then return nil, safe_text(message) end
+  if chunk == nil then return nil, safe_text(sub(message, 1, 2000)) end
   return chunk
 end
 

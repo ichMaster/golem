@@ -11,6 +11,7 @@ from golem.core.world import World
 
 REPORT_KEYS = ("level", "status", "reason", "steps", "instructions", "error")
 GIVE_UP_REASON_MAX = 200
+ERROR_TEXT_MAX = 500
 
 
 @dataclass(frozen=True)
@@ -43,8 +44,11 @@ def gave_up(reason: str) -> Ending:
 
 
 def lua_error(message: str) -> Ending:
-    """A Lua error at load or at run time, with its ``program:<line>:`` prefix when Lua gave one."""
-    return Ending("failed", "error", message)
+    """A Lua error at load or at run time, with its ``program:<line>:`` prefix when Lua gave one.
+
+    The text is cut to 500 characters, so a program cannot put megabytes into its report.
+    """
+    return Ending("failed", "error", message[:ERROR_TEXT_MAX])
 
 
 def short_report(level_id: str, world: World, instructions: int, ending: Ending) -> dict:

@@ -145,3 +145,18 @@ def test_the_level_is_never_resumed_after_it_ends():
 @pytest.mark.parametrize("name", sorted(PROGRAMS))
 def test_every_program_gives_a_byte_identical_report_twice(name):
     assert json.dumps(run(PROGRAMS[name])) == json.dumps(run(PROGRAMS[name]))
+
+
+def test_a_huge_error_text_is_cut_to_500_characters():
+    # code review #2: the error text had no cap, so one program could put megabytes in its report
+    report = run("error(string.rep('x', 5 * 1024 * 1024))")
+    assert (report["status"], report["reason"]) == ("failed", "error")
+    assert report["error"].startswith("program:1: xxx")
+    assert len(report["error"]) == 500
+
+
+def test_a_huge_syntax_error_is_cut_to_500_characters():
+    # an unfinished string literal: Lua quotes the whole literal in its message
+    report = run("x = '" + "y" * (1024 * 1024) + "\nz = 1")
+    assert report["error"].startswith("program:1: unfinished string")
+    assert len(report["error"]) <= 500

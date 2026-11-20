@@ -38,11 +38,13 @@ from golem.interp.sandbox import ProgramLoadError, new_sandbox
 
 LOG = logging.getLogger("golem.interp")
 
-# A give_up reason is cut to 200 characters; at most 4 bytes each, so 800 bytes reach Python.
+# A give_up reason is cut to 200 characters and an error text to 500; at most 4 bytes a character,
+# so no more than 800 and 2000 bytes of them ever cross into Python.
 GIVE_UP_BYTES_MAX = 800
+ERROR_BYTES_MAX = 2000
 
 DRIVER = r"""
-local chunk, every, budget, safe_text, reason_bytes = ...
+local chunk, every, budget, safe_text, reason_bytes, error_bytes = ...
 local SENTINEL = {}
 local counter = 0
 local co = coroutine.create(chunk)
@@ -52,7 +54,7 @@ debug.sethook(co, function()
 end, "", every)
 
 local function describe(value)
-  if type(value) == "string" then return safe_text(value) end
+  if type(value) == "string" then return safe_text(string.sub(value, 1, error_bytes)) end
   return "(error object is a " .. type(value) .. " value)"
 end
 
@@ -84,7 +86,7 @@ def run_program(level: Level, budget: Budget, source: str, settings: InterpSetti
             return short_report(level.id, world, 0, lua_error(str(error)))
         step = sandbox.runtime.execute(
             DRIVER, chunk, settings.hook_every, budget.instructions, sandbox.safe_text,
-            GIVE_UP_BYTES_MAX,
+            GIVE_UP_BYTES_MAX, ERROR_BYTES_MAX,
         )
         ending, world, instructions = _drive(step, world)
     except lua54.LuaMemoryError:
