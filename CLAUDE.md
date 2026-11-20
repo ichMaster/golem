@@ -122,5 +122,5 @@ The list of contracts lives in **ARCHITECTURE.md §Contracts**: the level format
 ## Constraints
 
 - The server binds `127.0.0.1` only. Nothing in this project listens on the network.
-- The Lua choice is open until the v2.3 spike confirms lupa. If the spike fails, the owner decides the alternative.
+- Lua is lupa 2.8 with `lupa.lua54`, confirmed by the v2.3 spike and pinned exactly. lupa keeps a `python` table in the runtime's globals that reaches Python objects: the sandbox removes it, and no program ever sees the globals. C functions such as the pattern matcher run without the count hook; the owner decides how to bound them before v4.1.
 - v2.4 (the swap prototype) must prove the swap design before anything is built on it. v2 is a prototype: do not polish it beyond its DoD. Its code lives in the final modules, and v3 and v4 extend it rather than rewrite it.

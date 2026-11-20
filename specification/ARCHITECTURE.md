@@ -58,7 +58,7 @@ There are no other listeners and no other outbound connections. The game itself 
 | Python 3.12+ with uv | everything except the screen | one language; dependencies pinned in `pyproject.toml` and `uv.lock` |
 | Python standard library only | game core | rules with no dependencies, testable on their own |
 | FastAPI + uvicorn (with websockets) | server | the HTTP API and the WebSocket in one process |
-| lupa, Lua 5.4 runtime (`lupa.lua54`) | interpreter | the sandbox, coroutines and `debug.sethook`. Lua is the concept's choice, confirmed or replaced in the v2.3 spike |
+| lupa, Lua 5.4 runtime (`lupa.lua54`) | interpreter | the sandbox, coroutines and `debug.sethook`. Lua is the concept's choice, confirmed in the v2.3 spike: lupa 2.8, pinned exactly ([v2.3-lupa-spike.md](implementation/v2.3-lupa-spike.md)) |
 | Typer + httpx | `golem` CLI | a thin wrapper that turns commands into HTTP requests and prints JSON |
 | `sqlite3` (standard library) | journal | sessions, versions, runs and validations, with no database server |
 | JSON files | traces | one file per run |
@@ -562,13 +562,7 @@ Before v1.1 there is no `pyproject.toml`, so both gates are `n/a`, not passed.
 
 ## Open decisions
 
-- **Lua through lupa.** The concept leaves the language open. v2.3 starts with a spike that must confirm the following before anything else is built on it:
-  - lupa installs from wheels on macOS arm64 and Linux;
-  - `lupa.lua54` coroutines can be driven from Python;
-  - per-coroutine count hooks work;
-  - `max_memory` works;
-  - each determinism fix in §Robot language works.
-
-  If any of these fails, the owner chooses the alternative before v2.3 continues.
+- **Lua through lupa: decided.** The v2.3 spike ([v2.3-lupa-spike.md](implementation/v2.3-lupa-spike.md)) confirmed lupa 2.8 with `lupa.lua54`: wheels on macOS arm64 and Linux, coroutines driven from Python, per-coroutine count hooks with a sentinel compared in Lua, `max_memory`, and every determinism fix. It also found that lupa keeps a `python` table in the runtime's globals even with `register_eval=False` and `register_builtins=False`, and that table reaches Python objects; the sandbox removes it (v2.3).
+- **C functions run without the count hook** (spike R1). One call into the pattern matcher (`string.find`, `match`, `gmatch`, `gsub`) runs to its end without a hook, and a pattern with several `.-` over a few hundred characters runs for minutes. The options are to drop the pattern functions (keeping a plain `find`), to run each program in a worker process with a wall-clock limit, or to cap the subject's length for the pattern functions. The owner decides before v4.1, which completes the sandbox.
 - **The agent in a container.** v6.1 isolates the agent by tool rules and paths. A container with only the workspace mounted would make "cannot reach" hold at the operating-system level. The decision is made after v6.1's isolation check.
 - **Level sources for tiers 2 and 3 and the hidden set.** Which published sets to use, under which licences, is decided in v7.1 and recorded in `levels/README.md`.
