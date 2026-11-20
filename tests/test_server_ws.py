@@ -43,6 +43,22 @@ def send(ws, message) -> dict:
     return ws.receive_json()
 
 
+PING_ERROR = {"type": "error", "detail": "unknown message type; use load, move or restart"}
+
+
+def state_on_connect(ws) -> dict:
+    """The state the server sends on connect, read without waiting forever when none is sent.
+
+    A harmless bad message goes first, and its error reply always arrives. A missing state then
+    fails the test at once instead of hanging it (v2.2 code review #2).
+    """
+    ws.send_text(json.dumps({"type": "ping"}))
+    first = ws.receive_json()
+    assert first["type"] == "state", f"no state on connect, got {first}"
+    assert ws.receive_json() == PING_ERROR
+    return first
+
+
 def core_states(level_id: str, moves: str) -> list[World]:
     level = load_level(level_id, LEVELS)
     _, states = replay(level, moves, budget_for(level_id, load_budgets(LEVELS)))
@@ -156,7 +172,7 @@ def test_a_new_connection_first_receives_the_current_state(tmp_path):
         send(ws, {"type": "load", "level": T1})
         moved = send(ws, {"type": "move", "dir": "N"})
     with client.websocket_connect("/ws") as ws:
-        assert ws.receive_json() == moved
+        assert state_on_connect(ws) == moved
         assert send(ws, {"type": "move", "dir": "S"})["steps"] == 2
 
 
@@ -164,6 +180,13 @@ def test_without_a_game_a_new_connection_receives_nothing_first(tmp_path):
     with client_for(LEVELS, tmp_path).websocket_connect("/ws") as ws:
         assert send(ws, {"type": "restart"})["type"] == "error"
 
+
+
+def test_reading_the_state_on_connect_fails_fast_when_none_is_sent(tmp_path):
+    # code review #2: a missing state on connect must fail the test, never hang it
+    with client_for(LEVELS, tmp_path).websocket_connect("/ws") as ws:
+        with pytest.raises(AssertionError, match="no state on connect"):
+            state_on_connect(ws)
 
 def test_the_same_messages_give_the_same_states_on_two_fresh_servers(tmp_path):
     messages = [{"type": "load", "level": T1}] + [{"type": "move", "dir": d} for d in "NSEWEE"]
@@ -235,7 +258,7 @@ def test_a_restarted_server_finds_the_game_where_it_was(tmp_path):
                   + moves("NNW"))
     restarted = saving_client(LEVELS, tmp_path, game_file)
     with restarted.websocket_connect("/ws") as ws:
-        assert ws.receive_json() == before[-1] == expected(core_states(T2, "NNW")[-1])
+        assert state_on_connect(ws) == before[-1] == expected(core_states(T2, "NNW")[-1])
         assert send(ws, {"type": "move", "dir": "N"}) == expected(core_states(T2, "NNWN")[-1])
 
 
@@ -246,7 +269,7 @@ def test_an_ended_game_restores_with_its_status_and_reason(tmp_path, directions,
     before = play(saving_client(LEVELS, tmp_path, game_file), [{"type": "load", "level": T1}]
                   + moves(directions))
     with saving_client(LEVELS, tmp_path, game_file).websocket_connect("/ws") as ws:
-        restored = ws.receive_json()
+        restored = state_on_connect(ws)
     assert restored == before[-1]
     assert (restored["status"], restored["reason"]) == (status, reason)
 
@@ -256,10 +279,10 @@ def test_load_and_restart_overwrite_the_save(tmp_path):
     client = saving_client(LEVELS, tmp_path, game_file)
     play(client, [{"type": "load", "level": T1}] + moves("E") + [{"type": "load", "level": T2}])
     with saving_client(LEVELS, tmp_path, game_file).websocket_connect("/ws") as ws:
-        assert ws.receive_json() == expected(core_states(T2, "")[0])
+        assert state_on_connect(ws) == expected(core_states(T2, "")[0])
     play(client, moves("NN") + [{"type": "restart"}])
     with saving_client(LEVELS, tmp_path, game_file).websocket_connect("/ws") as ws:
-        assert ws.receive_json() == expected(core_states(T2, "")[0])
+        assert state_on_connect(ws) == expected(core_states(T2, "")[0])
 
 
 def hidden_save() -> str:
