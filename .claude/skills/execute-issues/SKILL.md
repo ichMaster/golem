@@ -79,8 +79,9 @@ Follow `CLAUDE.md` and ARCHITECTURE.md. Route by component:
 - **`golem/server/`** (v2.1, v5.1): `create_app()`; routes stay thin over the core, the interpreter and the
   journal; it binds `127.0.0.1`; no response carries a hidden level's text, a hidden trace or the live
   world state; errors use `{"error", "detail"}`.
-- **`golem/screen/`** (v2.2, v5.3): plain HTML, canvas and JavaScript. It draws what the server sends and
-  holds no rules, and it uses no framework, no build step and no CDN.
+- **`golem/screen/`** (v2.3–v2.4, v5.3): plain HTML, canvas and JavaScript. It draws what the server sends
+  and holds no rules, and it uses no framework, no build step and no CDN. The look and the motion follow
+  the design handoff in `specification/design/golem-clay/README.md`; its values are final.
 - **`golem/cli.py`, `golem/local.py` and the owner tools:** one request per command, JSON out, exit codes
   0/1/2, program text sent (never paths), the `GOLEM_WORKSPACE` restriction applied.
 - **`golem/journal/`** (v5.2): SQLite in transactions, atomic trace writes, versions deduplicated by

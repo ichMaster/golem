@@ -22,7 +22,9 @@ v1 and v2.1 are built and released. Latest release: v2.1.0 (v2.1).
 | v1.2 | World state and the rules | ✅ released | v1.3.0 |
 | v1.3 | Save, restore and replay | ✅ released | v1.3.0 |
 | v2.1 | The server and the human game over WebSocket | ✅ released | v2.1.0 |
-| v2.2 | The game screen | ⏳ planned | — |
+| v2.2 | The screen's data from the server, and ten levels | ⏳ planned | — |
+| v2.3 | The game screen: the scene and the panels | ⏳ planned | — |
+| v2.4 | The game screen: motion, the atlas and small windows | ⏳ planned | — |
 | v3.1 | The Lua sandbox (with the lupa spike) | ⏳ planned | — |
 | v3.2 | Step-by-step execution, budgets and the run report | ⏳ planned | — |
 | v4.1 | The swap prototype: `memory` outside the program | ⏳ planned | — |
@@ -103,6 +105,12 @@ The first code: the package, the gates, CI, and the level parser with its valida
 
 A human plays the training levels with the arrow keys, through the same core the robot will use. This version introduces the server process that every later client reaches. Depends on: v1.
 
+The screen follows the "Clay and stone" design:
+- the brief: [design/game-screen-brief.md](design/game-screen-brief.md);
+- the designer's handoff: [design/golem-clay/README.md](design/golem-clay/README.md), whose layout, tokens and motion values are final.
+
+It takes three phases: what the screen needs from the server (v2.2), a playable screen with every panel (v2.3), and its motion and smaller layouts (v2.4).
+
 ### v2.1 — The server and the human game over WebSocket
 
 **Status:** ✅ released in v2.1.0.
@@ -123,23 +131,98 @@ A human plays the training levels with the arrow keys, through the same core the
 
 **Tests:** `TestClient` WebSocket tests for `load`, `move`, `restart` and every error path; `/api/levels` against the level files; a check that the default bind is `127.0.0.1`.
 
-### v2.2 — The game screen
+### v2.2 — The screen's data from the server, and ten levels
 
 **Status:** ⏳ planned.
 
-**Goal:** the owner plays the training levels with the arrow keys.
+**Goal:** the server sends the screen everything it draws, and ten training levels exist.
 
 **Tasks:**
-- `golem/screen/index.html`, `screen.js` and `screen.css`, served at `/`. A canvas draws walls, floor, goals, boxes, boxes on goals and the robot. The arrow keys send moves, `R` restarts the level, and a picker loads a level. The page shows the step count against the budget and a solved or lost banner with the reason, and it reconnects when the WebSocket drops.
-- No frameworks, no build step, no CDN, and no rules in JavaScript: the page sends keys and draws the states it receives.
-- Ten training levels across tiers 1 and 2, with recorded solutions in `tests/fixtures/solutions/`.
+- The WebSocket `state` gains `inside`: one string per row of `map`, as long as that row, with `1` for a cell inside the walls and `0` for a cell outside them. It comes from the core's `Level.inside`, so the page draws the floor only there and never computes it.
+- A new WebSocket message for the level picker. The client sends `{"type": "levels"}`, and the server answers `{"type": "levels", "levels": [...]}`: one entry per training level, sorted by id, with the fields of `GET /api/levels` plus the start `map` and its `inside`. Hidden levels are never listed.
+- `GET /api/levels` keeps its contract and still carries no map. The same route serves `golem levels` (v5.1), and the agent doesn't get a level's map before it runs the level. The screen's channel is the WebSocket, which the agent never uses.
+- Ten training levels: the committed t1-01 … t1-03, plus t1-04, t1-05 and t2-01 … t2-05. The sample maps in the design handoff (`GolemClayScreen.dc.html`) are candidates. Each level must parse, have a recorded solution in `tests/fixtures/solutions/`, and fit its tier's budget in `budgets.toml`.
+- ARCHITECTURE §HTTP API (the WebSocket contract) records `inside` and `levels`.
+
+**DoD:**
+- A scripted WebSocket client receives `inside` with every state and the level list on request, both matching the core and the level files.
+- Neither message carries a hidden id or any line of a hidden map, and `GET /api/levels` still carries no map.
+- Every recorded solution of the ten levels replays to `solved` through the core.
+
+**Tests:**
+- `inside` against `Level.inside` for every training level, at the start and after moves;
+- the `levels` reply against the level files, and against a root that holds the fixture hidden level;
+- `/api/levels` unchanged;
+- the ten solutions replay to `solved`.
+
+### v2.3 — The game screen: the scene and the panels
+
+**Status:** ⏳ planned.
+
+**Goal:** the owner plays the ten training levels on the "Clay and stone" screen. Every state is drawn at once; motion comes in v2.4.
+
+**Tasks:**
+- **Serving.** `GET /` answers `golem/screen/index.html`, and `/screen/…` serves the files under `golem/screen/` with their content types and nothing outside that directory. The files are found through the package, not the working directory.
+- **The files.** `golem/screen/index.html`, `screen.css` and `screen.js`, plus `art/golem-art.js`, the handoff's renderer trimmed to the clay direction. No frameworks, no build step, no CDN, and no rules in JavaScript.
+- **The look.** The handoff's tokens become CSS custom properties in `screen.css`. Nocturne's `.btn` and `.seg` classes are copied in without its Google Fonts `@import`. Inter Regular, Medium and SemiBold ship as WOFF2 under `golem/screen/fonts/` with their OFL licence.
+- **The scene.** One canvas at the device pixel ratio, drawn in the handoff's order: the room, the tray, the floor where `inside` is set, the runes, the shadows, the walls and blocks, Golem facing the last move, and the light.
+  - The static layer is cached per state.
+  - The cell size, the board insets and the three levels of detail follow the handoff, in the wide layout (≥ 1200 px).
+- **The socket.**
+  - On every open the page asks for `levels` and draws the state the server sends.
+  - It sends `load`, `move` and `restart`.
+  - On a drop it shows "Reconnecting…" and ignores keys without queuing them. It retries at 0.5, 1, 2 and 4 s, then every 5 s.
+- **Keys and focus,** as in the handoff's table:
+  - the arrows act only while the board has focus, and `event.repeat` is ignored;
+  - `R` restarts;
+  - the `Tab` order is fixed, and focus rings appear on `:focus-visible` only.
+- **The panels:**
+  - the picker: tiers and cards with miniatures, with solved marks kept in `localStorage`;
+  - the level plate and the step gauge (normal, warning, lost, solved);
+  - the key hints;
+  - the result panel for solved, lost on steps and lost on deadlock, with the next level;
+  - the error notice;
+  - the reconnecting overlay;
+  - the title screen.
+- **What changed.** The page compares the previous state with the new one only to name what happened: a move, a push, a bump, a block onto or off a rune, the stuck block of a deadlock. It never decides whether a move is legal. In this phase the stuck block is marked without animation.
 
 **DoD** (the concept's phase 2):
-- (Manual, owner) The owner passes ten training levels by hand on the screen.
-- (Manual, owner) A push into a corner shows lost on deadlock, and running out of steps shows lost on steps.
-- Every recorded solution replays to `solved` through the core.
+- (Manual, owner) The owner passes the ten training levels by hand on the screen.
+- (Manual, owner) A push into a corner shows lost on deadlock with the stuck block marked, and running out of steps shows lost on steps.
+- (Manual, owner) When the server restarts, the screen shows that it is reconnecting, then continues the game where it was.
 
-**Tests:** the page and its assets are served; the static files reference no external URL; the recorded solutions of all ten levels replay to `solved`.
+**Tests:**
+- `GET /` and every file the page references are served with their content types;
+- a path outside `golem/screen/` gets 404, encoded traversal included;
+- no file under `golem/screen/` references an external URL;
+- the fonts' licence ships with them.
+
+### v2.4 — The game screen: motion, the atlas and small windows
+
+**Status:** ⏳ planned.
+
+**Goal:** every action on the screen moves as the design specifies, and the screen fits smaller windows.
+
+**Tasks:**
+- `art/golem-fx.js`, from the handoff's poses and effects, and a tween scheduler in `screen.js`. Input never waits: a new state snaps the running tween to its end and starts the next one.
+- The handoff's motion table:
+  - idle and move;
+  - push, with the sliding block drawn outside the static layer;
+  - bump, with the "+1" chip and the keycap flash;
+  - a block onto and off a rune;
+  - solved, lost on steps, and lost on deadlock (spotlight, crack, lock);
+  - the steps warning, reconnecting and the error notice.
+- `prefers-reduced-motion`: only the short fades from the handoff's last column remain.
+- The atlas "All levels": a dialog with every tier. `Tab` and the arrows move between cards, `Enter` plays and `Esc` closes.
+- The compact layout under 1200 px, where the picker folds into a rail, and the narrow one under 900 px.
+- A fixture levels root under `tests/fixtures/` with a 20 × 20 training level (the handoff's large map), for the performance check with `GOLEM_LEVELS_DIR`.
+
+**DoD:**
+- (Manual, owner) Every moment of the motion table looks as the handoff specifies, and fast key presses never wait for an animation.
+- (Manual, owner) The 20 × 20 board holds 60 fps on the MacBook, and the screen works at 1024 × 700 and at 800 px wide.
+- (Manual, owner) With "Reduce motion" on in macOS, only fades remain.
+
+**Tests:** the fixture root's large level parses and loads over the WebSocket; the served files still reference no external URL.
 
 ## v3 — Robot language and interpreter: the Lua sandbox, execution and budgets
 
@@ -308,6 +391,7 @@ The game becomes reachable from the shell. Every program version and every run i
 **Tasks:**
 - `GET /api/runs` (training runs, newest first) and `GET /api/runs/{id}/frames`: the server rebuilds every world state from the trace through the core. A hidden run answers 404.
 - A replay mode in the screen: a run picker, play, pause, single steps, speed, a timeline with stops and swaps marked, the list of actions, and the robot's view (cells seen so far; the rest greyed out).
+- The replay follows the replay sketch in the design handoff ([design/golem-clay/README.md](design/golem-clay/README.md)), whose layout v2.3 already leaves room for. The frames come with the level's `inside`, as the WebSocket state does.
 
 **DoD** (the concept's phase 5, second half):
 - Any run can be replayed: the frames rebuilt from a trace end in the state that the run's report records.

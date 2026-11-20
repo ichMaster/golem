@@ -81,7 +81,7 @@ A **selector** is a phase (`v1.2` or `1.2`), a version (`v3` = all its phases), 
    - the ordered phases, grouped by version;
    - the filled-in phases, any reordering and the skips;
    - the sizing;
-   - the expected owner pauses: v2.2 (playing ten levels), v4.2 (a swap by hand), v5.2 (hidden levels),
+   - the expected owner pauses: v2.3 (playing ten levels), v2.4 (the motion and the small windows), v4.2 (a swap by hand), v5.2 (hidden levels),
      v5.3 (a replay), v6.1 (the isolation check), v6.2 and v7 (live Scribe sessions);
    - whether HARDEN runs.
 

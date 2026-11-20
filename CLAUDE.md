@@ -23,14 +23,14 @@ Read these before planning work. They are the project's contract with itself.
 
 ## Project status
 
-v1 (the game core) and v2.1 (the server and the human game over WebSocket) are built and released; v2.2 (the game screen) is next. Golem is a Sokoban-style sandbox in which an AI agent writes, runs and rewrites its own Lua program that drives a robot through puzzle levels.
+v1 (the game core) and v2.1 (the server and the human game over WebSocket) are built and released; v2.2–v2.4 (the game screen in the "Clay and stone" design) are next. Golem is a Sokoban-style sandbox in which an AI agent writes, runs and rewrites its own Lua program that drives a robot through puzzle levels.
 
 Latest release: v2.1.0 (phase v2.1 — the server and the human game over WebSocket).
 
 | Version | Phases | What it delivers |
 |---|---|---|
 | `v1` Game core | v1.1 skeleton + level format · v1.2 rules · v1.3 save, restore, replay | the rules as pure Python; the gates and CI |
-| `v2` Game for a human | v2.1 server + WebSocket · v2.2 game screen | the owner plays with the arrow keys |
+| `v2` Game for a human | v2.1 server + WebSocket · v2.2 the screen's data + ten levels · v2.3 game screen · v2.4 motion + small windows | the owner plays with the arrow keys |
 | `v3` Language and interpreter | v3.1 Lua sandbox (lupa spike first) · v3.2 execution, budgets, report | a hand-written program passes a tier-one level |
 | `v4` Stops and swap | v4.1 swap prototype · v4.2 stops + snapshot | the riskiest design step, prototyped first |
 | `v5` Validator and journal | v5.1 HTTP API + CLI · v5.2 validator + journal · v5.3 replay | `golem` from the shell; every version and run kept |

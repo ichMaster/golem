@@ -72,7 +72,7 @@ There are no other listeners and no other outbound connections. The game itself 
 
 - **Game core** (`golem/core/`, v1). Pure Python with no dependencies and no I/O beyond reading level text. It parses levels, holds an immutable world state, applies moves and pushes, counts steps, detects the corner deadlock and the win, saves and restores the state, and replays move sequences. Human moves, program commands, the validator and replays all go through it. The rules exist nowhere else.
 - **Server** (`golem/server/`, v2.1 and v5.1). A FastAPI app built by `create_app()` and run by uvicorn on `GOLEM_HOST:GOLEM_PORT` (`127.0.0.1:8700`). It serves the game screen's files, the WebSocket `/ws` for the human game and replays, and the HTTP API under `/api` for the CLI. The routes are thin: they parse input, call the core, the interpreter or the journal, and shape the JSON output.
-- **Game screen** (`golem/screen/`, v2.2 and v5.3). One HTML page, one script and one stylesheet, served by the server at `/`. A canvas draws the grid. The arrow keys send moves over `/ws`. A level picker, a step counter and a solved/lost banner complete the human game, and a replay mode plays back recorded runs. The page draws what the server sends and contains no game rules.
+- **Game screen** (`golem/screen/`, v2.3–v2.4 and v5.3). One HTML page with its script and stylesheet, two drawing scripts and local fonts, served by the server at `/`. A canvas draws the scene in the "Clay and stone" design. The arrow keys send moves over `/ws`. A level picker, a step gauge and a result panel complete the human game, and a replay mode plays back recorded runs. The page draws what the server sends and contains no game rules.
 - **Interpreter** (`golem/interp/`, v3 and v4). One Lua runtime per run, holding the sandbox environment, the `memory` table and the step and instruction counters. A Python driver resumes the program's coroutine, applies each robot command through the core, checks the stop conditions, and builds snapshots and run reports. Swapping a program loads a new chunk into the same runtime.
 - **Validator and journal** (`golem/journal/`, v5.2). The validator runs one program over the training and hidden sets with every stop off. The journal stores sessions, program versions (with the reason for each change), runs and validations in SQLite, and every run's trace as a JSON file.
 - **`golem` CLI** (`golem/cli.py`, v5.1). Typer + httpx. Each command is one HTTP request, and every response is printed as JSON. It reads program files from disk and sends their text, never their paths.
@@ -370,6 +370,20 @@ In non-interactive mode a tool call that needs a permission nobody can grant is 
 
 The page draws the map that the server sends: walls, floor, goals, boxes, boxes on goals and the robot. It shows the step count against the budget and the status with its reason. Keys: the arrows move, `R` restarts the level, and a picker loads a training level. The page holds no rules. It never decides whether a move is legal; it sends the key and draws the state that comes back.
 
+**The design** is "Clay and stone". Its sources:
+- the brief: `specification/design/game-screen-brief.md`;
+- the designer's handoff: `specification/design/golem-clay/`.
+  - Its `README.md` holds the final layout, tokens, copy and motion values.
+  - Its `.dc.html` files are references that open in a browser. They load `support.js`, which fetches libraries from a CDN, so they never become part of the page.
+
+The page's parts:
+- `art/golem-art.js` (v2.3) draws the scene from `map` and `inside`. The static layer (room, tray, floor, runes, shadows, walls, blocks) is cached per state, and each frame adds the glows, Golem and the light. It began as a copy of the handoff's renderer, trimmed to the clay direction.
+- `art/golem-fx.js` (v2.4) holds Golem's poses and the effects: dust, impact, rune ignition, flares, the crack and the lock.
+- `screen.js` holds the socket and its reconnect, the input and focus, the panels, and (v2.4) the tweens. It compares the previous state with the new one only to choose what to animate: a move, a push, a bump, a block onto or off a rune, the stuck block. It never decides legality, and input never waits for an animation.
+- `screen.css` holds the design tokens as CSS custom properties. `fonts/` holds Inter as WOFF2, under the OFL.
+
+Every file is served by the server from the package. None references an external URL, and a test checks this.
+
 **Replay** (v5.3) asks the server for a training run's frames (`GET /api/runs/{id}/frames`). The server rebuilds every world state from the trace through the core, so the page still holds no rules. The page offers play, pause, single steps and speed, a timeline with the stops and swaps marked, the list of actions, and the robot's view: the cells the robot has seen so far, with the rest greyed out. Hidden runs cannot be replayed.
 
 ## Contracts
@@ -486,11 +500,13 @@ golem/
     ROADMAP.md              # versions and phases with Goal/Tasks/DoD/Tests
     concept.en.md           # the original concept, the short overview
     concept.uk.md           # its Ukrainian translation, frozen
+    design/                 # the screen's brief; golem-clay/: the designer's handoff (a frozen reference)
     implementation/         # issues files and reports (generated by the skills)
   golem/
     core/                   # v1: level.py, levels.py, world.py, replay.py: the rules, stdlib only
     server/                 # v2.1: app.py (create_app, golem-server), config.py, ws.py; api.py (v5.1)
-    screen/                 # v2.2: index.html, screen.js, screen.css
+    screen/                 # v2.3: index.html, screen.js, screen.css; art/ (golem-art.js; golem-fx.js v2.4);
+                            # fonts/ (Inter WOFF2 + OFL licence)
     interp/                 # v3: sandbox.py, driver.py, report.py; run.py, stops.py, snapshot.py (v4)
     journal/                # v5.2: db.py, traces.py, validator.py
     cli.py                  # v5.1: the golem CLI

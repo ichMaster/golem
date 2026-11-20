@@ -101,7 +101,8 @@ ignored.
    - The automated gates are green, or `n/a` before v1.1. Never start on a red suite.
 8. **Flag the owner's work up front.** Every version stops for the owner's test (step 4). Several phases
    also have **Manual (owner)** checks:
-   - v2.2: playing ten levels;
+   - v2.3: playing ten levels;
+   - v2.4: the motion, the frame rate and the small windows;
    - v4.2: a swap by hand;
    - v5.2: writing the hidden levels;
    - v5.3: a replay;
@@ -119,13 +120,13 @@ ignored.
    Then run. Don't re-confirm before each sub-step; pause only for the blockers in the rules below.
 
 **Worked example:** `/ship-phase v4.1,v3` on the branch `dev`, in a repo where v1 and v2 are released
-(tags `v1.3.0` and `v2.2.0`).
+(tags `v1.3.0` and `v2.4.0`).
 
 ```
 selectors : v4.1 · v3
 expanded  : v4.1 | v3.1 v3.2
 filled    : (nothing missing below v4.1 beyond the set)
-skipped   : v1.1–v2.2                ← released (v1.3.0, v2.2.0)
+skipped   : v1.1–v2.4                ← released (v1.3.0, v2.4.0)
 ordered   : v3.1 → v3.2 → v4.1      (v4.1 was listed first; roadmap order is required)
 branch    : dev                      ← every commit, push and tag; no other branch is touched
 

@@ -48,7 +48,7 @@ The last version (v8) asks the same question about several agents that have to c
 - A full map, absolute coordinates or any other shortcut for the robot. The partial view is the point.
 - A model call per move, or an agent that watches the run step by step. The agent acts only at stops and after runs.
 - A networked or multi-user game: no accounts, no access from other machines, no hosting.
-- Graphics beyond a grid on a canvas: no frameworks, no build step, no CDN for the screen. Wrapping the page with pywebview is possible but outside this roadmap.
+- A graphics stack for the screen: no frameworks, no game engine, no build step and no CDN. The art is drawn on a canvas by plain scripts served with the page. Wrapping the page with pywebview is possible but outside this roadmap.
 - Training or fine-tuning a model. The agent is an off-the-shelf Claude Code session; only its program and its notes change.
 - Other agents. The interface allows the agent to be replaced, but this roadmap builds only Scribe (and, in v8, several Scribes).
 
