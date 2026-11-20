@@ -25,7 +25,7 @@ v1 and v2.1 are built and released. Latest release: v2.1.0 (v2.1).
 | v1.2 | World state and the rules | ✅ released | v1.3.0 |
 | v1.3 | Save, restore and replay | ✅ released | v1.3.0 |
 | v2.1 | The server and the human game over WebSocket | ✅ released | v2.1.0 |
-| v2.2 | The text game screen | ⏳ planned | — |
+| v2.2 | The text game screen | ✅ released | v2.2.0 |
 | v2.3 | Lua runs: the lupa spike, a minimal sandbox and the driver | ⏳ planned | — |
 | v2.4 | The swap prototype: `memory` outside the program | ⏳ planned | — |
 | v3.1 | The screen's data from the server, and ten levels | ⏳ planned | — |
@@ -136,7 +136,7 @@ This version introduces the server process that every later client reaches. The 
 
 ### v2.2 — The text game screen
 
-**Status:** ⏳ planned.
+**Status:** ✅ released in v2.2.0.
 
 **Goal:** the owner plays the training levels with the arrow keys on a plain text page that the server serves.
 

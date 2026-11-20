@@ -1,6 +1,6 @@
 ---
 name: release-version
-description: Bump the project version (ROADMAP phase vA.B -> A.B.0, post-release fix -> A.B.C), update VERSION / pyproject.toml / uv.lock / RELEASE.txt / the CLAUDE.md status line, commit, create an annotated tag, and push.
+description: Bump the project version (ROADMAP phase vA.B -> A.B.0, post-release fix -> A.B.C), update VERSION / pyproject.toml / uv.lock / RELEASE.txt / the CLAUDE.md status line / the ROADMAP status lines, commit, create an annotated tag, and push.
 ---
 
 # Skill: Release Version
@@ -67,7 +67,10 @@ Touch only files that exist, except `VERSION` and `RELEASE.txt`, which are creat
 3. **`README.md`:** update it only if it already carries a version string. Never add one.
 4. **`CLAUDE.md`:** update the `Latest release:` line under **Project status**, e.g.
    `Latest release: v1.1.0 (phase v1.1 — project skeleton and the level format).`
-5. **`RELEASE.txt`:** prepend a block at the top (after any header) and keep the older entries unchanged:
+5. **`specification/ROADMAP.md`:** mark every phase the release covers as released, both in the status
+   table (`| vA.B | <title> | ✅ released | v<version> |`) and in its section
+   (`**Status:** ✅ released in v<version>.`). `tests/test_roadmap.py` checks this against `VERSION`.
+6. **`RELEASE.txt`:** prepend a block at the top (after any header) and keep the older entries unchanged:
 
    ```
    Version <version> (YYYY-MM-DD)
@@ -81,7 +84,7 @@ Touch only files that exist, except `VERSION` and `RELEASE.txt`, which are creat
 Stage only the version files that **exist**. `git add` is fatal on a pathspec that matches nothing:
 
 ```bash
-for f in VERSION RELEASE.txt README.md CLAUDE.md pyproject.toml uv.lock; do
+for f in VERSION RELEASE.txt README.md CLAUDE.md pyproject.toml uv.lock specification/ROADMAP.md; do
   if [ -e "$f" ]; then git add "$f"; fi
 done
 ```
@@ -141,7 +144,7 @@ Released v<version>
   DoD confirmed by the owner (or explicitly waived, and noted).
 - **Annotated tags only** (`git tag -a`).
 - **Version metadata only.** This skill touches `VERSION`, `pyproject.toml`, `uv.lock`, `RELEASE.txt`,
-  `README.md` and CLAUDE.md's status line, never the game, the interpreter, the server, the orchestrator or
-  the levels.
+  `README.md`, CLAUDE.md's status line and the roadmap's status lines, never the game, the interpreter,
+  the server, the orchestrator or the levels.
 - **Confirm the changelog** when it is auto-generated.
 - **Plain-text release notes** in `RELEASE.txt`.
