@@ -65,6 +65,17 @@ def test_the_page_answers_head_like_the_files(tmp_path):
         assert response.content == b""
 
 
+
+@pytest.mark.parametrize("url", ["/", "/screen/screen.js"])
+def test_the_page_and_its_files_are_revalidated_on_every_load(tmp_path, url):
+    # code review #1: without Cache-Control a browser may keep running an old screen.js
+    client = client_for(tmp_path)
+    response = client.get(url)
+    assert response.headers["cache-control"] == "no-cache"
+    again = client.get(url, headers={"If-None-Match": response.headers["etag"]})
+    assert again.status_code == 304
+    assert again.headers["cache-control"] == "no-cache"
+
 def test_every_file_the_page_references_is_served_with_its_content_type(tmp_path):
     client = client_for(tmp_path)
     references = page_references()

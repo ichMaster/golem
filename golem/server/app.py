@@ -12,7 +12,7 @@ from pathlib import Path
 
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 from starlette.exceptions import HTTPException
 
@@ -112,18 +112,32 @@ def _install_level_routes(app: FastAPI, levels_dir: Path) -> None:
         return {"levels": entries}
 
 
+class _ScreenFiles(StaticFiles):
+    """The screen's files, each sent with ``Cache-Control: no-cache``.
+
+    The browser then revalidates every load (a cheap ``304`` when nothing changed), so a changed
+    ``screen.js`` is never run from a stale cache (v2.2 code review #1).
+    """
+
+    def file_response(self, full_path, stat_result, scope, status_code: int = 200) -> Response:
+        response = super().file_response(full_path, stat_result, scope, status_code)
+        response.headers["Cache-Control"] = "no-cache"
+        return response
+
+
 def _install_screen_routes(app: FastAPI) -> None:
     """``GET /`` is the page; ``/screen/…`` serves the files of ``golem/screen/`` and nothing else.
 
     ``StaticFiles`` refuses a path that resolves outside its directory, lists no directory, and
     raises the 404 that the app's handler turns into ``{"error", "detail"}``.
     """
+    files = _ScreenFiles(directory=SCREEN_DIR)
 
     @app.api_route("/", methods=["GET", "HEAD"], include_in_schema=False)
-    def screen_page() -> FileResponse:
-        return FileResponse(SCREEN_DIR / "index.html", media_type="text/html")
+    async def screen_page(request: Request) -> Response:
+        return await files.get_response("index.html", request.scope)
 
-    app.mount("/screen", StaticFiles(directory=SCREEN_DIR), name="screen")
+    app.mount("/screen", files, name="screen")
 
 
 def _install_error_handlers(app: FastAPI) -> None:

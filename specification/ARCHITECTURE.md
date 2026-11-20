@@ -315,7 +315,7 @@ A training level that doesn't parse gives `500 level_error` with the parse error
 
 **Routes outside the CLI:**
 
-- `GET /` answers the game screen's page, and `/screen/<path>` serves the files under `golem/screen/` with their content types (v2.2). The directory is found through the package, not the working directory. A path that resolves outside it (raw or percent-encoded `..`), a missing file and the bare directory answer `404 not_found`, and no directory is listed.
+- `GET /` answers the game screen's page, and `/screen/<path>` serves the files under `golem/screen/` with their content types (v2.2). The directory is found through the package, not the working directory. A path that resolves outside it (raw or percent-encoded `..`), a missing file and the bare directory answer `404 not_found`, and no directory is listed. Every page file is sent with `Cache-Control: no-cache`, so the browser revalidates it on each load (a `304` when it has not changed) and never runs a stale script.
 - `POST /api/sessions` and `POST /api/sessions/{id}/close` are **owner routes**: they need Bearer `GOLEM_OWNER_TOKEN` and are used only by the orchestrator.
 - `GET /api/runs` and `GET /api/runs/{id}/frames` serve the screen's replay (v5.3). They list and rebuild training runs only, and answer `404` for a hidden run. A training trace holds nothing that the run report does not already give the agent.
 
