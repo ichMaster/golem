@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet><link rel="stylesheet" href="_ds/nocturne-f0321a84-d3e2-4056-979b-79b1016e5a42/styles.css"><script src="./golem-clay-fx.js"></script><style>html,body{margin:0;background:#0f1019}a{color:#b5abfc}a:hover{color:#d2cefd}</style></helmet>
+<div data-screen-label="{{ label }}" style="position: relative; width: {{ w }}px; height: {{ h }}px; overflow: hidden; background: #0f1019; color: var(--color-text); font-family: var(--font-body); font-size: 13px; line-height: 1.45; -webkit-font-smoothing: antialiased;">
+  <div style="position: absolute; inset: 0; filter: {{ sceneFilter }};">
+    <x-import component-from-global-scope="golem-scene" from="./golem-art.js" direction="clay" map="{{ map }}" facing="{{ facing }}" inset="{{ inset }}" cellmax="{{ cellmax }}" pose="{{ pose }}" fx="{{ fx }}" focus="{{ focus }}" fog="{{ fog }}" phase="{{ phase }}" still="{{ still }}" style="position: absolute; inset: 0;" hint-size="100%,100%"></x-import>
+  </div>
+
+  <sc-if value="{{ wide }}" hint-placeholder-val="{{ true }}">
+  <aside aria-label="Levels" style="position: absolute; left: 20px; top: 20px; bottom: 20px; width: 300px; display: flex; flex-direction: column; border-radius: 16px; background: rgba(30,24,26,0.64); box-shadow: 0 0 0 1px rgba(255,214,170,0.10), 0 24px 60px rgba(0,0,0,0.45); backdrop-filter: blur(20px) saturate(1.15); -webkit-backdrop-filter: blur(20px) saturate(1.15); overflow: hidden;">
+    <div style="display: flex; align-items: center; gap: 9px; padding: 18px 18px 12px;">
+      <svg width="24" height="24" viewBox="0 0 64 64" aria-hidden="true"><path d="M14 56 C10 34 18 10 32 10 C46 10 54 34 50 56 Z" style="fill: #b8683f"></path><path d="M32 14 L32 22 M27 16 L32 20 L37 16" style="fill: none; stroke: #d6d0ff; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round;"></path><ellipse cx="25" cy="32" rx="4" ry="4.6" style="fill: #35180e"></ellipse><ellipse cx="39" cy="32" rx="4" ry="4.6" style="fill: #35180e"></ellipse><circle cx="25.5" cy="32" r="1.6" style="fill: #ece9ff"></circle><circle cx="39.5" cy="32" r="1.6" style="fill: #ece9ff"></circle></svg>
+      <span style="font-size: 16px; font-weight: 500; letter-spacing: -0.01em;">Golem</span>
+      <span role="status" style="margin-left: auto; display: inline-flex; align-items: center; gap: 6px; font-size: 11px; color: {{ connColor }}; white-space: nowrap;"><span style="width: 7px; height: 7px; border-radius: 50%; background: {{ connDot }}; box-shadow: 0 0 0 3px {{ connHalo }}, 0 0 8px {{ connDot }};"></span>{{ connLabel }}</span>
+    </div>
+    <div style="padding: 0 18px 14px;">
+      <div role="tablist" aria-label="Mode" style="display: flex; padding: 3px; gap: 3px; border-radius: 10px; background: rgba(0,0,0,0.25); box-shadow: inset 0 0 0 1px rgba(233,233,237,0.06);">
+        <button type="button" role="tab" aria-selected="{{ playSel }}" style="flex: 1; height: 28px; border: 0; border-radius: 7px; background: {{ playBg }}; box-shadow: {{ playRing }}; color: {{ playColor }}; font: 500 12px/1 var(--font-body); cursor: pointer;">Play</button>
+        <button type="button" role="tab" aria-selected="{{ replaySel }}" style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; height: 28px; border: 0; border-radius: 7px; background: {{ replayBg }}; box-shadow: {{ replayRing }}; color: {{ replayColor }}; font: 500 12px/1 var(--font-body); cursor: pointer;">Replay<sc-if value="{{ notReplay }}" hint-placeholder-val="{{ true }}"><span style="font-size: 10px; font-weight: 400; color: var(--color-neutral-600);">later</span></sc-if></button>
+      </div>
+    </div>
+    <div style="height: 1px; margin: 0 18px; background: linear-gradient(to right, transparent, rgba(255,214,170,0.14) 48px, rgba(255,214,170,0.14) calc(100% - 48px), transparent);"></div>
+
+    <sc-if value="{{ notReplay }}" hint-placeholder-val="{{ true }}">
+    <div style="flex: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column; gap: 6px; padding: 14px 12px;">
+      <sc-for list="{{ tiers }}" as="tr" hint-placeholder-count="3">
+        <sc-if value="{{ tr.collapsed }}" hint-placeholder-val="{{ false }}">
+          <button type="button" aria-expanded="false" style="display: flex; align-items: center; gap: 8px; padding: 9px 10px; border: 0; border-radius: 10px; background: rgba(255,255,255,0.025); box-shadow: inset 0 0 0 1px rgba(233,233,237,0.06); color: inherit; font: inherit; text-align: left; cursor: pointer;" style-hover="background: rgba(255,255,255,0.05);">
+            <span style="font-size: 11px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: var(--color-neutral-400); white-space: nowrap;">{{ tr.label }}</span>
+            <span style="display: flex; gap: 3px; margin-left: 4px;"><sc-for list="{{ tr.dots }}" as="d" hint-placeholder-count="5"><span style="width: 6px; height: 6px; border-radius: 50%; background: {{ d.bg }}; box-shadow: {{ d.glow }};"></span></sc-for></span>
+            <span style="margin-left: auto; font-size: 11px; color: var(--color-neutral-500); white-space: nowrap;">{{ tr.summary }}</span>
+            <svg width="12" height="12" viewBox="0 0 256 256" style="fill: none; stroke: var(--color-neutral-500); stroke-width: 22; stroke-linecap: round; stroke-linejoin: round;"><polyline points="96 48 176 128 96 208"></polyline></svg>
+          </button>
+        </sc-if>
+        <sc-if value="{{ tr.expanded }}" hint-placeholder-val="{{ true }}">
+          <div style="display: flex; align-items: baseline; justify-content: space-between; padding: 8px 4px 2px;">
+            <span style="font-size: 11px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: var(--color-neutral-300); white-space: nowrap;">{{ tr.label }}</span>
+            <span style="font-size: 11px; color: var(--color-neutral-500); white-space: nowrap;">{{ tr.summary }}</span>
+          </div>
+          <sc-for list="{{ tr.cards }}" as="cd" hint-placeholder-count="5">
+            <button type="button" aria-current="{{ cd.aria }}" style="display: grid; grid-template-columns: 92px minmax(0,1fr); gap: 12px; align-items: center; padding: 7px; border: 0; border-radius: 12px; background: {{ cd.bg }}; box-shadow: {{ cd.ring }}; color: inherit; font: inherit; text-align: left; cursor: pointer;" style-hover="background: rgba(255,255,255,0.06);">
+              <span style="display: grid; place-items: center; width: 92px; height: 66px; border-radius: 8px; background: #2a221f; box-shadow: inset 0 0 0 1px rgba(255,214,170,0.07);"><x-import component-from-global-scope="golem-mini" from="./golem-art.js" direction="clay" map="{{ cd.map }}" cell="{{ cd.cell }}" hint-size="80px,58px"></x-import></span>
+              <span style="display: flex; flex-direction: column; gap: 3px; min-width: 0;">
+                <span style="display: flex; align-items: center; gap: 7px;"><span style="font-size: 15px; font-weight: 500; color: {{ cd.nameColor }}; white-space: nowrap;">{{ cd.name }}</span><sc-if value="{{ cd.solved }}" hint-placeholder-val="{{ false }}"><svg width="14" height="14" viewBox="0 0 256 256" aria-label="Solved" style="fill: none; stroke: #5cc49b; stroke-width: 24; stroke-linecap: round; stroke-linejoin: round;"><circle cx="128" cy="128" r="100"></circle><polyline points="84 132 114 162 172 100"></polyline></svg></sc-if></span>
+                <span style="font-size: 12px; color: var(--color-neutral-500); font-variant-numeric: tabular-nums; white-space: nowrap;">{{ cd.size }} · {{ cd.budget }} steps</span>
+                <sc-if value="{{ cd.current }}" hint-placeholder-val="{{ false }}"><span style="align-self: flex-start; margin-top: 2px; font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; padding: 2px 7px; border-radius: 5px; background: rgba(145,132,217,0.18); color: #d2cefd;">Playing</span></sc-if>
+              </span>
+            </button>
+          </sc-for>
+        </sc-if>
+        <sc-if value="{{ tr.later }}" hint-placeholder-val="{{ false }}">
+          <div style="display: flex; align-items: baseline; justify-content: space-between; padding: 10px 4px 2px;"><span style="font-size: 11px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: var(--color-neutral-500);">{{ tr.label }}</span><span style="font-size: 11px; color: var(--color-neutral-600);">arrives later</span></div>
+          <div style="display: grid; grid-template-columns: 92px minmax(0,1fr); gap: 12px; align-items: center; padding: 7px; border-radius: 12px; border: 1px dashed rgba(255,214,170,0.14);"><span style="width: 92px; height: 44px; border-radius: 8px; background: repeating-linear-gradient(135deg, rgba(255,214,170,0.05) 0 6px, transparent 6px 12px);"></span><span style="display: flex; flex-direction: column; gap: 6px;"><span style="height: 8px; width: 60%; border-radius: 4px; background: rgba(233,233,237,0.08);"></span><span style="height: 6px; width: 85%; border-radius: 3px; background: rgba(233,233,237,0.05);"></span></span></div>
+        </sc-if>
+      </sc-for>
+    </div>
+    <div style="padding: 0 18px 16px;"><button type="button" class="btn btn-secondary btn-block" style="height: 34px; border-color: rgba(255,214,170,0.16);">All levels<span style="margin-left: auto; font-size: 11px; color: var(--color-neutral-500);">3 tiers</span></button></div>
+    </sc-if>
+
+    <sc-if value="{{ replay }}" hint-placeholder-val="{{ false }}">
+    <div style="flex: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column; gap: 6px; padding: 14px 12px;">
+      <div style="display: flex; align-items: baseline; justify-content: space-between; padding: 0 4px 2px;"><span style="font-size: 11px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: var(--color-neutral-300);">Recent runs</span><span style="font-size: 11px; color: var(--color-neutral-500);">today</span></div>
+      <sc-for list="{{ runs }}" as="rn" hint-placeholder-count="6">
+        <button type="button" aria-current="{{ rn.aria }}" style="display: grid; grid-template-columns: 64px minmax(0,1fr) auto; gap: 10px; align-items: center; padding: 6px 10px 6px 6px; border: 0; border-radius: 12px; background: {{ rn.bg }}; box-shadow: {{ rn.ring }}; color: inherit; font: inherit; text-align: left; cursor: pointer;" style-hover="background: rgba(255,255,255,0.06);">
+          <span style="display: grid; place-items: center; width: 64px; height: 48px; border-radius: 7px; background: #2a221f;"><x-import component-from-global-scope="golem-mini" from="./golem-art.js" direction="clay" map="{{ rn.map }}" cell="5" hint-size="50px,40px"></x-import></span>
+          <span style="display: flex; flex-direction: column; gap: 2px; min-width: 0;"><span style="font-size: 14px; font-weight: 500; color: {{ rn.nameColor }};">{{ rn.id }}</span><span style="font-size: 11px; color: var(--color-neutral-500); white-space: nowrap;">{{ rn.level }} · {{ rn.prog }}</span></span>
+          <span style="display: flex; flex-direction: column; align-items: flex-end; gap: 4px;"><span style="font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; padding: 2px 7px; border-radius: 5px; background: {{ rn.tint }}; color: {{ rn.color }};">{{ rn.result }}</span><span style="font-size: 11px; color: var(--color-neutral-500); font-variant-numeric: tabular-nums;">{{ rn.steps }} steps</span></span>
+        </button>
+      </sc-for>
+    </div>
+    </sc-if>
+  </aside>
+  </sc-if>
+
+  <sc-if value="{{ compact }}" hint-placeholder-val="{{ false }}">
+  <aside aria-label="Levels" style="position: absolute; left: 14px; top: 14px; bottom: 14px; width: 60px; display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 14px 0; border-radius: 14px; background: rgba(30,24,26,0.64); box-shadow: 0 0 0 1px rgba(255,214,170,0.10), 0 18px 40px rgba(0,0,0,0.45); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);">
+    <svg width="26" height="26" viewBox="0 0 64 64" aria-hidden="true"><path d="M14 56 C10 34 18 10 32 10 C46 10 54 34 50 56 Z" style="fill: #b8683f"></path><path d="M32 14 L32 22 M27 16 L32 20 L37 16" style="fill: none; stroke: #d6d0ff; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round;"></path><ellipse cx="25" cy="32" rx="4" ry="4.6" style="fill: #35180e"></ellipse><ellipse cx="39" cy="32" rx="4" ry="4.6" style="fill: #35180e"></ellipse></svg>
+    <button type="button" aria-label="Levels" class="btn btn-secondary btn-icon" style="width: 40px; height: 40px; border-color: rgba(255,214,170,0.16);"><svg width="18" height="18" viewBox="0 0 256 256" style="fill: none; stroke: currentColor; stroke-width: 16; stroke-linejoin: round;"><rect x="40" y="40" width="72" height="72" rx="8"></rect><rect x="144" y="40" width="72" height="72" rx="8"></rect><rect x="40" y="144" width="72" height="72" rx="8"></rect><rect x="144" y="144" width="72" height="72" rx="8"></rect></svg></button>
+    <sc-for list="{{ railTiers }}" as="rt" hint-placeholder-count="3">
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 5px;"><span style="font-size: 10px; font-weight: 500; letter-spacing: 0.08em; color: {{ rt.color }};">{{ rt.short }}</span><sc-for list="{{ rt.dots }}" as="d" hint-placeholder-count="5"><span style="width: 6px; height: 6px; border-radius: 50%; background: {{ d.bg }}; box-shadow: {{ d.glow }};"></span></sc-for></div>
+    </sc-for>
+    <span style="margin-top: auto; width: 8px; height: 8px; border-radius: 50%; background: {{ connDot }}; box-shadow: 0 0 0 3px {{ connHalo }};" title="{{ connLabel }}"></span>
+  </aside>
+  </sc-if>
+
+  <sc-if value="{{ hud }}" hint-placeholder-val="{{ true }}">
+    <div style="position: absolute; left: {{ plateX }}px; top: {{ plateY }}px; display: flex; flex-direction: column; gap: 4px;">
+      <span style="font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: #d9b48f; white-space: nowrap;">{{ kicker }}</span>
+      <span style="font-size: {{ nameSize }}px; font-weight: 500; letter-spacing: -0.025em; line-height: 1.05; text-shadow: 0 2px 18px rgba(0,0,0,0.6); white-space: nowrap;">{{ title }}</span>
+      <span style="font-size: 13px; color: var(--color-neutral-400); white-space: nowrap;">{{ sub }}</span>
+    </div>
+    <div style="position: absolute; right: {{ gaugeR }}px; top: {{ plateY }}px; width: {{ gaugeW }}px; display: flex; flex-direction: column; gap: 8px; padding: 10px 12px 12px; border-radius: 12px; background: {{ gaugeBg }}; box-shadow: {{ gaugeRing }};">
+      <div style="display: flex; align-items: baseline; justify-content: space-between;">
+        <span style="font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--color-neutral-500);">{{ gaugeLabel }}</span>
+        <sc-if value="{{ warn }}" hint-placeholder-val="{{ false }}"><span style="display: inline-flex; align-items: center; gap: 5px; padding: 2px 8px 2px 6px; border-radius: 6px; background: rgba(226,164,76,0.16); box-shadow: inset 0 0 0 1px rgba(226,164,76,0.5); color: #f0c27e; font-size: 11px; font-weight: 500;"><svg width="11" height="11" viewBox="0 0 256 256" style="fill: none; stroke: currentColor; stroke-width: 22; stroke-linecap: round; stroke-linejoin: round;"><path d="M64 40H192L128 128ZM128 128L192 216H64Z"></path></svg>{{ leftLabel }}</span></sc-if>
+        <sc-if value="{{ notWarn }}" hint-placeholder-val="{{ true }}"><span style="font-size: 12px; color: {{ leftColor }}; font-variant-numeric: tabular-nums;">{{ leftLabel }}</span></sc-if>
+      </div>
+      <div style="display: flex; align-items: baseline; gap: 6px; font-variant-numeric: tabular-nums;">
+        <span style="font-size: {{ numSize }}px; font-weight: 500; letter-spacing: -0.03em; line-height: 1; color: {{ numColor }}; text-shadow: 0 2px 18px rgba(0,0,0,0.6), 0 0 {{ numGlow }}px {{ numColor }};">{{ steps }}</span>
+        <span style="font-size: 18px; color: var(--color-neutral-500);">/ {{ budget }}</span>
+        <sc-if value="{{ bumped }}" hint-placeholder-val="{{ false }}"><span style="margin-left: 4px; align-self: center; font-size: 11px; font-weight: 600; padding: 2px 6px; border-radius: 5px; background: rgba(255,214,170,0.16); color: #ffd9b0;">+1</span></sc-if>
+      </div>
+      <div style="display: flex; gap: 3px; margin-top: 2px;">
+        <sc-for list="{{ ticks }}" as="tk" hint-placeholder-count="30"><span style="flex: 1; height: 16px; border-radius: 2px; background: {{ tk.bg }}; box-shadow: {{ tk.glow }};"></span></sc-for>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ showKeys }}" hint-placeholder-val="{{ true }}">
+    <div style="position: absolute; left: {{ keysL }}px; right: {{ keysR }}px; bottom: 22px; display: flex; justify-content: center; opacity: {{ keysOp }};">
+      <div style="display: flex; align-items: center; gap: 14px; padding: 9px 16px 9px 12px; border-radius: 14px; background: rgba(30,24,26,0.6); box-shadow: 0 0 0 1px rgba(255,214,170,0.10), 0 14px 36px rgba(0,0,0,0.4); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); font-size: 12px; color: var(--color-neutral-400);">
+        <div style="display: grid; grid-template-columns: repeat(3, 28px); grid-template-rows: 26px 26px; gap: 3px;">
+          <kbd style="grid-column: 2; grid-row: 1; display: grid; place-items: center; border-radius: 6px; background: linear-gradient(#4a3d36, #33292a); box-shadow: inset 0 1px 0 rgba(255,226,196,0.14), 0 2px 0 #140f0f, 0 0 0 1px #54473d; color: #f3e6d8; font: 500 12px/1 var(--font-body);">↑</kbd>
+          <kbd style="grid-column: 1; grid-row: 2; display: grid; place-items: center; border-radius: 6px; background: {{ keyW }}; box-shadow: inset 0 1px 0 rgba(255,226,196,0.14), 0 2px 0 #140f0f, 0 0 0 1px #54473d; color: #f3e6d8; font: 500 12px/1 var(--font-body);">←</kbd>
+          <kbd style="grid-column: 2; grid-row: 2; display: grid; place-items: center; border-radius: 6px; background: linear-gradient(#4a3d36, #33292a); box-shadow: inset 0 1px 0 rgba(255,226,196,0.14), 0 2px 0 #140f0f, 0 0 0 1px #54473d; color: #f3e6d8; font: 500 12px/1 var(--font-body);">↓</kbd>
+          <kbd style="grid-column: 3; grid-row: 2; display: grid; place-items: center; border-radius: 6px; background: {{ keyE }}; box-shadow: inset 0 1px 0 rgba(255,226,196,0.14), 0 2px 0 #140f0f, 0 0 0 1px #54473d; color: #f3e6d8; font: 500 12px/1 var(--font-body);">→</kbd>
+        </div>
+        <span>move</span>
+        <span style="width: 1px; height: 22px; background: rgba(255,214,170,0.14);"></span>
+        <kbd style="display: grid; place-items: center; width: 30px; height: 28px; border-radius: 6px; background: linear-gradient(#4a3d36, #33292a); box-shadow: inset 0 1px 0 rgba(255,226,196,0.14), 0 2px 0 #140f0f, 0 0 0 1px #54473d; color: #f3e6d8; font: 500 12px/1 var(--font-body);">R</kbd>
+        <span>restart</span>
+        <span style="width: 1px; height: 22px; background: rgba(255,214,170,0.14);"></span>
+        <span style="display: inline-flex; align-items: center; gap: 6px; color: var(--color-neutral-500);"><span style="width: 6px; height: 6px; border-radius: 50%; background: {{ focusDot }};"></span>{{ focusLabel }}</span>
+      </div>
+    </div>
+  </sc-if>
+  <sc-if value="{{ showResult }}" hint-placeholder-val="{{ false }}">
+    <div style="position: absolute; left: 340px; right: 0; bottom: 30px; display: flex; justify-content: center;">
+      <div role="status" style="width: 680px; display: flex; align-items: center; gap: 18px; padding: 18px 18px 18px 18px; border-radius: 20px; background: rgba(30,24,26,0.72); box-shadow: 0 0 0 1px {{ rColor }}, 0 0 48px {{ rGlow }}, 0 24px 60px rgba(0,0,0,0.55); backdrop-filter: blur(22px) saturate(1.2); -webkit-backdrop-filter: blur(22px) saturate(1.2);">
+        <span style="flex: none; position: relative; display: grid; place-items: center; width: 64px; height: 64px; border-radius: 50%; background: radial-gradient(circle at 40% 35%, {{ rTint }}, rgba(0,0,0,0.2)); box-shadow: inset 0 0 0 2px {{ rColor }}, 0 0 24px {{ rGlow }}; color: {{ rColor }};">
+          <sc-if value="{{ iconCheck }}" hint-placeholder-val="{{ false }}"><svg width="30" height="30" viewBox="0 0 256 256" style="fill: none; stroke: currentColor; stroke-width: 18; stroke-linecap: round; stroke-linejoin: round;"><polyline points="72 136 112 176 192 88"></polyline></svg></sc-if>
+          <sc-if value="{{ iconHour }}" hint-placeholder-val="{{ false }}"><svg width="28" height="28" viewBox="0 0 256 256" style="fill: none; stroke: currentColor; stroke-width: 16; stroke-linecap: round; stroke-linejoin: round;"><path d="M64 40H192L128 128ZM128 128L192 216H64Z"></path></svg></sc-if>
+          <sc-if value="{{ iconLock }}" hint-placeholder-val="{{ false }}"><svg width="28" height="28" viewBox="0 0 256 256" style="fill: none; stroke: currentColor; stroke-width: 16; stroke-linecap: round; stroke-linejoin: round;"><rect x="48" y="112" width="160" height="104" rx="12"></rect><path d="M88 112V80a40 40 0 0 1 80 0v32"></path></svg></sc-if>
+        </span>
+        <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px;">
+          <span style="font-size: 24px; font-weight: 500; letter-spacing: -0.02em; line-height: 1.15;">{{ rTitle }}</span>
+          <span style="font-size: 13px; color: var(--color-neutral-400); text-wrap: pretty;">{{ rSub }}</span>
+        </div>
+        <div style="flex: none; display: flex; flex-direction: column; gap: 6px; width: 170px;">
+          <sc-if value="{{ rWon }}" hint-placeholder-val="{{ false }}">
+            <button type="button" class="btn btn-primary" style="height: 36px; justify-content: space-between; background: rgba(145,132,217,0.12);">Next level<span style="display: inline-flex; align-items: center; gap: 6px;">t2-04<svg width="14" height="14" viewBox="0 0 256 256" style="fill: none; stroke: currentColor; stroke-width: 20; stroke-linecap: round; stroke-linejoin: round;"><line x1="40" y1="128" x2="216" y2="128"></line><polyline points="144 56 216 128 144 200"></polyline></svg></span></button>
+            <button type="button" class="btn btn-secondary" style="height: 36px; justify-content: space-between; border-color: rgba(255,214,170,0.18);">Restart<kbd style="display: grid; place-items: center; width: 24px; height: 22px; border-radius: 5px; background: linear-gradient(#4a3d36, #33292a); box-shadow: inset 0 1px 0 rgba(255,226,196,0.14), 0 0 0 1px #54473d; font: 500 11px/1 var(--font-body); color: #f3e6d8;">R</kbd></button>
+          </sc-if>
+          <sc-if value="{{ rLost }}" hint-placeholder-val="{{ false }}">
+            <button type="button" class="btn btn-primary" style="height: 36px; justify-content: space-between; background: rgba(145,132,217,0.12);">Restart<kbd style="display: grid; place-items: center; width: 24px; height: 22px; border-radius: 5px; background: linear-gradient(#4a3d36, #33292a); box-shadow: inset 0 1px 0 rgba(255,226,196,0.14), 0 0 0 1px #54473d; font: 500 11px/1 var(--font-body); color: #f3e6d8;">R</kbd></button>
+            <button type="button" class="btn btn-secondary" style="height: 36px; justify-content: space-between; border-color: rgba(255,214,170,0.18);">Another level<svg width="14" height="14" viewBox="0 0 256 256" style="fill: none; stroke: currentColor; stroke-width: 16; stroke-linejoin: round;"><rect x="40" y="40" width="72" height="72" rx="8"></rect><rect x="144" y="40" width="72" height="72" rx="8"></rect><rect x="40" y="144" width="72" height="72" rx="8"></rect><rect x="144" y="144" width="72" height="72" rx="8"></rect></svg></button>
+          </sc-if>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ showError }}" hint-placeholder-val="{{ false }}">
+    <div role="alert" style="position: absolute; right: 36px; top: 150px; width: 320px; display: flex; align-items: flex-start; gap: 10px; padding: 12px 10px 12px 14px; border-radius: 12px; background: rgba(30,24,26,0.78); box-shadow: 0 0 0 1px rgba(236,125,138,0.45), 0 16px 40px rgba(0,0,0,0.5); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);">
+      <span style="flex: none; padding-top: 1px; color: #ec7d8a;"><svg width="18" height="18" viewBox="0 0 256 256" style="fill: none; stroke: currentColor; stroke-width: 18; stroke-linecap: round;"><circle cx="128" cy="128" r="96"></circle><line x1="128" y1="80" x2="128" y2="136"></line><line x1="128" y1="172" x2="128" y2="174"></line></svg></span>
+      <span style="flex: 1; display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 14px; font-weight: 500;">Unknown level</span><span style="font-size: 12px; color: var(--color-neutral-400);">The server sent an error. Play continues.</span></span>
+      <button type="button" aria-label="Dismiss" class="btn btn-ghost" style="width: 26px; height: 26px; padding: 0; color: var(--color-neutral-400);"><svg width="12" height="12" viewBox="0 0 256 256" style="fill: none; stroke: currentColor; stroke-width: 22; stroke-linecap: round;"><line x1="200" y1="56" x2="56" y2="200"></line><line x1="200" y1="200" x2="56" y2="56"></line></svg></button>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ showReconnect }}" hint-placeholder-val="{{ false }}">
+    <div style="position: absolute; left: 340px; right: 0; top: 0; bottom: 0; display: grid; place-items: center;">
+      <div role="status" style="display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center;">
+        <svg width="72" height="72" viewBox="0 0 72 72" aria-hidden="true"><circle cx="36" cy="36" r="30" style="fill: none; stroke: rgba(255,214,170,0.14); stroke-width: 2;"></circle><circle cx="36" cy="36" r="30" style="fill: none; stroke: #e2a44c; stroke-width: 2; stroke-linecap: round; stroke-dasharray: 40 150;"></circle><path d="M36 25 L36 41 M28 29 L36 35 L44 29" style="fill: none; stroke: #f0c27e; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round;"></path></svg>
+        <span style="font-size: 22px; font-weight: 500; letter-spacing: -0.015em; text-shadow: 0 2px 16px rgba(0,0,0,0.8);">Reconnecting…</span>
+        <span style="max-width: 340px; font-size: 13px; color: var(--color-neutral-300); text-shadow: 0 1px 10px rgba(0,0,0,0.9);">Keys are paused. The game resumes where it was as soon as the server is back.</span>
+        <span style="font-size: 11px; letter-spacing: 0.06em; color: var(--color-neutral-500);">attempt 3 · next try in 2 s</span>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ showTitle }}" hint-placeholder-val="{{ false }}">
+    <div style="position: absolute; left: 340px; right: 0; top: 70px; display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center;">
+      <span style="font-size: 12px; letter-spacing: 0.24em; text-transform: uppercase; color: #d9b48f;">A box-pushing sandbox</span>
+      <span style="font-size: 88px; font-weight: 500; letter-spacing: -0.045em; line-height: 0.95; color: #f3e6d8; text-shadow: 0 0 40px rgba(255,180,120,0.25), 0 4px 24px rgba(0,0,0,0.7);">Golem</span>
+      <span style="max-width: 460px; font-size: 15px; color: var(--color-neutral-300); text-wrap: pretty;">A small clay worker, woken by a written word. Push every block onto its rune.</span>
+      <div style="display: flex; gap: 8px; margin-top: 8px;">
+        <button type="button" class="btn btn-primary" style="height: 38px; padding: 0 16px; background: rgba(145,132,217,0.12);">Start with t1-01<svg width="14" height="14" viewBox="0 0 256 256" style="fill: none; stroke: currentColor; stroke-width: 20; stroke-linecap: round; stroke-linejoin: round;"><line x1="40" y1="128" x2="216" y2="128"></line><polyline points="144 56 216 128 144 200"></polyline></svg></button>
+      </div>
+      <span style="font-size: 12px; color: var(--color-neutral-500);">or pick any level on the left · <kbd style="padding: 1px 6px; border-radius: 4px; background: rgba(255,214,170,0.1); box-shadow: inset 0 0 0 1px rgba(255,214,170,0.2); font: 500 11px var(--font-body); color: #f3e6d8;">Tab</kbd> reaches the list</span>
+    </div>
+  </sc-if>
+  <sc-if value="{{ showAtlas }}" hint-placeholder-val="{{ false }}">
+    <div role="dialog" aria-label="All levels" style="position: absolute; left: 340px; right: 36px; top: 28px; bottom: 28px; display: flex; flex-direction: column; gap: 18px; padding: 24px 26px; border-radius: 20px; background: rgba(30,24,26,0.8); box-shadow: 0 0 0 1px rgba(255,214,170,0.14), 0 30px 80px rgba(0,0,0,0.6); backdrop-filter: blur(24px) saturate(1.2); -webkit-backdrop-filter: blur(24px) saturate(1.2); overflow: hidden;">
+      <div style="display: flex; align-items: baseline; gap: 14px;">
+        <span style="font-size: 26px; font-weight: 500; letter-spacing: -0.02em;">All levels</span>
+        <span style="font-size: 13px; color: var(--color-neutral-500);">7 of 11 solved · Tab and arrows move between cards, Enter plays</span>
+        <button type="button" aria-label="Close" class="btn btn-secondary btn-icon" style="margin-left: auto; width: 34px; height: 34px; border-color: rgba(255,214,170,0.16);"><svg width="14" height="14" viewBox="0 0 256 256" style="fill: none; stroke: currentColor; stroke-width: 20; stroke-linecap: round;"><line x1="200" y1="56" x2="56" y2="200"></line><line x1="200" y1="200" x2="56" y2="56"></line></svg></button>
+      </div>
+      <sc-for list="{{ atlasTiers }}" as="at" hint-placeholder-count="3">
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+          <div style="display: flex; align-items: baseline; gap: 10px;"><span style="font-size: 11px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: #d9b48f;">{{ at.label }}</span><span style="font-size: 11px; color: var(--color-neutral-500);">{{ at.summary }}</span></div>
+          <div style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px;">
+            <sc-for list="{{ at.cards }}" as="cd" hint-placeholder-count="5">
+              <button type="button" aria-current="{{ cd.aria }}" style="display: flex; flex-direction: column; gap: 8px; padding: 8px; border: 0; border-radius: 12px; background: {{ cd.bg }}; box-shadow: {{ cd.ring }}; color: inherit; font: inherit; text-align: left; cursor: pointer;" style-hover="background: rgba(255,255,255,0.06);">
+                <span style="display: grid; place-items: center; height: 104px; border-radius: 8px; background: #2a221f; box-shadow: inset 0 0 0 1px rgba(255,214,170,0.07);"><x-import component-from-global-scope="golem-mini" from="./golem-art.js" direction="clay" map="{{ cd.map }}" cell="{{ cd.cell }}" hint-size="140px,90px"></x-import></span>
+                <span style="display: flex; align-items: center; gap: 7px; padding: 0 2px;"><span style="font-size: 15px; font-weight: 500; color: {{ cd.nameColor }};">{{ cd.name }}</span><sc-if value="{{ cd.solved }}" hint-placeholder-val="{{ false }}"><svg width="14" height="14" viewBox="0 0 256 256" aria-label="Solved" style="fill: none; stroke: #5cc49b; stroke-width: 24; stroke-linecap: round; stroke-linejoin: round;"><circle cx="128" cy="128" r="100"></circle><polyline points="84 132 114 162 172 100"></polyline></svg></sc-if><sc-if value="{{ cd.current }}" hint-placeholder-val="{{ false }}"><span style="margin-left: auto; font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; padding: 2px 7px; border-radius: 5px; background: rgba(145,132,217,0.18); color: #d2cefd;">Playing</span></sc-if></span>
+                <span style="padding: 0 2px; font-size: 12px; color: var(--color-neutral-500); font-variant-numeric: tabular-nums;">{{ cd.size }} · {{ cd.budget }} steps</span>
+              </button>
+            </sc-for>
+            <sc-for list="{{ at.placeholders }}" as="ph" hint-placeholder-count="0">
+              <div style="display: flex; flex-direction: column; gap: 8px; padding: 8px; border-radius: 12px; border: 1px dashed rgba(255,214,170,0.14);"><span style="height: 104px; border-radius: 8px; background: repeating-linear-gradient(135deg, rgba(255,214,170,0.05) 0 6px, transparent 6px 12px);"></span><span style="height: 10px; width: 50%; border-radius: 4px; background: rgba(233,233,237,0.08);"></span><span style="height: 8px; width: 75%; border-radius: 4px; background: rgba(233,233,237,0.05);"></span></div>
+            </sc-for>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ replay }}" hint-placeholder-val="{{ false }}">
+    <aside aria-label="Actions" style="position: absolute; right: 20px; top: 128px; bottom: 176px; width: 290px; display: flex; flex-direction: column; border-radius: 16px; background: rgba(30,24,26,0.64); box-shadow: 0 0 0 1px rgba(255,214,170,0.10), 0 24px 60px rgba(0,0,0,0.45); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); overflow: hidden;">
+      <div style="display: flex; align-items: baseline; justify-content: space-between; padding: 14px 16px 8px;"><span style="font-size: 11px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: #d9b48f;">Actions</span><span style="font-size: 11px; color: var(--color-neutral-500);">212 recorded</span></div>
+      <div style="flex: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column; gap: 2px; padding: 0 8px 10px;">
+        <sc-for list="{{ actions }}" as="a" hint-placeholder-count="13">
+          <div style="display: grid; grid-template-columns: 44px minmax(0,1fr); gap: 8px; padding: 6px 8px; border-radius: 8px; background: {{ a.bg }}; box-shadow: {{ a.ring }}; opacity: {{ a.op }}; font: 12px/1.35 ui-monospace, 'SF Mono', Menlo, monospace;"><span style="color: var(--color-neutral-500);">{{ a.n }}</span><span><span style="color: {{ a.cmdColor }};">{{ a.cmd }}</span> <span style="color: var(--color-neutral-600);">→</span> <span style="color: {{ a.resColor }};">{{ a.res }}</span></span></div>
+        </sc-for>
+      </div>
+    </aside>
+    <div style="position: absolute; left: 340px; right: 20px; bottom: 20px; display: flex; flex-direction: column; gap: 12px; padding: 14px 18px 16px; border-radius: 16px; background: rgba(30,24,26,0.68); box-shadow: 0 0 0 1px rgba(255,214,170,0.10), 0 18px 50px rgba(0,0,0,0.45); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);">
+      <div style="display: flex; align-items: center; gap: 6px;">
+        <button type="button" aria-label="Step back" class="btn btn-secondary btn-icon" style="width: 36px; height: 34px; border-color: rgba(255,214,170,0.16);"><svg width="14" height="14" viewBox="0 0 256 256" style="fill: currentColor; stroke: currentColor; stroke-width: 16; stroke-linejoin: round;"><line x1="56" y1="40" x2="56" y2="216"></line><path d="M200 48v160L88 128Z"></path></svg></button>
+        <button type="button" aria-label="Pause" class="btn btn-primary btn-icon" style="width: 44px; height: 34px; background: rgba(145,132,217,0.14);"><svg width="14" height="14" viewBox="0 0 256 256" style="fill: currentColor;"><rect x="64" y="40" width="44" height="176" rx="8"></rect><rect x="148" y="40" width="44" height="176" rx="8"></rect></svg></button>
+        <button type="button" aria-label="Step forward" class="btn btn-secondary btn-icon" style="width: 36px; height: 34px; border-color: rgba(255,214,170,0.16);"><svg width="14" height="14" viewBox="0 0 256 256" style="fill: currentColor; stroke: currentColor; stroke-width: 16; stroke-linejoin: round;"><line x1="200" y1="40" x2="200" y2="216"></line><path d="M56 48v160l112-80Z"></path></svg></button>
+        <div class="seg" style="margin-left: 8px; border-color: rgba(255,214,170,0.16);"><span class="seg-opt" style="padding: 7px 10px;">1×</span><span class="seg-opt" style="padding: 7px 10px; color: var(--color-accent); box-shadow: inset 0 0 0 1px var(--color-accent);">2×</span><span class="seg-opt" style="padding: 7px 10px;">4×</span><span class="seg-opt" style="padding: 7px 10px;">8×</span></div>
+        <div style="margin-left: auto; display: flex; flex-wrap: wrap; gap: 14px; font-size: 11px; color: var(--color-neutral-400);">
+          <sc-for list="{{ legend }}" as="lg" hint-placeholder-count="5"><span style="display: inline-flex; align-items: center; gap: 6px;"><span style="width: {{ lg.w }}px; height: {{ lg.h }}px; border-radius: {{ lg.r }}; background: {{ lg.color }}; transform: {{ lg.rot }}; box-shadow: 0 0 6px {{ lg.color }};"></span>{{ lg.label }}</span></sc-for>
+          <span style="display: inline-flex; align-items: center; gap: 6px;"><span style="width: 2px; height: 14px; background: #b5abfc;"></span>Program swap</span>
+        </div>
+      </div>
+      <div style="position: relative; height: 40px;">
+        <sc-for list="{{ swaps }}" as="sw" hint-placeholder-count="3"><div style="position: absolute; left: {{ sw.pct }}%; top: 0; bottom: 8px; width: 2px; background: rgba(181,171,252,0.8);"><span style="position: absolute; left: 6px; top: -2px; font-size: 11px; font-weight: 500; color: #d2cefd;">{{ sw.label }}</span></div></sc-for>
+        <div style="position: absolute; left: 0; right: 0; bottom: 12px; height: 6px; border-radius: 3px; background: rgba(255,214,170,0.1);"><div style="position: absolute; left: 0; top: 0; bottom: 0; width: 66%; border-radius: 3px; background: linear-gradient(to right, rgba(145,132,217,0.4), #9184d9); box-shadow: 0 0 10px rgba(145,132,217,0.5);"></div></div>
+        <sc-for list="{{ stops }}" as="st" hint-placeholder-count="4"><span title="{{ st.label }}" style="position: absolute; left: {{ st.pct }}%; bottom: 10px; width: {{ st.w }}px; height: {{ st.h }}px; margin-left: -4px; border-radius: {{ st.r }}; background: {{ st.color }}; transform: {{ st.rot }}; box-shadow: 0 0 0 2px rgba(30,24,26,0.9), 0 0 8px {{ st.color }};"></span></sc-for>
+        <div style="position: absolute; left: 66%; bottom: 4px; width: 14px; height: 22px; margin-left: -7px; border-radius: 4px; background: #f3e6d8; box-shadow: 0 0 0 2px rgba(30,24,26,0.9), 0 2px 8px rgba(0,0,0,0.6);"></div>
+        <div style="position: absolute; left: 0; right: 0; bottom: -8px; display: flex; justify-content: space-between; font-size: 10px; color: var(--color-neutral-600); font-variant-numeric: tabular-nums;"><span>0</span><span>step 140</span><span>212</span></div>
+      </div>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:900},&quot;frame&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;title&quot;,&quot;playing&quot;,&quot;warn&quot;,&quot;bump&quot;,&quot;land&quot;,&quot;solved&quot;,&quot;lost-steps&quot;,&quot;deadlock&quot;,&quot;reconnecting&quot;,&quot;error&quot;,&quot;atlas&quot;,&quot;large&quot;,&quot;replay&quot;],&quot;default&quot;:&quot;playing&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;width&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:1440,&quot;tsType&quot;:&quot;number&quot;},&quot;height&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:900,&quot;tsType&quot;:&quot;number&quot;},&quot;animate&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;}}">
+class Component extends DCLogic {
+  renderVals() {
+    const f = this.props.frame || 'playing', anim = this.props.animate ?? true;
+    const w = Number(this.props.width ?? 1440), h = Number(this.props.height ?? 900), compact = w < 1200;
+    const T = ['   ######', '   #  . #'], B = ['####   ###', '   #####'];
+    const MAPS = {
+      p: [...T, '####$#  #', '#  *    #', '# ## *  ##', '#  $@  . #', ...B],
+      warn: ['   ######', '   #  * #', '#### #  #', '#  *    #', '# ## *  ##', '#    @$. #', ...B],
+      bump: [...T, '####$#  #', '#@ *    #', '# ## *  ##', '#  $   . #', ...B],
+      land: [...T, '####$#  #', '#  *    #', '# ## *  ##', '#     @* #', ...B],
+      solved: ['   ######', '   #  * #', '#### #  #', '#  *    #', '# ## *  ##', '#     @* #', ...B],
+      lostSteps: [...T, '####$#  #', '#  *    #', '# ## *  ##', '#   $ @. #', ...B],
+      deadlock: [...T, '####$#  #', '#  *    #', '# ## *  ##', '#$@    . #', ...B],
+      title: ['  #######  ', '###     ###', '#   . @   #', '#    $    #', '###     ###', '  #######  '],
+      large: ['####################', '#    #      #      #', '# $  #  .   #  $   #', '#  . ## ##  #  ##  #', '##  $    #     .   #', ' #  ###  #  ####  ##', ' #    #  $     #  # ', ' ##.  #        #  # ', '  #  ####  ##  $  # ', '  #  #      #     # ', '###  #  *   ###  ###', '#    #####    .    #', '#  $     #  ###  $ #', '#  ##.   #  # #    #', '#   #  @    # #  . #', '##  #  $  ### ##   #', ' #     .  #    $   #', ' ####  ####  ##  . #', '    #        #     #', '    ################']
+    };
+    const LV = [
+      ['Tier 1', [['t1-01', ['#######', '#.$ @ #', '#     #', '#  $. #', '#######'], 200, 1], ['t1-02', ['########', '#   .  #', '#  $   #', '#  @   #', '#      #', '########'], 200, 1], ['t1-03', ['########', '#.  #  #', '# $ #  #', '#  @ $.#', '#      #', '########'], 200, 1], ['t1-04', ['  ######', '  #  . #', '###$#  #', '#  @ $ #', '# .    #', '#      #', '########'], 250, 1], ['t1-05', ['#########', '#   #   #', '# $ . $ #', '#  #@#  #', '#  . .  #', '#   $   #', '#########'], 250, 1]]],
+      ['Tier 2', [['t2-01', ['#########', '#   #   #', '# $ . $ #', '#  ###  #', '# .   . #', '#  $@   #', '#       #', '#########'], 300, 1], ['t2-02', ['  ########', '  #   .  #', '### $##  #', '#   $  . #', '# #  ##  #', '#  @ $ . #', '####     #', '   #######'], 300, 1], ['t2-03', MAPS.p, 300, 0], ['t2-04', ['###########', '#    #    #', '# $$ # .. #', '#    #    #', '##  ###  ##', ' #   @   # ', ' # $   . # ', ' #       # ', ' ######### '], 400, 0], ['t2-05', ['   #########', '   #   .   #', '#### $ ### #', '#  . $  $  #', '# ###  #   #', '#   $ @#.  #', '###    # . #', '  #        #', '  ##########'], 400, 0]]],
+      ['Tier 3', [['t3-01', MAPS.large, 1200, 0]]]
+    ];
+    const seen = (() => {
+      const rows = MAPS.p, m = rows.map(r => Array(r.length).fill('0'));
+      [[4, 3], [5, 3], [6, 3], [6, 2], [6, 1], [7, 1], [7, 2], [7, 3], [6, 4], [4, 4], [4, 5], [5, 5]].forEach(([x, y]) => [[0, 0], [1, 0], [-1, 0], [0, 1], [0, -1]].forEach(([dx, dy]) => { if (m[y + dy] && m[y + dy][x + dx] !== undefined) m[y + dy][x + dx] = '1'; }));
+      return m.map(r => r.join('')).join('|');
+    })();
+    const F = {
+      title: { map: 'title', cur: null, hud: false, inset: '330 56 110 352', cellmax: 60, facing: 'S' },
+      playing: { map: 'p', steps: 37, facing: 'W' },
+      warn: { map: 'warn', steps: 276, facing: 'E' },
+      bump: { map: 'bump', steps: 53, facing: 'W', pose: 'bump', fx: 'bump', phase: 0.27, bumped: true },
+      land: { map: 'land', steps: 58, facing: 'E', pose: 'push', fx: 'land', focus: '7,5', phase: 0.3 },
+      solved: { map: 'solved', steps: 64, facing: 'S', pose: 'celebrate', fx: 'solved', phase: 0.28, result: 'solved' },
+      'lost-steps': { map: 'lostSteps', steps: 300, facing: 'E', pose: 'powerdown', fx: 'lost', phase: 1, result: 'steps' },
+      deadlock: { map: 'deadlock', steps: 41, facing: 'W', fx: 'deadlock', focus: '1,5', phase: 0.9, result: 'deadlock' },
+      reconnecting: { map: 'p', steps: 37, facing: 'W', reconnect: true },
+      error: { map: 'p', steps: 37, facing: 'W', error: true },
+      atlas: { map: 'p', steps: 37, facing: 'W', atlas: true },
+      large: { map: 'large', steps: 142, facing: 'N', cur: 't3-01' },
+      replay: { map: 'p', steps: 140, facing: 'S', replay: true }
+    };
+    const s = F[f] || F.playing, replay = !!s.replay, cur = s.cur === null ? null : (s.cur || 't2-03');
+    const curTier = cur ? Number(cur[1]) : 1;
+    const all = LV.flatMap(([, l]) => l), curLv = all.find(l => l[0] === cur);
+    const card = ([name, rows, budget, solved], big) => {
+      const W = Math.max(...rows.map(r => r.length)), H = rows.length, on = name === cur;
+      return {
+        name, map: rows.join('|'), cell: Math.max(2, Math.floor(Math.min((big ? 150 : 82) / W, (big ? 92 : 56) / H))), size: `${W} × ${H}`, budget, solved: !!solved, current: on,
+        aria: on ? 'true' : 'false', bg: on ? 'rgba(145,132,217,0.13)' : 'rgba(255,255,255,0.025)',
+        ring: on ? 'inset 0 0 0 1px rgba(145,132,217,0.8), 0 0 24px rgba(145,132,217,0.22)' : (big && name === 't2-04' ? '0 0 0 2px #9184d9' : 'inset 0 0 0 1px rgba(233,233,237,0.06)'),
+        nameColor: on ? '#e7e5fe' : 'var(--color-text)'
+      };
+    };
+    const dots = (list) => list.map(([n, , , sv]) => ({ bg: n === cur ? '#b5abfc' : sv ? '#5cc49b' : 'rgba(233,233,237,0.18)', glow: n === cur ? '0 0 6px #9184d9' : sv ? '0 0 6px rgba(92,196,155,0.5)' : 'none' }));
+    const tiers = LV.map(([label, list], i) => {
+      const later = i === 2, solvedN = list.filter(l => l[3]).length, expanded = !later && i + 1 === curTier;
+      return { label, later, expanded, collapsed: !later && !expanded, summary: `${solvedN} of ${list.length} solved`, dots: dots(list), cards: expanded ? list.map(l => card(l)) : [] };
+    });
+    const atlasTiers = LV.map(([label, list], i) => ({ label, summary: i === 2 ? 'one sample · more arrive later' : `${list.filter(l => l[3]).length} of ${list.length} solved`, cards: list.map(l => card(l, true)), placeholders: i === 2 ? [1, 2, 3, 4] : [] }));
+    const railTiers = LV.map(([label, list], i) => ({ short: 'T' + (i + 1), color: i + 1 === curTier ? '#d2cefd' : 'var(--color-neutral-500)', dots: dots(list) }));
+
+    const budget = replay ? 212 : (curLv ? curLv[2] : 0), steps = s.steps, left = budget - steps;
+    const warn = !replay && !s.result && left <= budget * 0.1, spent = s.result === 'steps';
+    const spentT = Math.round((steps / (budget || 1)) * 30);
+    const ticks = Array.from({ length: 30 }, (_, i) => {
+      const used = i < spentT;
+      if (spent) return { bg: i === 29 ? 'rgba(236,125,138,0.5)' : 'rgba(233,233,237,0.06)', glow: i === 29 ? '0 0 8px rgba(236,125,138,0.6)' : 'none' };
+      if (warn) return used ? { bg: 'rgba(233,233,237,0.06)', glow: 'none' } : { bg: '#e2a44c', glow: '0 0 10px rgba(226,164,76,0.75)' };
+      if (used) return { bg: 'rgba(233,233,237,0.1)', glow: 'none' };
+      if (i >= 27 && !replay) return { bg: 'rgba(226,164,76,0.5)', glow: '0 0 6px rgba(226,164,76,0.3)' };
+      return { bg: s.result === 'solved' ? '#b5abfc' : '#9184d9', glow: '0 0 8px rgba(145,132,217,0.45)' };
+    });
+    const runs = [['#0142', 't2-03', 'v7–v9', 'Solved', 212], ['#0141', 't2-03', 'v7', 'Lost', 300], ['#0140', 't2-02', 'v7', 'Solved', 88], ['#0139', 't2-02', 'v6', 'Failed', 14], ['#0138', 't1-03', 'v6', 'Solved', 46], ['#0137', 't1-03', 'v5', 'Lost', 41]].map(([id, level, prog, result, st], i) => ({
+      id, level, prog, result, steps: st, map: (all.find(l => l[0] === level) || all[0])[1].join('|'), aria: i ? 'false' : 'true',
+      bg: i ? 'rgba(255,255,255,0.025)' : 'rgba(145,132,217,0.13)', ring: i ? 'inset 0 0 0 1px rgba(233,233,237,0.06)' : 'inset 0 0 0 1px rgba(145,132,217,0.8)', nameColor: i ? 'var(--color-text)' : '#e7e5fe',
+      color: { Solved: '#8fe0bd', Lost: '#f4a7b0', Failed: '#f0c27e' }[result], tint: { Solved: 'rgba(92,196,155,0.16)', Lost: 'rgba(236,125,138,0.16)', Failed: 'rgba(226,164,76,0.16)' }[result]
+    }));
+    const actions = [['#134', 'look E', '"floor"'], ['#135', 'move E', 'true'], ['#136', 'look S', '"floor"'], ['#137', 'move S', 'true'], ['#138', 'here', '"floor"'], ['#139', 'look S', '"floor"'], ['#140', 'move S', 'true'], ['#141', 'look W', '"box"'], ['#142', 'boxes_left', '2'], ['#143', 'move W', 'true'], ['#144', 'look W', '"box"'], ['#145', 'move W', 'false'], ['#146', 'give_up', '—']].map(([n, cmd, res]) => {
+      const k = Number(n.slice(1)), on = k === 140;
+      return { n, cmd, res, bg: on ? 'rgba(145,132,217,0.2)' : 'transparent', ring: on ? 'inset 0 0 0 1px rgba(145,132,217,0.7)' : 'none', op: k > 140 ? 0.5 : 1, resColor: res === 'false' ? '#f4a7b0' : 'var(--color-neutral-400)', cmdColor: on ? '#e7e5fe' : 'var(--color-text)' };
+    });
+    const K = { error: ['#ec7d8a', 'rotate(45deg)', '2px', 'Error'], deadlock: ['#ec7d8a', 'none', '2px', 'Deadlock'], giveup: ['#9397ab', 'none', '50%', 'Give-up'], half: ['#e2a44c', 'none', '2px', 'Half budget'], repeat: ['#b5abfc', 'none', '50%', 'Repeated position'] };
+    const mk = (k) => ({ color: K[k][0], rot: K[k][1], r: K[k][2], label: K[k][3], h: k === 'half' ? 14 : 9, w: k === 'half' ? 4 : 9 });
+    const stops = [[52, 'repeat'], [77, 'error'], [150, 'half'], [188, 'repeat']].map(([st, k]) => ({ ...mk(k), pct: (st / 212) * 100 }));
+    const legend = Object.keys(K).map(mk);
+    const swaps = [[0, 'v7'], [78, 'v8'], [151, 'v9']].map(([st, label]) => ({ pct: (st / 212) * 100, label }));
+
+    const R = {
+      solved: { title: `Solved in ${steps} steps`, sub: 'All four blocks are home. Next up: t2-04.', color: '#b5abfc', glow: 'rgba(145,132,217,0.45)', tint: 'rgba(145,132,217,0.18)', icon: 'check', primary: 'Next level', secondary: 'Restart' },
+      steps: { title: 'Lost — out of steps', sub: `Golem has spent all ${budget} steps and powered down.`, color: '#ec7d8a', glow: 'rgba(236,125,138,0.35)', tint: 'rgba(236,125,138,0.14)', icon: 'hourglass', primary: 'Restart', secondary: 'Another level' },
+      deadlock: { title: 'Lost — a box is stuck in a corner', sub: 'The marked block can never move again.', color: '#ec7d8a', glow: 'rgba(236,125,138,0.35)', tint: 'rgba(236,125,138,0.14)', icon: 'lock', primary: 'Restart', secondary: 'Another level' }
+    }[s.result] || {};
+    const reconnect = !!s.reconnect, hud = s.hud !== false;
+    const labels = { title: '01 Title', playing: '02 Playing', warn: '03 Few steps left', bump: '04 Bump', land: '05 Box onto goal', solved: '06 Solved', 'lost-steps': '07 Lost — steps', deadlock: '08 Lost — deadlock', reconnecting: '09 Reconnecting', error: '10 Error', atlas: '11 Level picker', large: '12 Large board', replay: '13 Replay sketch' };
+    return {
+      label: labels[f] || f, w, h, wide: !compact, compact, replay, notReplay: !replay, hud,
+      map: MAPS[s.map].join('|'), facing: s.facing, pose: s.pose || 'idle', fx: s.fx || '', focus: s.focus || '', fog: replay ? seen : '', phase: s.phase ?? 0.5, still: !anim,
+      inset: s.inset || (compact ? '96 28 86 96' : s.result ? '112 56 214 352' : replay ? '112 330 176 352' : '112 56 120 352'), cellmax: s.cellmax || 64,
+      sceneFilter: reconnect ? 'grayscale(0.85) brightness(0.55)' : s.atlas ? 'blur(2px) brightness(0.5)' : 'none',
+      tiers, atlasTiers, railTiers, runs, actions, stops, legend, swaps,
+      connLabel: reconnect ? 'Reconnecting…' : 'Connected', connColor: reconnect ? '#f0c27e' : 'var(--color-neutral-500)', connDot: reconnect ? '#e2a44c' : '#5cc49b', connHalo: reconnect ? 'rgba(226,164,76,0.2)' : 'rgba(92,196,155,0.18)',
+      playSel: replay ? 'false' : 'true', replaySel: replay ? 'true' : 'false',
+      playBg: replay ? 'transparent' : 'rgba(145,132,217,0.16)', playRing: replay ? 'none' : 'inset 0 0 0 1px rgba(145,132,217,0.6)', playColor: replay ? 'var(--color-neutral-500)' : '#d2cefd',
+      replayBg: replay ? 'rgba(145,132,217,0.16)' : 'transparent', replayRing: replay ? 'inset 0 0 0 1px rgba(145,132,217,0.6)' : 'none', replayColor: replay ? '#d2cefd' : 'var(--color-neutral-600)',
+      plateX: compact ? 96 : 360, plateY: compact ? 18 : 22, nameSize: compact ? 30 : 40, gaugeR: compact ? 20 : 36, gaugeW: compact ? 230 : 290, numSize: compact ? 30 : 40,
+      kicker: replay ? 'Replay · t2-03 · programs v7 → v9' : curLv ? `Tier ${curTier} · level ${Number(cur.slice(3))} of ${LV[curTier - 1][1].length}${curTier === 3 ? ' (sample)' : ''}` : '',
+      title: replay ? 'Run #0142' : cur, sub: replay ? 'Solved in 212 steps · fog shows what Golem has not seen yet' : curLv ? `${curLv[1][0].length > 0 ? Math.max(...curLv[1].map(r => r.length)) : 0} × ${curLv[1].length} cells` : '',
+      gaugeLabel: replay ? 'Step' : 'Steps', steps, budget, leftLabel: replay ? 'of 212' : `${left} left`, leftColor: spent ? '#f4a7b0' : 'var(--color-neutral-400)',
+      warn, notWarn: !warn, bumped: !!s.bumped, ticks,
+      numColor: warn ? '#f0c27e' : spent ? '#f4a7b0' : 'var(--color-text)', numGlow: warn || spent ? 14 : 0,
+      gaugeBg: warn ? 'rgba(60,40,20,0.35)' : 'transparent', gaugeRing: warn ? '0 0 0 1px rgba(226,164,76,0.35), 0 0 32px rgba(226,164,76,0.18)' : 'none',
+      showKeys: hud && !s.result && !replay && !s.atlas, keysL: compact ? 74 : 340, keysR: 0, keysOp: reconnect ? 0.45 : 1,
+      keyW: f === 'bump' ? 'linear-gradient(#7a5a48, #5a4033)' : 'linear-gradient(#4a3d36, #33292a)', keyE: f === 'land' ? 'linear-gradient(#7a5a48, #5a4033)' : 'linear-gradient(#4a3d36, #33292a)',
+      focusLabel: reconnect ? 'Keys paused' : 'Board focused', focusDot: reconnect ? '#e2a44c' : '#9184d9',
+      showResult: !!s.result, rTitle: R.title, rSub: R.sub, rColor: R.color, rGlow: R.glow, rTint: R.tint, rPrimary: R.primary, rSecondary: R.secondary,
+      iconCheck: R.icon === 'check', iconHour: R.icon === 'hourglass', iconLock: R.icon === 'lock', rWon: s.result === 'solved', rLost: !!s.result && s.result !== 'solved',
+      showError: !!s.error, showReconnect: reconnect, showAtlas: !!s.atlas, showTitle: f === 'title'
+    };
+  }
+}
+</script>
+</body>
+</html>

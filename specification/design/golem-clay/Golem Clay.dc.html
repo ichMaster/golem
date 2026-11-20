@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet><meta name="design_doc_mode" content="canvas"><link rel="stylesheet" href="_ds/nocturne-f0321a84-d3e2-4056-979b-79b1016e5a42/styles.css"><script src="./golem-art.js"></script><script src="./golem-clay-fx.js"></script><style>html,body{margin:0;background:#12121a;color:#e9e9ed;-webkit-font-smoothing:antialiased}a{color:#b5abfc;text-underline-offset:3px}a:hover{color:#d2cefd}</style></helmet>
+<div style="width: 3088px; padding: 72px 72px 140px; box-sizing: border-box; display: flex; flex-direction: column; gap: 120px; font-family: var(--font-body);">
+
+  <section id="intro" style="display: flex; flex-direction: column; gap: 26px; max-width: 1280px;">
+    <span style="font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: #d9b48f;">Golem · direction 2a · Clay and stone · full set</span>
+    <h1 style="margin: 0; font-size: 64px; font-weight: 500; letter-spacing: -0.035em; line-height: 1;">A clay worker in a stone workshop</h1>
+    <p style="margin: 0; max-width: 860px; font-size: 17px; line-height: 1.6; color: #cfc4b8; text-wrap: pretty;">Golem is shaped from clay and woken by a written word — the agent's program. Its forehead glyph burns violet whenever it acts. The board is a stone tray under a warm lamp; blocks are carved sandstone; goals are bronze rune circles that ignite when a block settles. Violet is reserved for “something the word did”: Golem, a lit rune, a placed block, the current level. Everything else stays in warm, low-chroma stone, so the eye finds the action first.</p>
+    <div style="display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 14px;">
+      <sc-for list="{{ pillars }}" as="pl" hint-placeholder-count="4">
+        <div style="display: flex; flex-direction: column; gap: 8px; padding: 18px; border-radius: 14px; background: rgba(42,34,31,0.7); box-shadow: inset 0 0 0 1px rgba(255,214,170,0.08);">
+          <span style="font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: #d9b48f;">{{ pl.k }}</span>
+          <span style="font-size: 13px; line-height: 1.55; color: #e4d8cc; text-wrap: pretty;">{{ pl.v }}</span>
+        </div>
+      </sc-for>
+    </div>
+    <nav style="display: flex; gap: 22px; font-size: 13px;"><a href="#frames">Frames</a><a href="#art">Art</a><a href="#assets">Asset list</a><a href="#motion">Motion specs</a><a href="#ui">UI system</a></nav>
+  </section>
+
+  <section id="frames" style="display: flex; flex-direction: column; gap: 40px;">
+    <div style="display: flex; flex-direction: column; gap: 10px; max-width: 1280px;">
+      <span style="font-size: 12px; font-weight: 500; color: #d9b48f;">01</span>
+      <h2 style="margin: 0; font-size: 44px; font-weight: 500; letter-spacing: -0.025em;">Frames</h2>
+      <p style="margin: 0; font-size: 14px; color: #a99d92;">Live canvas, not pictures: every frame is the real renderer. Motion stills show the moment named; switch “Animate” on in Tweaks to see them loop.</p>
+      <div style="height: 1px; background: linear-gradient(to right, transparent, rgba(255,214,170,0.16) 48px, rgba(255,214,170,0.16) calc(100% - 48px), transparent);"></div>
+    </div>
+    <div style="display: flex; flex-wrap: wrap; gap: 80px 64px; align-items: flex-start;">
+      <sc-for list="{{ frames }}" as="fr" hint-placeholder-count="13">
+        <div id="{{ fr.id }}" style="display: flex; flex-direction: column; gap: 14px; scroll-margin-top: 24px;">
+          <div style="display: flex; align-items: baseline; gap: 12px;"><span style="font-size: 12px; font-weight: 600; padding: 4px 8px; border-radius: 5px; background: rgba(145,132,217,0.18); color: #d2cefd;">{{ fr.n }}</span><span style="font-size: 22px; font-weight: 500; letter-spacing: -0.01em;">{{ fr.name }}</span><span style="font-size: 12px; color: #75798c; font-variant-numeric: tabular-nums;">{{ fr.w }} × {{ fr.h }}</span></div>
+          <div style="border-radius: 14px; overflow: hidden; box-shadow: 0 0 0 1px rgba(255,214,170,0.12), 0 24px 60px rgba(0,0,0,0.6);"><dc-import name="GolemClayScreen" frame="{{ fr.frame }}" width="{{ fr.w }}" height="{{ fr.h }}" animate="{{ anim }}" hint-size="{{ fr.hint }}"></dc-import></div>
+          <p style="margin: 0; max-width: {{ fr.noteW }}px; font-size: 14px; line-height: 1.6; color: #b9ada2; text-wrap: pretty;">{{ fr.note }}</p>
+        </div>
+      </sc-for>
+    </div>
+  </section>
+  <section id="art" style="display: flex; flex-direction: column; gap: 44px; max-width: 2200px;">
+    <div style="display: flex; flex-direction: column; gap: 10px; max-width: 1280px;">
+      <span style="font-size: 12px; font-weight: 500; color: #d9b48f;">02</span>
+      <h2 style="margin: 0; font-size: 44px; font-weight: 500; letter-spacing: -0.025em;">Art</h2>
+      <p style="margin: 0; font-size: 14px; line-height: 1.6; color: #a99d92; max-width: 900px; text-wrap: pretty;">All art comes from one source: <span style="font-family: ui-monospace, Menlo, monospace; color: #e4d8cc;">golem-art.js</span> + <span style="font-family: ui-monospace, Menlo, monospace; color: #e4d8cc;">golem-clay-fx.js</span>. The same functions bake the PNG sheets at 1× and 2× (see the asset list) or draw at runtime; both give identical pixels. Variants come from a per-cell hash, so a map always looks the same on every load.</p>
+      <div style="height: 1px; background: linear-gradient(to right, transparent, rgba(255,214,170,0.16) 48px, rgba(255,214,170,0.16) calc(100% - 48px), transparent);"></div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 56px; align-items: start;">
+      <div style="display: flex; flex-direction: column; gap: 14px;">
+        <span style="font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: #d9b48f;">Cell kinds · 32 px and 64 px</span>
+        <div style="display: grid; grid-template-columns: 150px 70px 76px 124px minmax(0,1fr); gap: 12px 16px; align-items: center;">
+          <sc-for list="{{ kinds }}" as="k" hint-placeholder-count="8">
+            <span style="font-size: 15px; font-weight: 500;">{{ k.name }}</span>
+            <span style="font-family: ui-monospace, Menlo, monospace; font-size: 14px; color: #d2cefd; white-space: pre;">{{ k.ch }}</span>
+            <div style="width: 76px; height: 76px; border-radius: 10px; background: #1b1716; overflow: hidden;"><x-import component-from-global-scope="golem-scene" from="./golem-art.js" direction="clay" map="{{ k.map }}" floor="{{ k.floor }}" bare="true" still="true" cellmax="32" fx="{{ k.fx }}" focus="{{ k.focus }}" phase="1" facing="S" hint-size="76px,76px"></x-import></div>
+            <div style="width: 124px; height: 124px; border-radius: 12px; background: #1b1716; overflow: hidden;"><x-import component-from-global-scope="golem-scene" from="./golem-art.js" direction="clay" map="{{ k.map }}" floor="{{ k.floor }}" bare="true" still="true" cellmax="64" fx="{{ k.fx }}" focus="{{ k.focus }}" phase="1" facing="S" hint-size="124px,124px"></x-import></div>
+            <span style="font-size: 13px; line-height: 1.5; color: #b9ada2; text-wrap: pretty;">{{ k.note }}</span>
+          </sc-for>
+        </div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 36px;">
+        <div style="display: flex; flex-direction: column; gap: 14px;">
+          <span style="font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: #d9b48f;">Floor variants · flagstone, worn, cracked</span>
+          <div style="display: flex; gap: 16px; align-items: flex-end;">
+            <div style="width: 360px; height: 150px; border-radius: 12px; background: #1b1716; overflow: hidden;"><x-import component-from-global-scope="golem-scene" from="./golem-art.js" direction="clay" map="          |          |          |          " floor="all" bare="true" still="true" cellmax="32" hint-size="360px,150px"></x-import></div>
+            <div style="width: 300px; height: 150px; border-radius: 12px; background: #1b1716; overflow: hidden;"><x-import component-from-global-scope="golem-scene" from="./golem-art.js" direction="clay" map="    |    " floor="all" bare="true" still="true" cellmax="64" hint-size="300px,150px"></x-import></div>
+          </div>
+          <span style="font-size: 13px; color: #b9ada2;">8 base stones (tone ± 5 %, corner radius) × overlays: wear spot (35 %), crack (22 %). At 64 px the grain doubles.</span>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 14px;">
+          <span style="font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: #d9b48f;">Walls on a ragged map · edges, outer and inner corners</span>
+          <div style="width: 100%; max-width: 760px; height: 300px; border-radius: 12px; background: #1b1716; overflow: hidden;"><x-import component-from-global-scope="golem-scene" from="./golem-art.js" direction="clay" map="  #####     |  #   ###   |### #   ####|#   # #    #|# ###   ## #|#     #    #|#####   ####|    #####   " bare="true" still="true" cellmax="34" hint-size="760px,300px"></x-import></div>
+          <span style="font-size: 13px; color: #b9ada2; max-width: 760px; text-wrap: pretty;">Each wall reads its four neighbours: a front face (with mortar courses) only where the cell below is open; a lit lip where north or west is open; a shaded lip east and south. Joints between two walls get a mortar seam instead.</span>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 14px;">
+          <span style="font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: #d9b48f;">Wall autotile · 16 neighbour masks (N E S W)</span>
+          <div style="display: grid; grid-template-columns: repeat(8, 96px); gap: 10px;">
+            <sc-for list="{{ masks }}" as="mk" hint-placeholder-count="16">
+              <div style="display: flex; flex-direction: column; gap: 4px; align-items: center;"><div style="width: 96px; height: 104px; border-radius: 8px; background: #1b1716; overflow: hidden;"><x-import component-from-global-scope="golem-scene" from="./golem-art.js" direction="clay" map="{{ mk.map }}" floor="all" bare="true" still="true" cellmax="26" hint-size="96px,104px"></x-import></div><span style="font-family: ui-monospace, Menlo, monospace; font-size: 11px; color: #a99d92;">{{ mk.label }}</span></div>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 14px;">
+      <span style="font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: #d9b48f;">Golem sprite set · shown at 48 px cells · exported at 64 px (1×) and 128 px (2×) frames</span>
+      <div style="display: grid; grid-template-columns: 200px minmax(0,1fr); gap: 14px 20px; align-items: center;">
+        <sc-for list="{{ sprites }}" as="sp" hint-placeholder-count="10">
+          <span style="display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 15px; font-weight: 500;">{{ sp.name }}</span><span style="font-size: 12px; color: #a99d92;">{{ sp.meta }}</span></span>
+          <div style="padding: 8px; border-radius: 12px; background: #1b1716; justify-self: start;"><x-import component-from-global-scope="golem-sheet" from="./golem-clay-fx.js" anim="{{ sp.anim }}" facing="{{ sp.facing }}" cell="48" hint-size="{{ sp.hint }}"></x-import></div>
+        </sc-for>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 14px;">
+      <span style="font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: #d9b48f;">Effect sprites · shown at 48 px</span>
+      <div style="display: grid; grid-template-columns: 200px minmax(0,1fr); gap: 14px 20px; align-items: center;">
+        <sc-for list="{{ effects }}" as="ef" hint-placeholder-count="7">
+          <span style="display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 15px; font-weight: 500;">{{ ef.name }}</span><span style="font-size: 12px; color: #a99d92;">{{ ef.meta }}</span></span>
+          <div style="padding: 8px; border-radius: 12px; background: #1b1716; justify-self: start;"><x-import component-from-global-scope="golem-sheet" from="./golem-clay-fx.js" anim="{{ ef.anim }}" cell="48" hint-size="{{ ef.hint }}"></x-import></div>
+        </sc-for>
+      </div>
+    </div>
+  </section>
+  <section id="assets" style="display: flex; flex-direction: column; gap: 24px; max-width: 1640px;">
+    <div style="display: flex; flex-direction: column; gap: 10px;">
+      <span style="font-size: 12px; font-weight: 500; color: #d9b48f;">03</span>
+      <h2 style="margin: 0; font-size: 44px; font-weight: 500; letter-spacing: -0.025em;">Asset list</h2>
+      <p style="margin: 0; font-size: 14px; line-height: 1.6; color: #a99d92; max-width: 900px; text-wrap: pretty;">Ready to commit under <span style="font-family: ui-monospace, Menlo, monospace; color: #e4d8cc;">static/</span>. Sheets are horizontal strips, one frame per tile, transparent PNG, frame size given at 1×; the @2x file is exactly double. Total ≈ 2 MB with both densities, well inside the 10 MB budget. Alternative with zero image files: ship the two JS renderers and draw at runtime — the frames above already run that way.</p>
+      <div style="height: 1px; background: linear-gradient(to right, transparent, rgba(255,214,170,0.16) 48px, rgba(255,214,170,0.16) calc(100% - 48px), transparent);"></div>
+    </div>
+    <div style="display: flex; flex-direction: column;">
+      <div style="display: grid; grid-template-columns: 340px 120px 120px 80px 90px minmax(0,1fr); gap: 16px; padding: 0 0 10px; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: #8a7f76;"><span>File (1× · add @2x)</span><span>Frame 1×</span><span>Sheet 1×</span><span>Frames</span><span>Size 1×+2×</span><span>Contents</span></div>
+      <sc-for list="{{ assets }}" as="as" hint-placeholder-count="20">
+        <sc-if value="{{ as.group }}" hint-placeholder-val="{{ false }}"><div style="padding: 18px 0 6px; font-size: 11px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: #d9b48f;">{{ as.group }}</div></sc-if>
+        <sc-if value="{{ as.file }}" hint-placeholder-val="{{ true }}"><div style="display: grid; grid-template-columns: 340px 120px 120px 80px 90px minmax(0,1fr); gap: 16px; padding: 7px 0; font-size: 13px; background: linear-gradient(to right, transparent, rgba(255,214,170,0.07) 48px, rgba(255,214,170,0.07) calc(100% - 48px), transparent) no-repeat bottom / 100% 1px;"><span style="font-family: ui-monospace, Menlo, monospace; font-size: 12px; color: #e4d8cc;">{{ as.file }}</span><span style="color: #b9ada2; font-variant-numeric: tabular-nums;">{{ as.frame }}</span><span style="color: #b9ada2; font-variant-numeric: tabular-nums;">{{ as.sheet }}</span><span style="color: #b9ada2;">{{ as.n }}</span><span style="color: #b9ada2;">{{ as.kb }}</span><span style="color: #a99d92;">{{ as.note }}</span></div></sc-if>
+      </sc-for>
+    </div>
+  </section>
+
+  <section id="motion" style="display: flex; flex-direction: column; gap: 24px; max-width: 1640px;">
+    <div style="display: flex; flex-direction: column; gap: 10px;">
+      <span style="font-size: 12px; font-weight: 500; color: #d9b48f;">04</span>
+      <h2 style="margin: 0; font-size: 44px; font-weight: 500; letter-spacing: -0.025em;">Motion specs</h2>
+      <p style="margin: 0; font-size: 14px; line-height: 1.6; color: #a99d92; max-width: 960px; text-wrap: pretty;">Triggers are differences between the last two states the server sent — the page never decides legality. Rule one: input never waits. A key is sent the moment it is pressed; when a new state arrives mid-animation, the running tween snaps to its end in one frame and the new one starts from there. Easing curves are CSS-style so the same values drive canvas tweens and HTML panels.</p>
+      <div style="height: 1px; background: linear-gradient(to right, transparent, rgba(255,214,170,0.16) 48px, rgba(255,214,170,0.16) calc(100% - 48px), transparent);"></div>
+    </div>
+    <div style="display: flex; flex-direction: column;">
+      <div style="display: grid; grid-template-columns: 190px 300px 100px 240px minmax(0,1fr) 220px; gap: 16px; padding: 0 0 10px; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: #8a7f76;"><span>Moment</span><span>Trigger (state diff)</span><span>Duration</span><span>Easing</span><span>What moves</span><span>Reduced motion</span></div>
+      <sc-for list="{{ motion }}" as="mo" hint-placeholder-count="14">
+        <div style="display: grid; grid-template-columns: 190px 300px 100px 240px minmax(0,1fr) 220px; gap: 16px; padding: 10px 0; font-size: 13px; line-height: 1.5; background: linear-gradient(to right, transparent, rgba(255,214,170,0.07) 48px, rgba(255,214,170,0.07) calc(100% - 48px), transparent) no-repeat bottom / 100% 1px;">
+          <span style="font-weight: 500; color: #f3e6d8;">{{ mo.k }}</span><span style="color: #b9ada2;">{{ mo.trig }}</span><span style="color: #d2cefd; font-variant-numeric: tabular-nums;">{{ mo.dur }}</span><span style="font-family: ui-monospace, Menlo, monospace; font-size: 11px; color: #b9ada2;">{{ mo.ease }}</span><span style="color: #cfc4b8; text-wrap: pretty;">{{ mo.what }}</span><span style="color: #a99d92;">{{ mo.rm }}</span>
+        </div>
+      </sc-for>
+    </div>
+  </section>
+  <section id="ui" style="display: flex; flex-direction: column; gap: 36px; max-width: 2000px;">
+    <div style="display: flex; flex-direction: column; gap: 10px; max-width: 1280px;">
+      <span style="font-size: 12px; font-weight: 500; color: #d9b48f;">05</span>
+      <h2 style="margin: 0; font-size: 44px; font-weight: 500; letter-spacing: -0.025em;">UI system</h2>
+      <p style="margin: 0; font-size: 14px; line-height: 1.6; color: #a99d92; max-width: 900px; text-wrap: pretty;">One theme: the scene is a lit room at night, and a light variant would fight the lamp. Nocturne supplies the ramps, Inter, spacing, radii, outlined actions and focus ring; the clay direction adds warm glass tints, lighting values and game semantics. Names are ready to become CSS custom properties.</p>
+      <div style="height: 1px; background: linear-gradient(to right, transparent, rgba(255,214,170,0.16) 48px, rgba(255,214,170,0.16) calc(100% - 48px), transparent);"></div>
+    </div>
+    <div style="display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 56px; align-items: start;">
+      <div style="display: flex; flex-direction: column; gap: 26px;">
+        <sc-for list="{{ tokenGroups }}" as="tg" hint-placeholder-count="3">
+          <div style="display: flex; flex-direction: column;">
+            <span style="padding: 0 0 8px; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: #d9b48f;">{{ tg.group }}</span>
+            <sc-for list="{{ tg.rows }}" as="tk" hint-placeholder-count="8">
+              <div style="display: grid; grid-template-columns: 34px 220px 220px minmax(0,1fr); gap: 14px; align-items: center; padding: 6px 0; background: linear-gradient(to right, transparent, rgba(255,214,170,0.07) 48px, rgba(255,214,170,0.07) calc(100% - 48px), transparent) no-repeat bottom / 100% 1px;">
+                <span style="width: 30px; height: 20px; border-radius: 5px; background: {{ tk.v }}; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.1);"></span>
+                <span style="font-family: ui-monospace, Menlo, monospace; font-size: 12px; color: #f3e6d8;">{{ tk.name }}</span>
+                <span style="font-family: ui-monospace, Menlo, monospace; font-size: 11px; color: #a99d92;">{{ tk.v }}</span>
+                <span style="font-size: 12px; color: #b9ada2;">{{ tk.use }}</span>
+              </div>
+            </sc-for>
+          </div>
+        </sc-for>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 40px;">
+        <div style="display: flex; flex-direction: column;">
+          <span style="padding: 0 0 8px; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: #d9b48f;">Type · Inter (WOFF2, OFL) · tabular numerals for counts</span>
+          <sc-for list="{{ typeScale }}" as="ty" hint-placeholder-count="8">
+            <div style="display: grid; grid-template-columns: 170px 110px minmax(0,1fr); gap: 14px; align-items: baseline; padding: 9px 0; background: linear-gradient(to right, transparent, rgba(255,214,170,0.07) 48px, rgba(255,214,170,0.07) calc(100% - 48px), transparent) no-repeat bottom / 100% 1px;">
+              <span style="font-family: ui-monospace, Menlo, monospace; font-size: 12px; color: #f3e6d8;">{{ ty.name }}</span>
+              <span style="font-size: 11px; color: #a99d92;">{{ ty.spec }}</span>
+              <span style="font-size: {{ ty.size }}px; font-weight: {{ ty.wt }}; letter-spacing: {{ ty.ls }}; text-transform: {{ ty.tt }}; line-height: 1.1; color: {{ ty.color }}; white-space: nowrap; font-variant-numeric: tabular-nums;">{{ ty.sample }}</span>
+            </div>
+          </sc-for>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+          <span style="font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: #d9b48f;">Buttons and focus · Nocturne outlined actions on warm glass</span>
+          <div style="display: grid; grid-template-columns: 110px repeat(5, minmax(0,1fr)); gap: 12px; align-items: center; padding: 18px; border-radius: 16px; background: rgba(30,24,26,0.75); box-shadow: 0 0 0 1px rgba(255,214,170,0.1);">
+            <span></span><span style="font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: #8a7f76;">Default</span><span style="font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: #8a7f76;">Hover</span><span style="font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: #8a7f76;">Pressed</span><span style="font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: #8a7f76;">Focus</span><span style="font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: #8a7f76;">Disabled</span>
+            <span style="font-size: 12px; color: #b9ada2;">Primary</span>
+            <button type="button" class="btn btn-primary" style="height: 34px;">Next level</button>
+            <button type="button" class="btn btn-primary" style="height: 34px; background: color-mix(in srgb, var(--color-accent) 12%, transparent);">Next level</button>
+            <button type="button" class="btn btn-primary" style="height: 34px; background: color-mix(in srgb, var(--color-accent) 22%, transparent); border-color: var(--color-accent-400); color: var(--color-accent-300);">Next level</button>
+            <button type="button" class="btn btn-primary" style="height: 34px; outline: 2px solid var(--color-accent); outline-offset: 2px;">Next level</button>
+            <button type="button" class="btn btn-primary" disabled style="height: 34px;">Next level</button>
+            <span style="font-size: 12px; color: #b9ada2;">Secondary</span>
+            <button type="button" class="btn btn-secondary" style="height: 34px; border-color: rgba(255,214,170,0.18);">Restart</button>
+            <button type="button" class="btn btn-secondary" style="height: 34px; border-color: rgba(255,214,170,0.18); background: rgba(255,226,196,0.07);">Restart</button>
+            <button type="button" class="btn btn-secondary" style="height: 34px; border-color: rgba(255,214,170,0.28); background: rgba(255,226,196,0.14);">Restart</button>
+            <button type="button" class="btn btn-secondary" style="height: 34px; border-color: rgba(255,214,170,0.18); outline: 2px solid var(--color-accent); outline-offset: 2px;">Restart</button>
+            <button type="button" class="btn btn-secondary" disabled style="height: 34px; border-color: rgba(255,214,170,0.18);">Restart</button>
+            <span style="font-size: 12px; color: #b9ada2;">Level card</span>
+            <span style="height: 40px; border-radius: 10px; background: rgba(255,255,255,0.025); box-shadow: inset 0 0 0 1px rgba(233,233,237,0.06);"></span>
+            <span style="height: 40px; border-radius: 10px; background: rgba(255,255,255,0.06); box-shadow: inset 0 0 0 1px rgba(233,233,237,0.1);"></span>
+            <span style="height: 40px; border-radius: 10px; background: rgba(255,255,255,0.09); box-shadow: inset 0 0 0 1px rgba(233,233,237,0.14);"></span>
+            <span style="height: 40px; border-radius: 10px; background: rgba(255,255,255,0.025); box-shadow: 0 0 0 2px #9184d9;"></span>
+            <span style="height: 40px; border-radius: 10px; background: rgba(145,132,217,0.13); box-shadow: inset 0 0 0 1px rgba(145,132,217,0.8), 0 0 24px rgba(145,132,217,0.22);"><span style="display: block; padding: 11px 12px; font-size: 11px; color: #d2cefd;">current</span></span>
+          </div>
+          <span style="font-size: 12px; color: #a99d92;">Focus is always Nocturne’s 2 px violet ring, offset 2 px, on :focus-visible only. The board region gets the same ring around the tray when reached by Tab.</span>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+          <span style="font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: #d9b48f;">Panels</span>
+          <div style="display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 14px; padding: 22px; border-radius: 16px; background: radial-gradient(circle at 25% 0%, #47352a, #18151d 70%);">
+            <div style="display: flex; flex-direction: column; gap: 6px; padding: 14px; border-radius: 16px; background: rgba(30,24,26,0.64); box-shadow: 0 0 0 1px rgba(255,214,170,0.10), 0 24px 60px rgba(0,0,0,0.45); backdrop-filter: blur(20px);"><span style="font-size: 13px; font-weight: 500;">--gm-panel</span><span style="font-size: 11px; color: #a99d92;">Picker, keycaps, replay. Glass 64 %, blur 20, warm 1 px edge, radius 16.</span></div>
+            <div style="display: flex; flex-direction: column; gap: 6px; padding: 14px; border-radius: 20px; background: rgba(30,24,26,0.72); box-shadow: 0 0 0 1px #b5abfc, 0 0 48px rgba(145,132,217,0.45), 0 24px 60px rgba(0,0,0,0.55);"><span style="font-size: 13px; font-weight: 500;">--gm-result</span><span style="font-size: 11px; color: #a99d92;">Result moments. Edge and glow take the outcome colour, radius 20.</span></div>
+            <div style="display: flex; flex-direction: column; gap: 6px; padding: 14px; border-radius: 12px; background: rgba(30,24,26,0.78); box-shadow: 0 0 0 1px rgba(236,125,138,0.45), 0 16px 40px rgba(0,0,0,0.5);"><span style="font-size: 13px; font-weight: 500;">--gm-notice</span><span style="font-size: 11px; color: #a99d92;">Error notice. Smaller radius, danger edge, no glow.</span></div>
+          </div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+          <span style="font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: #d9b48f;">Icons · Phosphor-style, 16 px stroke on 256, currentColor</span>
+          <div style="display: flex; flex-wrap: wrap; gap: 10px; color: #f3e6d8;">
+            <sc-for list="{{ icons }}" as="ic" hint-placeholder-count="12">
+              <div style="display: flex; flex-direction: column; align-items: center; gap: 6px; width: 76px; padding: 12px 0 8px; border-radius: 10px; background: rgba(42,34,31,0.7);"><svg width="22" height="22" viewBox="0 0 256 256" style="fill: none; stroke: currentColor; stroke-width: 16; stroke-linecap: round; stroke-linejoin: round;"><path d="{{ ic.d }}"></path></svg><span style="font-size: 10px; color: #a99d92;">{{ ic.name }}</span></div>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;animate&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;}}">
+class Component extends DCLogic {
+  renderVals() {
+    const anim = this.props.animate ?? false;
+    const pillars = [
+      { k: 'Board as hero', v: 'A lit stone tray with real depth: walls stand 0.34 of a cell tall, every block casts a soft shadow down-right, and a warm lamp from the top-left falls off into a vignette.' },
+      { k: 'Legible at 20 px', v: 'Each kind keeps a distinct silhouette, not just a colour: tall pale walls, dark floor, round rune rings, square blocks with a seal, Golem’s rounded dome. Detail drops in three levels as cells shrink.' },
+      { k: 'Instant input', v: 'The static layer is cached once per state; each frame only blits it and redraws Golem, glows and particles. A new state always replaces the animation in flight.' },
+      { k: 'Interface', v: 'Nocturne: Inter, glass panels tinted warm, outlined violet actions, rules that fade at the ends. Panels float over the scene so the board can use the whole window.' }
+    ];
+    const F = [
+      ['title', 'Title — no level loaded', 'Golem waits on a small plinth, breathing and blinking. The picker is open on Tier 1. “Start with t1-01” has focus; Tab reaches the list.'],
+      ['playing', 'Playing', 't2-03 at step 37. Two blocks are home (seal lit, rune glowing). Golem stands next to a block and looks toward its last move.'],
+      ['warn', 'Few steps left', 'In the last 10 % the gauge changes character: spent tiles go dark, the remaining ones burn amber, the panel itself glows and the count gets an hourglass pill.'],
+      ['bump', 'Bump — still at 27 %', 'Golem lunges into the wall, squashes, squints; a burst of light and stone chips at the contact edge. The ← keycap lights and the gauge shows +1, so the cost is explained.'],
+      ['land', 'Block onto a rune — still at 30 %', 'Golem leans into the push; dust trails behind the block; the rune ignites in a violet ring with rising sparks, and the seal on the block lights.'],
+      ['solved', 'Solved — celebration', 'Every rune flares into a light pillar, sparks rise, Golem jumps with arms up and happy eyes. The result panel rises from below; Next level is primary.'],
+      ['lost-steps', 'Lost — out of steps', 'Golem powers down: clay greys, glyph and eyes go dark, it slumps. The gauge is empty with one red tile. The room dims. Restart is primary.'],
+      ['deadlock', 'Lost — a box stuck in a corner', 'The page finds the block that moved in the last step. It cracks and darkens, a red lock pops above it, a pulsing ring outlines it, and a spotlight dims the rest of the room.'],
+      ['reconnecting', 'Reconnecting', 'The scene desaturates and dims; keys are paused. A calm amber ring with Golem’s glyph turns slowly in the centre. The picker header shows the state too.'],
+      ['error', 'Error notice', 'A small glass notice under the gauge with the server’s detail. It never takes focus; × or Esc closes it, and it fades after 8 s.'],
+      ['atlas', 'The picker — all tiers', '“All levels” opens the atlas: every level as a card with a miniature in the clay palette, solved marks and the current level ringed. Tier 3 shows its sample and placeholders. Keyboard focus is on t2-04.'],
+      ['large', '20 × 20 board at 1024 × 700', 'Below 1200 px the picker folds into a rail (tier dots, Levels button). The tray fits at 21 px a cell; detail level 0 keeps every kind distinct.'],
+      ['replay', 'Sketch — replay (later)', 'Same scene. Runs replace levels on the left, actions list on the right, transport and timeline below. Unseen cells sit under drifting fog; a warm lantern lights the five cells Golem sees.']
+    ];
+    const frames = F.map(([frame, name, note], i) => {
+      const w = frame === 'large' ? 1024 : 1440, h = frame === 'large' ? 700 : 900;
+      return { id: 'f' + String(i + 1).padStart(2, '0'), n: String(i + 1).padStart(2, '0'), frame, name, note, w, h, hint: `${w}px,${h}px`, noteW: Math.min(860, w - 40) };
+    });
+    const kinds = [
+      ['Wall', '#', '#', 'all', '', '', 'Hewn stone, 0.34 cell tall. 4 top variants; face shows only above open floor.'],
+      ['Floor', 'space · inside', ' ', 'all', '', '', 'Worn flagstone, darker than walls and blocks. Outside the walls only the dark room shows.'],
+      ['Goal', '.', '.', 'all', '', '', 'Bronze rune circle: ring, inner ring, 8 marks, centre diamond. Dormant = bronze.'],
+      ['Block', '$', '$', 'all', '', '', 'Sandstone block, 0.27 cell tall, carved seal on top. Seal is dark when loose.'],
+      ['Block on goal', '*', '*', 'all', '', '', 'Seal lit violet, rune ignited under it, violet glow on the face. Differs in light and mark, not just hue.'],
+      ['Golem', '@', '@', 'auto', '', '', 'Clay dome, ember-violet eyes, glyph on the brow. Never the colour of anything else.'],
+      ['Golem on goal', '+', '+', 'auto', '', '', 'Body is narrower than the rune ring, so the ring and marks stay visible around its feet.'],
+      ['Stuck block', 'state', '##|#$', 'all', 'deadlock', '1,1', 'Drawn only on a deadlock loss: cracked, darkened, red lock, pulsing outline, spotlight.']
+    ].map(([name, ch, map, floor, fx, focus, note]) => ({ name, ch, map, floor, fx, focus, note }));
+    const masks = Array.from({ length: 16 }, (_, b) => {
+      const N = b & 1, E = b & 2, S = b & 4, W = b & 8;
+      return { map: [' ' + (N ? '#' : ' ') + ' ', (W ? '#' : ' ') + '#' + (E ? '#' : ' '), ' ' + (S ? '#' : ' ') + ' '].join('|'), label: (N ? 'N' : '·') + (E ? 'E' : '·') + (S ? 'S' : '·') + (W ? 'W' : '·') };
+    });
+    const sp = (name, anim, facing, n, meta) => ({ name, anim, facing, meta, hint: `${n * 60}px,72px` });
+    const sprites = [
+      sp('Idle', 'idle', 'S', 8, '8 frames · loop 3.3 s · breathe + blink'),
+      sp('Walk east', 'walk', 'E', 6, '6 frames · 140 ms'), sp('Walk west', 'walk', 'W', 6, '6 frames · 140 ms'),
+      sp('Walk north', 'walk', 'N', 6, '6 frames · 140 ms · back view'), sp('Walk south', 'walk', 'S', 6, '6 frames · 140 ms'),
+      sp('Push east', 'push', 'E', 6, '6 frames · 160 ms · lean + glyph flare'), sp('Push north', 'push', 'N', 6, '6 frames · 160 ms'),
+      sp('Bump west', 'bump', 'W', 6, '6 frames · 200 ms · lunge, squash, recoil'), sp('Celebrate', 'celebrate', 'S', 12, '12 frames · 900 ms · jump, arms up'),
+      sp('Power down', 'powerdown', 'E', 10, '10 frames · 700 ms · grey, slump, eyes off')
+    ];
+    const ef = (name, anim, n, meta) => ({ name, anim, meta, hint: `${n * 60}px,72px` });
+    const effects = [
+      ef('Dust puff', 'dust', 6, '6 frames · 260 ms'), ef('Impact', 'impact', 5, '5 frames · 180 ms'), ef('Rune ignite', 'ignite', 8, '8 frames · 420 ms'),
+      ef('Sparks', 'sparks', 8, '8 frames · 500 ms'), ef('Goal flare', 'flare', 10, '10 frames · 1.1 s'), ef('Crack', 'crack', 6, '6 frames · 360 ms'), ef('Lock mark', 'lock', 6, '6 frames · 300 ms · back-ease pop')
+    ];
+    const A = (file, frame, sheet, n, kb, note) => ({ file, frame, sheet, n, kb, note, group: '' });
+    const G = (group) => ({ group, file: '' });
+    const assets = [
+      G('Golem — 64 × 80 frames, feet on the bottom 8 px'),
+      A('golem/idle.png', '64 × 80', '512 × 80', 8, '62 KB', 'Facing south; breathe + one blink on frame 6'),
+      A('golem/walk-n.png · -e · -s · -w', '64 × 80', '384 × 80', '6 ×4', '4 × 44 KB', 'In place; the engine moves the sprite between cells'),
+      A('golem/push-n.png · -e · -s · -w', '64 × 80', '384 × 80', '6 ×4', '4 × 46 KB', 'Lean, arms forward, squint, glyph flare'),
+      A('golem/bump-n.png · -e · -s · -w', '64 × 80', '384 × 80', '6 ×4', '4 × 42 KB', 'Lunge 0.13 cell, squash, damped recoil'),
+      A('golem/celebrate.png', '64 × 96', '768 × 96', 12, '96 KB', 'Taller frame for the jump'),
+      A('golem/powerdown.png', '64 × 80', '640 × 80', 10, '70 KB', 'Ends on a hold frame (grey, eyes off)'),
+      A('golem/face-n.png', '64 × 80', '64 × 80', 1, '6 KB', 'Back view for idle facing north'),
+      G('Tiles — 64 × 64 cells; walls are 64 × 86 (22 px of height)'),
+      A('tiles/floor.png', '64 × 64', '512 × 64', '8', '88 KB', 'Flagstone base stones'),
+      A('tiles/floor-overlay.png', '64 × 64', '384 × 64', '6', '30 KB', '3 wear spots + 3 cracks, drawn over a base'),
+      A('tiles/wall-top.png', '64 × 64', '256 × 64', '4', '44 KB', 'Stone tops, speckle variants'),
+      A('tiles/wall-auto.png', '64 × 86', '1024 × 86', '16', '160 KB', 'Lips and seams by N/E/S/W mask'),
+      A('tiles/wall-face.png', '64 × 22', '256 × 22', '4', '14 KB', 'Front face with mortar courses'),
+      A('tiles/goal.png', '64 × 64', '128 × 64', '2', '16 KB', 'Dormant bronze · ignited violet'),
+      A('tiles/block.png', '64 × 82', '192 × 82', '3', '36 KB', 'Loose · sealed (on goal) · cracked'),
+      A('tiles/shadow.png', '64 × 64', '128 × 64', '2', '8 KB', 'Soft drop shadow for wall and block, multiply'),
+      A('tiles/tray.png', '96 × 96', '96 × 96', '9-slice', '24 KB', 'Stone tray frame around the board'),
+      G('Effects — 64 × 80 frames, additive unless noted'),
+      A('fx/dust.png', '64 × 80', '384 × 80', 6, '22 KB', 'Normal blend'), A('fx/impact.png', '64 × 80', '320 × 80', 5, '18 KB', 'Rays + chips'),
+      A('fx/ignite.png', '64 × 80', '512 × 80', 8, '40 KB', 'Ring + burst'), A('fx/sparks.png', '64 × 80', '512 × 80', 8, '20 KB', 'Violet + ember'),
+      A('fx/flare.png', '64 × 160', '640 × 160', 10, '64 KB', 'Light pillar for solved'), A('fx/crack.png', '64 × 64', '384 × 64', 6, '20 KB', 'Over a block top'),
+      A('fx/lock.png', '64 × 64', '384 × 64', 6, '16 KB', 'Red lock pop'), A('fx/fog.png', '128 × 128', '512 × 128', 4, '90 KB', 'Soft fog puffs for replay, normal blend'),
+      A('fx/motes.png', '8 × 8', '32 × 8', 4, '1 KB', 'Dust motes in the lamp light'),
+      G('Scene and interface'),
+      A('scene/room.webp', '1440 × 900', '—', 1, '180 KB', 'Workshop ground + lamp falloff, drawn once'),
+      A('ui/icons.svg', '24 × 24', 'sprite', 14, '6 KB', 'Phosphor-style, currentColor'),
+      A('fonts/Inter-Regular.woff2 · -Medium · -SemiBold', '—', '—', 3, '3 × 108 KB', 'Inter, SIL OFL 1.1 — Nocturne’s face, self-hosted')
+    ];
+    const M = (k, trig, dur, ease, what, rm) => ({ k, trig, dur, ease, what, rm });
+    const motion = [
+      M('Idle', 'No new state for 600 ms', '3.3 s loop', 'sine', 'Breathe (scale y +3.5 %), blink every 3.7 s, glyph pulse, dust motes drift, lamp flickers ±6 %', 'Static pose; no motes'),
+      M('Move', 'Golem’s cell changed, no block moved', '140 ms', 'cubic-bezier(.2,.7,.3,1)', 'Sprite slides one cell; walk strip plays once; eyes turn to the direction', 'Jump to the new cell'),
+      M('Push', 'Golem moved and one $/* moved the same way', '160 ms', 'cubic-bezier(.3,.6,.35,1)', 'Golem leans in; block slides with a 20 ms lag (weight); dust puff behind the block', 'Jump; no dust'),
+      M('Bump', 'map identical, steps + 1', '200 ms', 'out 60 ms, damped spring 140 ms', 'Lunge 0.13 cell toward the key, squash, recoil; impact burst at the edge; key cap and gauge +1 flash 400 ms', 'Amber outline on Golem, 300 ms fade'),
+      M('Block onto rune', 'A cell turned . → * this step', '420 ms', 'cubic-bezier(.16,1,.3,1)', 'Ring expands 0.34 → 0.9 cell and fades; 12 sparks rise; seal lights; rune glow settles to a slow pulse', 'Instant lit state, 150 ms fade'),
+      M('Block off a rune', 'A cell turned * → .', '300 ms', 'ease-out', 'Seal and rune glow fade to bronze', '150 ms fade'),
+      M('Solved', 'status → solved', '1.2 s', 'flare: out; panel: cubic-bezier(.2,.8,.2,1)', 'All runes flare in a 60 ms stagger; sparks; Golem celebrates; result panel rises 24 px + fades in at 300 ms', 'Panel fades in; runes lit'),
+      M('Lost — steps', 'status → lost, reason = steps', '900 ms', 'ease-in-out', 'Gauge drains its last tile red; Golem powers down; room dims 30 %; panel rises at 500 ms', 'Grey pose; panel fades'),
+      M('Lost — deadlock', 'status → lost, reason = deadlock; block = the one that moved last step', '1.0 s', 'crack: linear; lock: back-out', 'Spotlight closes in on the block; crack spreads; lock pops; outline pulses at 0.5 Hz; panel rises at 600 ms', 'Static mark + outline'),
+      M('Steps warning', 'steps ≥ 90 % of budget (first time)', '600 ms', 'ease-out', 'Remaining tiles turn amber one by one (20 ms stagger); panel glow fades in; hourglass pill appears', 'Instant'),
+      M('Reconnecting', 'socket closed', '400 ms in, 600 ms out', 'ease', 'Scene desaturates + dims; amber ring turns once per 1.6 s; on reconnect everything lifts back', 'Fade only, ring static'),
+      M('Error notice', '{type: "error"}', '220 ms in, 8 s hold', 'cubic-bezier(.2,.8,.2,1)', 'Slides 8 px down from under the gauge and fades in', 'Fade'),
+      M('Picker / atlas', 'Click, Enter, or “All levels”', '220 ms', 'cubic-bezier(.2,.8,.2,1)', 'Atlas scales 0.98 → 1 and fades; scene blurs 2 px and dims', 'Fade'),
+      M('Replay fog', 'A cell enters the robot’s view for the first time', '500 ms', 'ease-out', 'Fog puffs over that cell fade and drift outward; lantern follows Golem', 'Fog removed instantly')
+    ];
+    const T = (name, v, use) => ({ name, v, use });
+    const tokenGroups = [
+      { group: 'Ground and glass', rows: [
+        T('--gm-room', '#18151d', 'Room behind the tray (lamp falls off into it)'), T('--gm-room-lit', '#47352a', 'Lamp pool, top-left'),
+        T('--gm-panel', 'rgba(30,24,26,0.64)', 'Glass panels; blur 20 px, saturate 1.15'), T('--gm-panel-edge', 'rgba(255,214,170,0.10)', '1 px warm edge on every panel'),
+        T('--gm-card', 'rgba(255,255,255,0.025)', 'Level and run cards'), T('--gm-rule', 'rgba(255,214,170,0.14)', 'Fading rules (48 px ramps)'),
+        T('--gm-text', '#e9e9ed', 'Nocturne --color-text'), T('--gm-text-muted', '#9397ab', 'Nocturne neutral-500'), T('--gm-kicker', '#d9b48f', 'Warm labels, tier and section kickers')
+      ] },
+      { group: 'Game semantics', rows: [
+        T('--gm-word', '#9184d9', 'Nocturne accent: Golem’s glyph, lit runes, current level, primary'), T('--gm-word-hi', '#d6d0ff', 'Glyph and seal at full burn'),
+        T('--gm-solved', '#5cc49b', 'Solved checks and connected dot — never on the board'), T('--gm-warn', '#e2a44c', 'Last 10 %, reconnecting'),
+        T('--gm-danger', '#ec7d8a', 'Lost, stuck block, error'), T('--gm-ember', '#ffd9b0', 'Impact, dust motes, keycap +1')
+      ] },
+      { group: 'Material and light (canvas)', rows: [
+        T('--gm-stone-top', '#9a8a79', 'Wall top mid-tone (±6 % per cell)'), T('--gm-stone-face', '#54473d', 'Wall front face'), T('--gm-flag', '#6c5e52', 'Flagstone mid-tone (±5 %)'),
+        T('--gm-grout', '#29211d', 'Gaps between flagstones'), T('--gm-sandstone', '#c4a580', 'Block top'), T('--gm-bronze', '#a68f69', 'Dormant rune'),
+        T('--gm-clay', '#b8683f', 'Golem body mid-tone'), T('--gm-shadow', 'rgba(8,5,3,0.62)', 'Cast shadow, offset (0.2, 0.16) cell, blur 0.32 cell'),
+        T('--gm-lamp', 'rgba(255,180,120,0.10)', 'Screen-blend lamp, flicker ±6 %'), T('--gm-vignette', 'rgba(6,5,10,0.9)', 'Edge darkening at 75 %')
+      ] }
+    ];
+    const Y = (name, spec, size, wt, ls, tt, sample, color) => ({ name, spec, size, wt, ls, tt, sample, color: color || '#f3e6d8' });
+    const typeScale = [
+      Y('--gm-type-hero', '88 / 0.95 · 500', 88, 500, '-0.045em', 'none', 'Golem'),
+      Y('--gm-type-plate', '40 / 1.05 · 500', 40, 500, '-0.025em', 'none', 't2-03  37 / 300'),
+      Y('--gm-type-title', '24 / 1.15 · 500', 24, 500, '-0.02em', 'none', 'Solved in 64 steps'),
+      Y('--gm-type-card', '15 / 1.3 · 500', 15, 500, '-0.005em', 'none', 't2-04'),
+      Y('--gm-type-body', '13 / 1.45 · 400', 13, 400, 'normal', 'none', 'All four blocks are home.', '#cfc4b8'),
+      Y('--gm-type-meta', '12 / 1.4 · 400', 12, 400, 'normal', 'none', '11 × 9 · 400 steps', '#a99d92'),
+      Y('--gm-type-kicker', '11 / 1.3 · 500 · caps', 11, 500, '0.12em', 'uppercase', 'Tier 2 · level 3 of 5', '#d9b48f'),
+      Y('--gm-type-key', '12 / 1 · 500', 12, 500, 'normal', 'none', '← ↑ → ↓  R')
+    ];
+    const icons = [
+      ['restart', 'M24 56v48h48M67.6 192A88 88 0 1 0 65.8 65.8L24 104'], ['next', 'M40 128h176M144 56l72 72-72 72'], ['check', 'M72 136l40 40 80-88'],
+      ['hourglass', 'M64 40H192L128 128ZM128 128L192 216H64Z'], ['lock', 'M48 112h160v104H48ZM88 112V80a40 40 0 0 1 80 0v32'], ['levels', 'M40 40h72v72H40ZM144 40h72v72h-72ZM40 144h72v72H40ZM144 144h72v72h-72Z'],
+      ['close', 'M200 56L56 200M200 200L56 56'], ['error', 'M128 32a96 96 0 1 0 0.1 0ZM128 80v56M128 172v2'], ['play', 'M72 40v176l144-88Z'],
+      ['pause', 'M72 40v176M184 40v176'], ['step back', 'M56 40v176M200 48v160L88 128Z'], ['step fwd', 'M200 40v176M56 48v160l112-80Z'], ['glyph', 'M128 48v120M88 72l40 44 40-44'], ['reconnect', 'M168 40.7a96 96 0 1 1-80 0']
+    ].map(([name, d]) => ({ name, d }));
+    return { anim, pillars, frames, kinds, masks, sprites, effects, assets, motion, tokenGroups, typeScale, icons };
+  }
+}
+</script>
+</body>
+</html>
