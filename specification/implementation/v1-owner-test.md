@@ -23,5 +23,5 @@ Nothing.
 
 ## End of testing
 
-The owner answered "продовжуй" ("continue") to the handover, which said that the review and the release
+The owner answered "continue" (translated) to the handover, which said that the review and the release
 follow once testing is finished. No problem was reported.

@@ -128,7 +128,7 @@ def test_a_bad_argument_is_a_lua_error_at_the_programs_line(source, message):
 def test_safe_text_replaces_bytes_that_are_not_utf8():
     sandbox = new_sandbox(InterpSettings())
     assert sandbox.safe_text(b"ok \x93 \xff\xfe end") == "ok \ufffd \ufffd\ufffd end"
-    assert sandbox.safe_text("кирилиця ok") == "кирилиця ok"
+    assert sandbox.safe_text("naïve café → ok") == "naïve café → ok"
     assert sandbox.safe_text(b"") == ""
 
 

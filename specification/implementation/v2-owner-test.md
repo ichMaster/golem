@@ -29,8 +29,8 @@ None reported.
 
 ### End of testing
 
-The owner answered: "я перевірю вже через клієнт в наст версії, роби реліз" ("I'll check it through the
-client in the next version; do the release"). No problem was reported.
+The owner answered (translated): "I'll check it through the client in the next version; do the
+release". No problem was reported.
 
 ## v2.2 (`/ship-phase v2.2`)
 
@@ -71,6 +71,5 @@ Nothing.
 
 ### End of testing
 
-The owner answered: "тестування завершено, роби ревʼю і реліз" ("testing is finished; do the review and
-the release"). No problem was reported. Claude records GOLEM-017's three Manual (owner) checks as confirmed
+The owner answered (translated): "testing is finished; do the review and the release". No problem was reported. Claude records GOLEM-017's three Manual (owner) checks as confirmed
 by the owner on these words.

@@ -185,7 +185,7 @@ When the version's last planned phase is executed, its gates are green and every
    - what the owner tested;
    - each problem, with its fix commit and its regression test;
    - anything moved to later work;
-   - the owner's words that ended the testing.
+   - the owner's words that ended the testing, in English (translate them; the repository is English only).
 
    Commit it (`docs: vA owner test`) and push.
 4. **Continue only when the owner says testing is finished.** Never assume it. Issues of the version's last

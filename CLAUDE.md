@@ -2,6 +2,19 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Language
+
+- **The repository is English only.** That covers:
+  - the interface: the game screen's text, the output of `golem-server`, `golem-local` and later `golem`,
+    error details and log messages;
+  - every document: the specification, the implementation notes and reports, the READMEs and the skills;
+  - all code: identifiers, comments, docstrings, test names, test data and the Lua fixture programs;
+  - commit messages, and GitHub issues and comments.
+- **The owner's words** quoted in a document (an owner-test record, for example) are written in English
+  translation.
+- **The only exception** is the frozen `specification/concept.uk.md`.
+- **In chat**, Claude answers in the language of the owner's current message.
+
 ## Specification
 
 Read these before planning work. They are the project's contract with itself.
