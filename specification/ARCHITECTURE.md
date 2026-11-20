@@ -228,6 +228,8 @@ loop:
 
 **The short report** (v2.3) is the first six fields, `level` through `error`, in that order. v2.5 adds `versions`, and v4.1 adds `last_actions` and `final_map`.
 
+**Frames** (v2.4, a contract) are what the screen plays back: the map before the first move, then the map after every `move`, rendered by the core. A frame is `{"step": n, "dir": "N" | "E" | "S" | "W", "moved": true | false, "map": [...]}`; the first has `step` 0 and `dir` and `moved` set to `null`. `look`, `here` and `boxes_left` change nothing on the map and add no frame, so the frames are bounded by the step budget. A run that never moves has only the first frame.
+
 For a hidden level the report is only `{"level": "hidden/tier2/h-07", "passed": false}`.
 
 ## Stops, snapshots and program swaps

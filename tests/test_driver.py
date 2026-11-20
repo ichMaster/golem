@@ -8,9 +8,9 @@ import pytest
 
 from golem.core.levels import budget_for, load_budgets, load_level
 from golem.core.replay import replay
-from golem.core.world import boxes_left, here, look
+from golem.core.world import boxes_left, here, look, render
 from golem.interp.config import InterpSettings
-from golem.interp.driver import run_program
+from golem.interp.driver import run_program, run_with_frames
 
 REPO = Path(__file__).resolve().parent.parent
 LEVELS = REPO / "levels"
@@ -160,3 +160,58 @@ def test_a_huge_syntax_error_is_cut_to_500_characters():
     report = run("x = '" + "y" * (1024 * 1024) + "\nz = 1")
     assert report["error"].startswith("program:1: unfinished string")
     assert len(report["error"]) <= 500
+
+
+# --- frames (v2.4): the map before the first move and after every move ------------------------
+
+SOLUTIONS = REPO / "tests" / "fixtures" / "solutions" / "training" / "tier1"
+
+
+def recorded(name: str) -> str:
+    lines = (SOLUTIONS / f"{name}.txt").read_text(encoding="utf-8").splitlines()
+    return "".join(line.strip().replace(" ", "") for line in lines if not line.startswith(";"))
+
+
+def framed(source: str, level_id: str = T1) -> tuple[dict, list[dict]]:
+    level = load_level(level_id, LEVELS)
+    return run_with_frames(level, budget_for(level_id, load_budgets(LEVELS)), source, SETTINGS)
+
+
+@pytest.mark.parametrize("name", ["t1-01", "t1-02", "t1-03"])
+def test_the_frames_of_a_recorded_solution_are_the_cores_replay(name):
+    level_id = f"training/tier1/{name}"
+    moves = recorded(name)
+    budget = budget_for(level_id, load_budgets(LEVELS))
+    _, states = replay(load_level(level_id, LEVELS), moves, budget)
+    report, frames = framed(moves_program(moves), level_id)
+    assert report["status"] == "solved"
+    assert [f["map"] for f in frames] == [render(world) for world in states]
+    assert [f["step"] for f in frames] == list(range(len(moves) + 1))
+    assert [f["dir"] for f in frames] == [None, *moves]
+    assert frames[0] == {"step": 0, "dir": None, "moved": None, "map": render(states[0])}
+
+
+def test_a_bump_is_a_frame_with_the_same_map_and_a_counted_step():
+    _, frames = framed('move("N") move("N") give_up("stop")')
+    assert [(f["step"], f["dir"], f["moved"]) for f in frames] == [
+        (0, None, None), (1, "N", True), (2, "N", False)]
+    assert frames[1]["map"] == frames[2]["map"] != frames[0]["map"]
+
+
+def test_look_here_and_boxes_left_add_no_frame():
+    _, frames = framed('look("N") here() boxes_left() move("E") look("E") give_up("x")')
+    assert [f["dir"] for f in frames] == [None, "E"]
+
+
+def test_a_program_that_never_runs_has_only_the_first_frame():
+    report, frames = framed("x = = 1")
+    assert report["reason"] == "error"
+    assert len(frames) == 1 and frames[0]["step"] == 0
+
+
+@pytest.mark.parametrize("name", sorted(PROGRAMS))
+def test_the_framed_report_equals_the_plain_one_and_both_repeat_exactly(name):
+    report, frames = framed(PROGRAMS[name])
+    assert report == run(PROGRAMS[name])
+    assert json.dumps([report, frames]) == json.dumps(list(framed(PROGRAMS[name])))
+

@@ -76,6 +76,34 @@ end
 
 def run_program(level: Level, budget: Budget, source: str, settings: InterpSettings) -> dict:
     """Run ``source`` on ``level`` within ``budget`` and return the short report."""
+    return _run(level, budget, source, settings, on_move=None)
+
+
+def run_with_frames(
+    level: Level, budget: Budget, source: str, settings: InterpSettings
+) -> tuple[dict, list[dict]]:
+    """Run like ``run_program``, and also return the frames: the map before the first move and after
+    every ``move``, rendered by the core.
+
+    Each frame is ``{"step", "dir", "moved", "map"}``; the first has ``step`` 0 and ``dir`` and
+    ``moved`` set to ``None``. ``look``, ``here`` and ``boxes_left`` change nothing on the map and
+    add no frame, so the frames are bounded by the step budget.
+    """
+    start = new_world(level, budget)
+    frames = [_frame(start, None, None)]
+
+    def on_move(world: World, direction: str, moved: bool) -> None:
+        frames.append(_frame(world, direction, moved))
+
+    report = _run(level, budget, source, settings, on_move=on_move)
+    return report, frames
+
+
+def _frame(world: World, direction: str | None, moved: bool | None) -> dict:
+    return {"step": world.steps, "dir": direction, "moved": moved, "map": core.render(world)}
+
+
+def _run(level: Level, budget: Budget, source: str, settings: InterpSettings, on_move) -> dict:
     world = new_world(level, budget)
     instructions = 0
     try:
@@ -88,7 +116,7 @@ def run_program(level: Level, budget: Budget, source: str, settings: InterpSetti
             DRIVER, chunk, settings.hook_every, budget.instructions, sandbox.safe_text,
             GIVE_UP_BYTES_MAX, ERROR_BYTES_MAX,
         )
-        ending, world, instructions = _drive(step, world)
+        ending, world, instructions = _drive(step, world, on_move)
     except lua54.LuaMemoryError:
         ending = OUT_OF_MEMORY
     except Exception:
@@ -97,8 +125,11 @@ def run_program(level: Level, budget: Budget, source: str, settings: InterpSetti
     return short_report(level.id, world, instructions, ending)
 
 
-def _drive(step, world: World) -> tuple[Ending, World, int]:
-    """Resume the program until the run ends; return the ending, the last world and the count."""
+def _drive(step, world: World, on_move=None) -> tuple[Ending, World, int]:
+    """Resume the program until the run ends; return the ending, the last world and the count.
+
+    ``on_move(world, direction, moved)``, when given, is called after every ``move``.
+    """
     reply = step(None)
     while True:
         kind = reply[0]
@@ -114,6 +145,8 @@ def _drive(step, world: World) -> tuple[Ending, World, int]:
         if cmd == "give_up":
             return gave_up(arg), world, instructions
         result, world = _apply(world, cmd, arg)
+        if cmd == "move" and on_move is not None:
+            on_move(world, arg, result)
         if world.status != PLAYING:
             return from_world(world), world, instructions
         reply = step(result)
