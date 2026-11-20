@@ -8,7 +8,8 @@ import re
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
-SCANNED = ["golem", "tests", "specification", "scripts", "levels/training", ".claude/skills"]
+SCANNED = ["golem", "tests", "specification", "scripts", "levels/training", ".claude/skills",
+           "programs"]
 TOP_LEVEL = ["README.md", "CLAUDE.md", "RELEASE.txt", "pyproject.toml", ".env.example"]
 EXCEPTIONS = {REPO / "specification" / "concept.uk.md"}
 TEXT_SUFFIXES = {".py", ".lua", ".md", ".txt", ".toml", ".html", ".js", ".css", ".sh", ".json",

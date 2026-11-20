@@ -423,6 +423,7 @@ Nothing that a run produces is deleted. `data/`, `reports/`, `levels/hidden/` (e
 | `levels/training/tier{1,2,3}/*.txt` | by hand, committed | training levels |
 | `levels/hidden/tier{1,2,3}/*.txt` | by the owner, gitignored | hidden levels with opaque names |
 | `levels/budgets.toml` | by hand, committed | step and instruction budgets per tier |
+| `programs/*.lua` | by hand, committed | the example programs the screen lists, shows and runs (v2.4) |
 | `levels/README.md` | by hand, committed | the format, the tiers, and the source and licence of every level |
 | `data/logs/server.log` | the server (v2.1) | the server log, rotating (1 MB × 3) |
 | `data/human-game.json` | the server, after every change to the human game (v2.2) | the human game: the saved world of the current training level |
@@ -443,6 +444,7 @@ All settings live in `.env` (read with python-dotenv) or in `levels/budgets.toml
 |---|---|---|
 | `GOLEM_LEVELS_DIR` | v1.1 | the levels root (`levels`) |
 | `GOLEM_HOST`, `GOLEM_PORT` | v2.1 | where the server listens (`127.0.0.1` / `8700`) |
+| `GOLEM_PROGRAMS_DIR` | v2.4 | the folder of Lua programs the screen lists and runs (`programs`) |
 | `LUA_MAX_MEMORY` | v2.3 | the Lua memory cap per run, in bytes (64 MiB) |
 | `RANDOM_SEED` | v4.1 | the seed of the sandbox's `math.random` (`0`) |
 | `HOOK_EVERY` | v2.3 | instructions between two calls of the count hook (`1000`) |
@@ -530,6 +532,7 @@ golem/
     metrics.py              # v7.2: golem-metrics
   agents/
     scribe/                 # v6.2: CLAUDE.md (Scribe's instructions), task.md (the task prompt)
+  programs/                 # v2.4: example Lua programs that the screen runs; committed
   levels/
     training/tier1/ …       # committed
     hidden/                 # gitignored; only README.md is committed

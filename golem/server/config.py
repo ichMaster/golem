@@ -13,6 +13,7 @@ DEFAULT_PORT = 8700
 DEFAULT_LEVELS_DIR = "levels"
 DEFAULT_LOG_DIR = "data/logs"
 DEFAULT_GAME_FILE = "data/human-game.json"
+DEFAULT_PROGRAMS_DIR = "programs"
 
 
 class ConfigError(ValueError):
@@ -24,7 +25,8 @@ class Settings:
     """Where the server listens, where the levels are, where it logs, and where it saves the game.
 
     ``game_file`` is where the human game is saved after every change and restored from at start;
-    ``None`` turns saving off.
+    ``None`` turns saving off. ``programs_dir`` is the folder of programs the screen runs (v2.4);
+    ``None`` lists none.
     """
 
     host: str
@@ -32,6 +34,7 @@ class Settings:
     levels_dir: Path
     log_dir: Path
     game_file: Path | None = None
+    programs_dir: Path | None = None
 
 
 def load_settings(environ: Mapping[str, str]) -> Settings:
@@ -54,6 +57,8 @@ def load_settings(environ: Mapping[str, str]) -> Settings:
     levels_dir = Path(environ.get("GOLEM_LEVELS_DIR") or DEFAULT_LEVELS_DIR).resolve()
     log_dir = Path(DEFAULT_LOG_DIR).resolve()
     game_file = Path(DEFAULT_GAME_FILE).resolve()
+    programs_dir = Path(environ.get("GOLEM_PROGRAMS_DIR") or DEFAULT_PROGRAMS_DIR).resolve()
     return Settings(
-        host=host, port=port, levels_dir=levels_dir, log_dir=log_dir, game_file=game_file
+        host=host, port=port, levels_dir=levels_dir, log_dir=log_dir, game_file=game_file,
+        programs_dir=programs_dir,
     )

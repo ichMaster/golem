@@ -29,6 +29,7 @@ def test_the_defaults_bind_loopback():
     assert settings.levels_dir.is_absolute()
     assert settings.log_dir == Path("data/logs").resolve()
     assert settings.game_file == Path("data/human-game.json").resolve()
+    assert settings.programs_dir == Path("programs").resolve()
 
 
 @pytest.mark.parametrize("host", ["127.0.0.1", "localhost", "::1"])
@@ -62,7 +63,8 @@ def test_env_example_names_the_variables():
         if line and not line.startswith("#")
     }
     assert names == {
-        "GOLEM_LEVELS_DIR", "GOLEM_HOST", "GOLEM_PORT", "LUA_MAX_MEMORY", "HOOK_EVERY"}
+        "GOLEM_LEVELS_DIR", "GOLEM_HOST", "GOLEM_PORT", "LUA_MAX_MEMORY", "HOOK_EVERY",
+        "GOLEM_PROGRAMS_DIR"}
 
 
 # --- start-up checks (v1 code review #4) -------------------------------------------------------
