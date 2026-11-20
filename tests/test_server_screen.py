@@ -222,3 +222,35 @@ def test_the_page_messages_play_a_level_to_solved(tmp_path):
         assert state["status"] == "solved"
         ws.send_text(json.dumps({"type": "restart"}))
         assert ws.receive_json() == start
+
+
+# --- The programs panel (v2.4) ------------------------------------------------------------------
+
+
+def test_the_script_fetches_only_the_level_and_program_routes():
+    text = SCRIPT.read_text(encoding="utf-8")
+    urls = re.findall(r"""fetch\(\s*([`"'])(.*?)\1""", text)
+    assert urls, "screen.js fetches nothing"
+    for _, url in urls:
+        assert url == "/api/levels" or url.startswith("/api/programs"), url
+
+
+def test_the_playback_shows_one_frame_every_150_ms():
+    assert re.search(r"\bconst PLAYBACK_MS = 150;", SCRIPT.read_text(encoding="utf-8"))
+
+
+def test_the_game_keys_skip_form_controls():
+    text = SCRIPT.read_text(encoding="utf-8")
+    controls = re.search(r"FORM_CONTROLS = new Set\(\[(.*?)\]\)", text)
+    assert controls and set(re.findall(r'"([A-Z]+)"', controls.group(1))) == {
+        "SELECT", "INPUT", "TEXTAREA"}
+    on_key = text[text.index("function onKey"):text.index("// --- The drawing")]
+    assert "FORM_CONTROLS.has(event.target.tagName)" in on_key
+
+
+def test_the_page_has_the_programs_panel():
+    page = (SCREEN_DIR / "index.html").read_text(encoding="utf-8")
+    for element_id in ("program-list", "program-name", "program-code", "program-error",
+                       "run-level", "run-button", "skip-button", "run-board", "run-step",
+                       "run-report"):
+        assert f'id="{element_id}"' in page, element_id
