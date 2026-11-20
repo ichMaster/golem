@@ -4,8 +4,10 @@
 """
 
 from collections.abc import Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
+
+from golem.interp.config import InterpConfigError, InterpSettings, load_interp_settings
 
 LOOPBACK_HOSTS = ("127.0.0.1", "localhost", "::1")
 DEFAULT_HOST = "127.0.0.1"
@@ -26,7 +28,8 @@ class Settings:
 
     ``game_file`` is where the human game is saved after every change and restored from at start;
     ``None`` turns saving off. ``programs_dir`` is the folder of programs the screen runs (v2.4);
-    ``None`` lists none.
+    ``None`` lists none. ``interp`` holds the Lua memory cap and the hook interval for the runs
+    the screen starts.
     """
 
     host: str
@@ -35,6 +38,7 @@ class Settings:
     log_dir: Path
     game_file: Path | None = None
     programs_dir: Path | None = None
+    interp: InterpSettings = field(default_factory=InterpSettings)
 
 
 def load_settings(environ: Mapping[str, str]) -> Settings:
@@ -58,7 +62,11 @@ def load_settings(environ: Mapping[str, str]) -> Settings:
     log_dir = Path(DEFAULT_LOG_DIR).resolve()
     game_file = Path(DEFAULT_GAME_FILE).resolve()
     programs_dir = Path(environ.get("GOLEM_PROGRAMS_DIR") or DEFAULT_PROGRAMS_DIR).resolve()
+    try:
+        interp = load_interp_settings(environ)
+    except InterpConfigError as error:
+        raise ConfigError(str(error)) from None
     return Settings(
         host=host, port=port, levels_dir=levels_dir, log_dir=log_dir, game_file=game_file,
-        programs_dir=programs_dir,
+        programs_dir=programs_dir, interp=interp,
     )

@@ -9,8 +9,9 @@ import os
 import sys
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
+from typing import Annotated
 
-from fastapi import FastAPI, Request
+from fastapi import Body, FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
@@ -19,7 +20,9 @@ from starlette.exceptions import HTTPException
 import golem
 from golem.core.level import LevelError
 from golem.core.levels import BudgetsError, budget_for, list_levels, load_budgets, load_level
+from golem.interp.driver import run_with_frames
 from golem.server.config import ConfigError, Settings, load_settings
+from golem.server.programs import BadProgram, UnknownProgram, list_programs, read_program
 from golem.server.ws import install_ws
 
 LOG = logging.getLogger("golem")
@@ -46,6 +49,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     _install_error_handlers(app)
     _install_level_routes(app, settings.levels_dir)
     _install_screen_routes(app)
+    _install_program_routes(app, settings)
     install_ws(app, settings.levels_dir, settings.port, settings.game_file)
     return app
 
@@ -110,6 +114,53 @@ def _install_level_routes(app: FastAPI, levels_dir: Path) -> None:
                 "budget": {"steps": budget.steps, "instructions": budget.instructions},
             })
         return {"levels": entries}
+
+
+def _install_program_routes(app: FastAPI, settings: Settings) -> None:
+    """The programs the screen lists, shows and runs (v2.4): by name, from one folder only.
+
+    The routes are plain ``def`` functions, so FastAPI runs them in its thread pool and a run never
+    blocks the event loop that carries the human game.
+    """
+    folder, levels_dir = settings.programs_dir, settings.levels_dir
+
+    def source_of(name: str) -> str | JSONResponse:
+        try:
+            return read_program(folder, name)
+        except UnknownProgram:
+            return error_response(404, "not_found", "unknown program")
+        except BadProgram as error:
+            return error_response(422, "bad_program", str(error))
+
+    @app.get("/api/programs")
+    def programs():
+        return {"programs": list_programs(folder)}
+
+    @app.get("/api/programs/{name}")
+    def program(name: str):
+        source = source_of(name)
+        if isinstance(source, JSONResponse):
+            return source
+        return {"name": name, "source": source}
+
+    @app.post("/api/programs/{name}/run")
+    def run(name: str, body: Annotated[dict | None, Body()] = None):
+        source = source_of(name)
+        if isinstance(source, JSONResponse):
+            return source
+        level_id = body.get("level") if isinstance(body, dict) else None
+        # Training ids only; a hidden, unknown, missing or non-string id gets the same answer.
+        if not isinstance(level_id, str) or level_id not in list_levels("training", levels_dir):
+            return error_response(404, "unknown_level", "unknown level")
+        try:
+            level = load_level(level_id, levels_dir)
+            budget = budget_for(level_id, load_budgets(levels_dir))
+        except (LevelError, BudgetsError, OSError) as error:
+            LOG.error("training level %s does not load: %s", level_id, error)
+            return error_response(500, "level_error", str(error))
+        report, frames = run_with_frames(level, budget, source, settings.interp)
+        LOG.info("ran %s on %s: %s %s", name, level_id, report["status"], report["reason"])
+        return {"report": report, "frames": frames}
 
 
 class _ScreenFiles(StaticFiles):

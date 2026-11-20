@@ -6,6 +6,7 @@ from pathlib import Path
 import pytest
 from fastapi.testclient import TestClient
 
+from golem.interp.config import load_interp_settings
 from golem.server import app as server_app
 from golem.server.app import StartupError, create_app
 from golem.server.config import ConfigError, Settings, load_settings
@@ -144,3 +145,11 @@ def test_the_working_directorys_env_is_read(tmp_path, monkeypatch):
     (tmp_path / ".env").write_text("GOLEM_PORT=8801\n")
     started = run_main(monkeypatch, tmp_path)
     assert started["port"] == 8801
+
+
+@pytest.mark.parametrize("name", ["LUA_MAX_MEMORY", "HOOK_EVERY"])
+def test_a_bad_interpreter_setting_stops_the_server_at_start(name):
+    with pytest.raises(ConfigError, match=name):
+        load_settings({name: "0"})
+    assert load_settings({name: "4096"}).interp == load_interp_settings({name: "4096"})
+

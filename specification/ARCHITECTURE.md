@@ -324,6 +324,11 @@ A training level that doesn't parse gives `500 level_error` with the parse error
 **Routes outside the CLI:**
 
 - `GET /` answers the game screen's page, and `/screen/<path>` serves the files under `golem/screen/` with their content types (v2.2). The directory is found through the package, not the working directory. A path that resolves outside it (raw or percent-encoded `..`), a missing file and the bare directory answer `404 not_found`, and no directory is listed. Every page file is sent with `Cache-Control: no-cache`, so the browser revalidates it on each load (a `304` when it has not changed) and never runs a stale script.
+- **The programs** (v2.4) serve the owner's screen; the `golem` CLI has no command for them. A program is named `[a-z0-9][a-z0-9_-]*.lua` (at most 64 characters) and read only from `GOLEM_PROGRAMS_DIR`, as a regular file directly inside it, so no path, `..` or symlink out of the folder reaches another file:
+  - `GET /api/programs` gives `{"programs": [{"name", "description", "size"}]}`, sorted by name; the description is the program's first line when it is a `--` comment;
+  - `GET /api/programs/{name}` gives `{"name", "source"}`;
+  - `POST /api/programs/{name}/run` with `{"level": "<training id>"}` gives `{"report": <the short report>, "frames": [...]}` (the frames of §Execution, budgets and the report). It runs in the server's thread pool, off the event loop.
+  - An unknown or invalid program name gets `404 not_found` ("unknown program"), and a program that is not UTF-8 gets `422 bad_program`. A hidden, unknown, missing or non-string level gets the same `404 unknown_level` ("unknown level"), and a body that is not a JSON object gets `422 bad_request`.
 - `POST /api/sessions` and `POST /api/sessions/{id}/close` are **owner routes**: they need Bearer `GOLEM_OWNER_TOKEN` and are used only by the orchestrator.
 - `GET /api/runs` and `GET /api/runs/{id}/frames` serve the screen's replay (v5.3). They list and rebuild training runs only, and answer `404` for a hidden run. A training trace holds nothing that the run report does not already give the agent.
 
@@ -479,6 +484,7 @@ The project has no API keys. The things to keep private are `GOLEM_OWNER_TOKEN`,
 | The agent fits its program to the hidden levels | hidden results are passed or failed only; the metrics count hidden validations per session |
 | A hidden level is published | `levels/hidden/` is gitignored; tests use fixture hidden levels in `tests/fixtures/hidden/`; no hidden level text appears in logs, issues or commits |
 | Someone on the network uses the server | it binds `127.0.0.1` only |
+| A program name reaches another file | programs are read by a name pattern from one folder only, as regular files directly inside it; a symlink out of the folder is refused |
 | A web page open in the owner's browser uses the server | the WebSocket accepts only the server's own origin, or no origin; HTTP responses carry no CORS headers, so other pages cannot read them; a `Host` check against DNS rebinding comes with the run routes in v5.1 |
 
 ## Error handling and resilience
