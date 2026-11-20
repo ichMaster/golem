@@ -13,7 +13,7 @@ TOP_LEVEL = ["README.md", "CLAUDE.md", "RELEASE.txt", "pyproject.toml", ".env.ex
 EXCEPTIONS = {REPO / "specification" / "concept.uk.md"}
 TEXT_SUFFIXES = {".py", ".lua", ".md", ".txt", ".toml", ".html", ".js", ".css", ".sh", ".json",
                  ".yml", ".yaml", ""}
-CYRILLIC = re.compile("[Ѐ-ӿ]")
+CYRILLIC = re.compile("[\u0400-\u04ff]")
 
 
 def text_files() -> list[Path]:
@@ -37,5 +37,5 @@ def test_no_tracked_text_is_written_in_cyrillic():
 
 
 def test_the_check_would_catch_cyrillic():
-    assert CYRILLIC.search("готово")
+    assert CYRILLIC.search("\u0433\u043e\u0442\u043e\u0432\u043e")  # a Cyrillic word
     assert not CYRILLIC.search("naïve café → ok")
