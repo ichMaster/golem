@@ -28,6 +28,7 @@ def test_the_defaults_bind_loopback():
     assert settings.levels_dir == Path("levels").resolve()
     assert settings.levels_dir.is_absolute()
     assert settings.log_dir == Path("data/logs").resolve()
+    assert settings.game_file == Path("data/human-game.json").resolve()
 
 
 @pytest.mark.parametrize("host", ["127.0.0.1", "localhost", "::1"])

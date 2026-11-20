@@ -151,6 +151,7 @@ A deliberately plain page: no design, no canvas and no animation. It proves the 
   - the key hints, and a line for an `error` reply.
 - **Keys.** The arrow keys send `move` and `R` sends `restart`.
 - **The socket.** The page connects to `/ws` when it opens and draws every `state` it receives. On a drop it shows "Reconnecting…" and ignores keys without queuing them. It retries at 0.5, 1, 2 and 4 s, then every 5 s, and the server sends the current state on reconnect.
+- **The game survives a restart.** The server saves the human game to `data/human-game.json` after every `load`, `move` and `restart`, written atomically, and restores it at start, so a page that reconnects after a server restart finds the game where it was. Only a training level restores; a save that does not restore is logged without its contents, and the server starts with no game.
 
 **DoD** (the concept's phase 2, first part):
 - (Manual, owner) The owner passes t1-01 … t1-03 by hand on the page.
@@ -160,7 +161,8 @@ A deliberately plain page: no design, no canvas and no animation. It proves the 
 **Tests:**
 - `GET /` and every file the page references are served with their content types;
 - a path outside `golem/screen/` gets 404, encoded traversal included;
-- no file under `golem/screen/` references an external URL.
+- no file under `golem/screen/` references an external URL;
+- a game saved by one server is restored by a new server on the same file, ended games included; a save that is not JSON, not a saved game, a hidden or unknown level, or a world that does not fit its level starts with no game and logs no level text; the saved file is byte-identical for the same messages.
 
 ### v2.3 — Lua runs: the lupa spike, a minimal sandbox and the driver
 

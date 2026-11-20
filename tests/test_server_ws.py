@@ -8,9 +8,10 @@ import pytest
 from fastapi.testclient import TestClient
 from starlette.websockets import WebSocketDisconnect
 
-from golem.core.levels import budget_for, load_budgets, load_level
+from golem.core.level import parse_level
+from golem.core.levels import Budget, budget_for, load_budgets, load_level
 from golem.core.replay import replay
-from golem.core.world import World, render
+from golem.core.world import World, new_world, render, to_json
 from golem.server.app import create_app
 from golem.server.config import Settings
 from golem.server.ws import handle
@@ -207,3 +208,131 @@ def test_a_foreign_origin_is_refused_before_the_handshake(tmp_path, origin):
 def test_the_servers_own_page_may_connect(tmp_path, origin):
     with client_for(LEVELS, tmp_path).websocket_connect("/ws", headers={"origin": origin}) as ws:
         assert send(ws, {"type": "load", "level": T1})["type"] == "state"
+
+
+# --- the game survives a server restart (data/human-game.json) ----------------------------------
+
+T2 = "training/tier1/t1-02"
+
+
+def saving_client(levels_dir: Path, tmp_path: Path, game_file: Path | None) -> TestClient:
+    settings = Settings("127.0.0.1", 8700, levels_dir, tmp_path / "logs", game_file)
+    return TestClient(create_app(settings))
+
+
+def play(client: TestClient, messages: list[dict]) -> list[dict]:
+    with client.websocket_connect("/ws") as ws:
+        return [send(ws, message) for message in messages]
+
+
+def moves(directions: str) -> list[dict]:
+    return [{"type": "move", "dir": d} for d in directions]
+
+
+def test_a_restarted_server_finds_the_game_where_it_was(tmp_path):
+    game_file = tmp_path / "data" / "human-game.json"
+    before = play(saving_client(LEVELS, tmp_path, game_file), [{"type": "load", "level": T2}]
+                  + moves("NNW"))
+    restarted = saving_client(LEVELS, tmp_path, game_file)
+    with restarted.websocket_connect("/ws") as ws:
+        assert ws.receive_json() == before[-1] == expected(core_states(T2, "NNW")[-1])
+        assert send(ws, {"type": "move", "dir": "N"}) == expected(core_states(T2, "NNWN")[-1])
+
+
+@pytest.mark.parametrize(("directions", "status", "reason"),
+                         [("EE", "solved", None), ("SENWNEE", "lost", "deadlock")])
+def test_an_ended_game_restores_with_its_status_and_reason(tmp_path, directions, status, reason):
+    game_file = tmp_path / "human-game.json"
+    before = play(saving_client(LEVELS, tmp_path, game_file), [{"type": "load", "level": T1}]
+                  + moves(directions))
+    with saving_client(LEVELS, tmp_path, game_file).websocket_connect("/ws") as ws:
+        restored = ws.receive_json()
+    assert restored == before[-1]
+    assert (restored["status"], restored["reason"]) == (status, reason)
+
+
+def test_load_and_restart_overwrite_the_save(tmp_path):
+    game_file = tmp_path / "human-game.json"
+    client = saving_client(LEVELS, tmp_path, game_file)
+    play(client, [{"type": "load", "level": T1}] + moves("E") + [{"type": "load", "level": T2}])
+    with saving_client(LEVELS, tmp_path, game_file).websocket_connect("/ws") as ws:
+        assert ws.receive_json() == expected(core_states(T2, "")[0])
+    play(client, moves("NN") + [{"type": "restart"}])
+    with saving_client(LEVELS, tmp_path, game_file).websocket_connect("/ws") as ws:
+        assert ws.receive_json() == expected(core_states(T2, "")[0])
+
+
+def hidden_save() -> str:
+    level = parse_level(HIDDEN_FIXTURE.read_text(encoding="utf-8"), "hidden/tier1/h-01")
+    world = new_world(level, Budget(steps=200, instructions=1_000_000))
+    return json.dumps({"world": to_json(world)})
+
+
+def misfit_save() -> str:
+    data = to_json(core_states(T1, "")[0])
+    data["robot"] = [0, 0]  # a wall cell
+    return json.dumps({"world": data})
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "not json {",
+        "[1, 2]",
+        '{"other": 1}',
+        '{"world": {"level": 7}}',
+        '{"world": {"level": "training/tier1/t1-99"}}',
+        misfit_save(),
+        hidden_save(),
+    ],
+    ids=["not-json", "not-object", "no-world", "bad-id", "unknown-id", "misfit", "hidden-id"],
+)
+def test_a_save_that_does_not_restore_starts_without_a_game(root_with_hidden, tmp_path, text):
+    game_file = tmp_path / "human-game.json"
+    game_file.write_text(text, encoding="utf-8")
+    client = saving_client(root_with_hidden, tmp_path, game_file)
+    with client.websocket_connect("/ws") as ws:
+        # nothing arrives first: the first reply is the answer to restart
+        assert send(ws, {"type": "restart"}) == {
+            "type": "error", "detail": "no level is loaded; send load first"}
+        assert game_file.read_text(encoding="utf-8") == text  # left as it was
+        assert send(ws, {"type": "load", "level": T1})["status"] == "playing"
+    assert json.loads(game_file.read_text(encoding="utf-8"))["world"]["level"] == T1
+    log = (tmp_path / "logs" / "server.log").read_text(encoding="utf-8")
+    assert "does not restore" in log
+    for line in HIDDEN_FIXTURE.read_text(encoding="utf-8").splitlines():
+        if line.strip() and not line.startswith(";"):
+            assert line not in log
+
+
+def test_without_a_game_file_nothing_is_saved(tmp_path):
+    play(saving_client(LEVELS, tmp_path, None), [{"type": "load", "level": T1}] + moves("EE"))
+    assert not [p for p in tmp_path.rglob("*") if p.is_file() and p.suffix != ".log"]
+
+
+def test_the_save_is_atomic_and_leaves_no_temporary_file(tmp_path):
+    game_file = tmp_path / "data" / "human-game.json"
+    play(saving_client(LEVELS, tmp_path, game_file),
+         [{"type": "load", "level": T2}] + moves("NNWNE") + [{"type": "restart"}])
+    assert sorted(p.name for p in game_file.parent.iterdir()) == ["human-game.json"]
+
+
+def test_a_failed_save_is_logged_and_the_game_goes_on(tmp_path):
+    blocker = tmp_path / "blocker"
+    blocker.write_text("a file where the directory should be", encoding="utf-8")
+    replies = play(saving_client(LEVELS, tmp_path, blocker / "human-game.json"),
+                   [{"type": "load", "level": T1}] + moves("EE"))
+    assert [reply["type"] for reply in replies] == ["state", "state", "state"]
+    assert replies[-1]["status"] == "solved"
+    assert "could not be saved" in (tmp_path / "logs" / "server.log").read_text(encoding="utf-8")
+
+
+def test_the_save_is_byte_identical_on_two_fresh_servers(tmp_path):
+    messages = [{"type": "load", "level": T2}] + moves("NNWNE")
+    saved = []
+    for name in ("a", "b"):
+        game_file = tmp_path / name / "human-game.json"
+        play(saving_client(LEVELS, tmp_path / name, game_file), messages)
+        saved.append(game_file.read_bytes())
+    assert saved[0] == saved[1]
+    assert json.loads(saved[0])["world"]["status"] == "solved"

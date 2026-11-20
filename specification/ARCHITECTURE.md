@@ -329,6 +329,7 @@ The server answers each message with `{"type": "state", "level": …, "map": [�
 
 - **Origin.** A handshake is accepted only without an `Origin` header (a non-browser client) or from the server's own page: `http://127.0.0.1:<port>`, `http://localhost:<port>` or `http://[::1]:<port>`. Any other origin is closed with code 1008 before it is accepted, so a web page from another site cannot drive the game.
 - **One game, kept in the server.** The server holds one human game at a time. When a game is loaded, a client that connects first receives its current `state`, so a page that reconnects finds the game where it was.
+- **The game survives a restart** (v2.2). After every `load`, `move` and `restart` the server saves the game to `data/human-game.json` as `{"world": <the saved world>}`, the core's save format with sorted keys, written atomically. At start it restores the game from that file, so a page that reconnects after a server restart also finds the game where it was. Only a training level restores, as with `load`. A save that does not restore (not JSON, not a saved game, not a training level, a level that does not load, a world that does not fit its level) is logged as a warning with a fixed reason, never with the file's contents, and the server starts with no game. A failed write is logged and the game goes on in memory.
 - **`load` refuses alike.** A hidden id, an id not in the training listing and an id that is not a string all get the same `{"type": "error", "detail": "unknown level"}`, so a reply never tells a hidden id from a missing one.
 - **Errors.** Also answered with `error`: text that is not JSON or not a JSON object, a missing or unknown `type`, a direction other than `N`, `E`, `S` or `W`, `move` or `restart` before any `load`, and a binary frame. An error leaves the game as it was, and its detail never echoes the message.
 
@@ -416,6 +417,7 @@ Nothing that a run produces is deleted. `data/`, `reports/`, `levels/hidden/` (e
 | `levels/budgets.toml` | by hand, committed | step and instruction budgets per tier |
 | `levels/README.md` | by hand, committed | the format, the tiers, and the source and licence of every level |
 | `data/logs/server.log` | the server (v2.1) | the server log, rotating (1 MB × 3) |
+| `data/human-game.json` | the server, after every change to the human game (v2.2) | the human game: the saved world of the current training level |
 | `data/journal.sqlite` | the server (v5.2) | sessions, versions, runs, validations |
 | `data/traces/<run>.json` | the server, when a run closes (v5.2) | the trace of a training run |
 | `data/traces/hidden/<run>.json` | the server (v5.2) | the trace of a hidden run, never served by the API |
@@ -427,7 +429,7 @@ Nothing that a run produces is deleted. `data/`, `reports/`, `levels/hidden/` (e
 
 All settings live in `.env` (read with python-dotenv) or in `levels/budgets.toml`. Nothing is hard-coded.
 
-`golem-server` reads `.env` from its working directory when it starts, without overriding variables already set. `GOLEM_HOST` must be a loopback host (`127.0.0.1`, `localhost` or `::1`); any other value is refused, so nothing listens on the network. `GOLEM_LEVELS_DIR` is resolved to an absolute path once, at start, and the server refuses to start when `<levels>/training/` is missing or `budgets.toml` is missing or broken. Until `GOLEM_DATA_DIR` arrives in v5.2, the log goes to `data/logs/` under the working directory.
+`golem-server` reads `.env` from its working directory when it starts, without overriding variables already set. `GOLEM_HOST` must be a loopback host (`127.0.0.1`, `localhost` or `::1`); any other value is refused, so nothing listens on the network. `GOLEM_LEVELS_DIR` is resolved to an absolute path once, at start, and the server refuses to start when `<levels>/training/` is missing or `budgets.toml` is missing or broken. Until `GOLEM_DATA_DIR` arrives in v5.2, the log goes to `data/logs/` and the human game to `data/human-game.json`, both under the working directory.
 
 | Variable | Phase | Meaning (default) |
 |---|---|---|
@@ -439,7 +441,7 @@ All settings live in `.env` (read with python-dotenv) or in `levels/budgets.toml
 | `LAST_ACTIONS_N` | v4.1 | actions in a report or a snapshot (`20`) |
 | `SNAPSHOT_MEMORY_MAX_BYTES` | v4.2 | the cap on `memory` in a snapshot (`65536`) |
 | `GOLEM_URL` | v5.1 | where the CLI sends requests (`http://127.0.0.1:8700`) |
-| `GOLEM_DATA_DIR` | v5.2 | the journal, traces and logs (`data`) |
+| `GOLEM_DATA_DIR` | v5.2 | the journal, traces, logs and the saved human game (`data`) |
 | `GOLEM_HIDDEN_DIR` | v5.2 | the hidden levels (`levels/hidden`) |
 | `GOLEM_OWNER_TOKEN` | v5.2 | the Bearer token for the owner routes; never in the agent's environment |
 | `GOLEM_SESSION` | v5.2 | the session the CLI acts in (set by the orchestrator; otherwise `manual`) |
@@ -479,7 +481,7 @@ The project has no API keys. The things to keep private are `GOLEM_OWNER_TOKEN`,
 - The CLI prints a JSON error and exits with a non-zero code. It never prints a Python traceback for an expected failure.
 - An unreadable or malformed level is refused by id with a parse error. It never reaches a run.
 - The orchestrator records why a session ended (done, time limit, version limit, agent error). A crashed agent leaves its workspace and its stream log for diagnosis.
-- When the screen's WebSocket drops, the page reconnects. The human game state stays in the server.
+- When the screen's WebSocket drops, the page reconnects. The human game state stays in the server, and a server restart restores it from `data/human-game.json`.
 
 ## Observability
 
