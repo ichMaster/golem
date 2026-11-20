@@ -73,3 +73,47 @@ Nothing.
 
 The owner answered (translated): "testing is finished; do the review and the release". No problem was reported. Claude records GOLEM-017's three Manual (owner) checks as confirmed
 by the owner on these words.
+
+## v2.3 (`/ship-phase v2.3`)
+
+**Date:** 2026-11-20
+**Branch:** v2-dev
+**Built:** v2.3 (GOLEM-018…021), commits d69ca00…a27e842
+
+### What was handed over for testing
+
+- The gates: `uv run ruff check . && uv run pytest -q` (519 tests, CI green).
+- `uv run golem-local run training/tier1/<t1-01|t1-02|t1-03> tests/fixtures/programs/t1_solver.lua`.
+- The other fixture programs on t1-01: `infinite_loop`, `syntax_error`, `runtime_error`, `give_up` and
+  `own_budget_error`.
+- A hidden id refused with exit 1.
+- Writing a program by hand with the v2.3 robot API.
+- The spike's findings: F1, fixed in the sandbox, and R1, an open decision for the owner before v4.1.
+
+Claude ran each command before the handover.
+
+### Problems found and fixed
+
+None reported.
+
+### Added at the owner's request during the test
+
+- **The repository is English only** (950bf03, f084eb9):
+  - CLAUDE.md gains a Language section;
+  - the owner's quoted words in these records are translated;
+  - a test string is made English;
+  - ship-phase records the owner's words in English;
+  - `tests/test_english_only.py` fails on Cyrillic text outside the frozen `concept.uk.md`.
+- **A red commit:** 950bf03 was pushed with a failing test. The new guard found its own Cyrillic sample, and
+  a `| tail` hid pytest's exit code. f084eb9 fixed it within minutes, and the gates now run with
+  `pipefail`.
+
+### Moved to later work
+
+- **R1, a decision for the owner before v4.1:** how to bound C functions such as the pattern matcher, which
+  run without the count hook. It is recorded in ARCHITECTURE §Open decisions.
+
+### End of testing
+
+The owner answered (translated): "testing is finished; do the review and the release". No problem was
+reported.
