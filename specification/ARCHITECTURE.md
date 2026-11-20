@@ -154,17 +154,19 @@ A program is Lua 5.4 text and runs in a sandbox that offers only the robot API, 
 | `look(dir)` | looks at the neighbouring cell in that direction | `"wall"`, `"box"`, `"goal"`, `"box_on_goal"` or `"empty"` |
 | `here()` | looks at the robot's own cell | `"goal"` or `"empty"` |
 | `boxes_left()` | counts the boxes not yet on goals | an integer |
-| `give_up(reason)` | ends the program; the reason (a string, cut to 200 characters) goes into the report | does not return |
+| `give_up(reason)` | ends the program; the reason (a string, cut to 200 characters) goes into the report; a reason that is not a string is a Lua error | does not return |
 
 An invalid direction is a Lua error. The robot never learns its absolute position: a program that wants coordinates keeps its own, relative to where it started. Only `move` costs a step. All five commands cost instructions, like any other Lua code.
 
-**The runtime.** One `LuaRuntime` per run, created with `register_eval=False` and `register_builtins=False`, so that Lua has no `python` module, and with `max_memory=LUA_MAX_MEMORY`. No Python object is ever passed into Lua; the driver exchanges only strings, numbers, booleans and Lua tables with the program. Programs are loaded with `load(source, "=program", "t", env)`. The mode `"t"` accepts text only and refuses precompiled bytecode.
+**The runtime.** One `LuaRuntime` per run, created with `register_eval=False`, `register_builtins=False` and `max_memory=LUA_MAX_MEMORY`. Those flags remove `python.eval` and `python.builtins` only: lupa still puts a `python` table in the runtime's globals, and `python.none` reaches Python objects (the v2.3 spike, F1). So before any program text is loaded, the sandbox removes `python`, `io`, `os`, `package`, `require`, `dofile` and `loadfile` from the runtime's globals, and the program's environment never reaches the globals at all. No Python object is ever passed into Lua; the driver exchanges only strings, numbers, booleans and Lua tables with the program. Programs are loaded with `load(source, "=program", "t", env)`. The mode `"t"` accepts text only and refuses precompiled bytecode.
 
 **The environment.** A program's globals are a fresh table, never `_G`. It contains:
 
 - the robot API and `memory`;
 - `assert`, `error`, `ipairs`, `pairs`, `select`, `tonumber`, `tostring`, `type` and `unpack` (an alias of `table.unpack`);
 - the `string`, `table` and `math` libraries, without `string.dump` and `math.randomseed`. Strings reach the `string` library through their metatable, so the trimmed table is also the strings' `__index`, and `("").dump` is `nil` too.
+
+**Until v4.1** (the prototype, v2.3–v2.4) the environment holds only the names whose behaviour is already deterministic: it has no `pairs`, `tostring`, `string.format`, `table.sort` or `math.random` until their deterministic versions arrive. The library tables are copies, so a program that changes `string`, `table` or `math` changes only its own. Text that a program can shape (an error message, a `give_up` reason) is cleaned to valid UTF-8 in Lua before it reaches Python, because lupa raises on invalid UTF-8.
 
 Nothing else is reachable. In particular there is no `io`, `os`, `require`, `package`, `debug`, `load`, `loadstring`, `dofile`, `loadfile`, `pcall`, `xpcall`, `coroutine`, `next`, `rawget`, `rawset`, `rawequal`, `rawlen`, `setmetatable`, `getmetatable`, `collectgarbage` or `print`. The reasons for the less obvious entries:
 

@@ -55,13 +55,14 @@ def test_a_bad_port_is_refused(port):
         load_settings({"GOLEM_PORT": port})
 
 
-def test_env_example_names_the_server_variables():
+def test_env_example_names_the_variables():
     names = {
         line.split("=", 1)[0]
         for line in (REPO / ".env.example").read_text(encoding="utf-8").splitlines()
         if line and not line.startswith("#")
     }
-    assert names == {"GOLEM_LEVELS_DIR", "GOLEM_HOST", "GOLEM_PORT"}
+    assert names == {
+        "GOLEM_LEVELS_DIR", "GOLEM_HOST", "GOLEM_PORT", "LUA_MAX_MEMORY", "HOOK_EVERY"}
 
 
 # --- start-up checks (v1 code review #4) -------------------------------------------------------
