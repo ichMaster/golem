@@ -1,6 +1,22 @@
 Golem release notes
 ===================
 
+Version 2.2.0 (2026-11-20)
+---------------------------
+- v2.2 (GOLEM-014..017): GET / and /screen/... serve the game screen from the package; raw and encoded
+  traversal get 404, and no page file references an external URL.
+- The text game page: the map in a <pre>, steps / budget, the status with its reason, level buttons from
+  /api/levels, arrows to move and R to restart; it reconnects after 0.5, 1, 2, 4 s, then every 5 s.
+- The human game survives a server restart: saved atomically to data/human-game.json after every change
+  and restored at start (training levels only; a bad save is ignored with a warning).
+- Owner test: scripts/start.sh, stop.sh and restart.sh run golem-server in the background; a person's name
+  removed from a design-system comment. The owner confirmed the three manual DoD checks.
+- Code review: the page files are sent with Cache-Control: no-cache; tests that wait for the state on
+  connect fail fast instead of hanging.
+- Specification: the "Clay and stone" design brief and handoff; v2 is now the prototype (v2.2 text screen,
+  v2.3 Lua runs, v2.4 swap), v3 the designed screen, v4 the interpreter; two sandbox design holes closed
+  (string.format addresses, the string metatable).
+
 Version 2.1.0 (2026-11-19)
 ---------------------------
 - v2.1 (GOLEM-011..013): golem-server (FastAPI + uvicorn) on loopback only; settings from the environment

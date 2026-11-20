@@ -23,9 +23,9 @@ Read these before planning work. They are the project's contract with itself.
 
 ## Project status
 
-v1 (the game core) and v2.1 (the server and the human game over WebSocket) are built and released; the rest of v2, the prototype (a text game screen, Lua runs and the program swap), is next. Golem is a Sokoban-style sandbox in which an AI agent writes, runs and rewrites its own Lua program that drives a robot through puzzle levels.
+v1 (the game core), v2.1 (the server and the human game over WebSocket) and v2.2 (the text game screen) are built and released; the rest of v2, the prototype (Lua runs and the program swap), is next. Golem is a Sokoban-style sandbox in which an AI agent writes, runs and rewrites its own Lua program that drives a robot through puzzle levels.
 
-Latest release: v2.1.0 (phase v2.1 — the server and the human game over WebSocket).
+Latest release: v2.2.0 (phase v2.2 — the text game screen).
 
 | Version | Phases | What it delivers |
 |---|---|---|
