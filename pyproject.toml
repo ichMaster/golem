@@ -15,6 +15,7 @@ dependencies = [
 
 [project.scripts]
 golem-server = "golem.server.app:main"
+golem-local = "golem.local:main"
 
 [dependency-groups]
 dev = [

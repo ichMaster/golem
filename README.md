@@ -15,6 +15,12 @@ scripts/stop.sh      # stop it
 `uv run golem-server` runs it in the foreground instead. The server's console output goes to
 `data/logs/server.out`, and its log to `data/logs/server.log`.
 
+Run a Lua program on a training level, in-process, and print its report:
+
+```sh
+uv run golem-local run training/tier1/t1-01 tests/fixtures/programs/t1_solver.lua
+```
+
 ## License
 
 MIT — see [LICENSE](LICENSE).

@@ -44,7 +44,7 @@ See ARCHITECTURE.md §Repository layout for the full tree. The commands, with th
 
 - Server (v2.1): `uv run golem-server`, which listens on `http://127.0.0.1:8700`. The game screen is at `/`.
   The owner's scripts run it in the background: `scripts/start.sh` (opens the page; `--no-open`), `scripts/stop.sh`, `scripts/restart.sh`.
-- Local runner (v2.3, `--swap` from v2.4, interactive at stops from v4.2): `uv run golem-local run <level> <program.lua> [--swap <program.lua>] [--stop-on …]`.
+- Local runner (v2.3, `--swap` from v2.4, interactive at stops from v4.2): `uv run golem-local run <level> <program.lua> [--swap <program.lua>] [--stop-on …]`. Example: `uv run golem-local run training/tier1/t1-01 tests/fixtures/programs/t1_solver.lua`.
 - The CLI (v5.1): `uv run golem levels | run | state | continue | swap | validate | versions | show`.
 - Orchestrator (v6.1): `uv run golem-orchestrate --set training/tier1 [--max-versions N] [--max-minutes M]`.
 - Owner tools: `uv run golem-levels check [--hidden]` (v7.1) and `uv run golem-metrics` (v7.2).
