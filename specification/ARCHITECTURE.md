@@ -164,7 +164,7 @@ An invalid direction is a Lua error. The robot never learns its absolute positio
 
 - the robot API and `memory`;
 - `assert`, `error`, `ipairs`, `pairs`, `select`, `tonumber`, `tostring`, `type` and `unpack` (an alias of `table.unpack`);
-- the `string`, `table` and `math` libraries, without `string.dump` and `math.randomseed`.
+- the `string`, `table` and `math` libraries, without `string.dump` and `math.randomseed`. Strings reach the `string` library through their metatable, so the trimmed table is also the strings' `__index`, and `("").dump` is `nil` too.
 
 Nothing else is reachable. In particular there is no `io`, `os`, `require`, `package`, `debug`, `load`, `loadstring`, `dofile`, `loadfile`, `pcall`, `xpcall`, `coroutine`, `next`, `rawget`, `rawset`, `rawequal`, `rawlen`, `setmetatable`, `getmetatable`, `collectgarbage` or `print`. The reasons for the less obvious entries:
 
@@ -173,13 +173,14 @@ Nothing else is reachable. In particular there is no `io`, `os`, `require`, `pac
 - No `next` and no metatables. Raw iteration order is not deterministic (see below), and a metatable on `memory` would make it more than plain data.
 - No `print`. A program reports through `memory`, which the snapshot shows, and through `give_up(reason)`.
 
-**Determinism inside Lua.** Lua 5.4 has four sources of run-to-run variation, and the sandbox removes each one:
+**Determinism inside Lua.** Lua 5.4 has five sources of run-to-run variation, and the sandbox removes each one:
 
 | Source | Fix in the sandbox |
 |---|---|
 | The order of `pairs` depends on a per-runtime string-hash seed | `pairs` iterates in a fixed order: numbers ascending, then strings in byte order, then `false`, `true`. A table used as a key is a Lua error. `next` is not exposed |
 | `table.sort` picks a random pivot on arrays longer than 100 | `table.sort` is a stable merge sort written in Lua, so its result and its instruction count are fixed |
 | `tostring` of a table or function prints a memory address | `tostring` returns `"table"` or `"function"` for those types |
+| `string.format` prints a memory address for `%p`, and for `%s` given a table or function | `string.format` is a wrapper that refuses `%p` with a Lua error and formats a table or function under `%s` as the sandbox's `tostring` does |
 | `math.random` is seeded randomly when the runtime starts | the driver seeds it with `RANDOM_SEED` when the run starts; `math.randomseed` is not exposed |
 
 Instruction counts depend on the Lua version's bytecode, so the lupa version and the `lupa.lua54` runtime are pinned. Changing either is a contract change.
@@ -395,7 +396,7 @@ Changing any of these updates this document (and `concept.en.md` where it states
 - The level text format, the level id scheme `<set>/<tier>/<name>`, and the `levels/budgets.toml` schema.
 - The rules: move and push semantics, the step definition, the corner rule, the win condition.
 - The robot API: the five commands, their arguments and their exact return values.
-- The sandbox: the environment allowlist, the fixed `pairs` order, the stable `table.sort`, `tostring`, the seeded `math.random`, text-only loading, and the pinned lupa version and Lua runtime.
+- The sandbox: the environment allowlist, the fixed `pairs` order, the stable `table.sort`, `tostring`, `string.format`, the seeded `math.random`, text-only loading, and the pinned lupa version and Lua runtime.
 - The stop events, their `continue` and `swap` rules, and the `--stop-on` names.
 - The JSON shapes of the snapshot, the run report, the hidden result and the error body, plus the CLI's exit codes.
 - The HTTP routes, the CLI commands with their arguments, and the WebSocket messages.

@@ -63,7 +63,7 @@ defects, not restatements of what works.
   - Does a Python set or dict ordering reach JSON, a trace or a report unsorted?
   - Does anything read the clock or unseeded randomness?
   - Inside Lua: is `pairs` still the fixed-order version, `next` absent, `table.sort` the merge sort, and
-    `tostring` address-free? Is `math.random` seeded per run, and `math.randomseed` absent?
+    `tostring` and `string.format` address-free (`%p`, and `%s` of a table)? Is `math.random` seeded per run, and `math.randomseed` absent?
   - Is the lupa version pinned, and is `lupa.lua54` used explicitly?
   - Does a run-twice test exist for every fixture program, and are the traces compared byte for byte?
 - **The sandbox (v2.3, v4.1):**

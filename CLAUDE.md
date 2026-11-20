@@ -86,7 +86,7 @@ The full mechanisms live in ARCHITECTURE.md. These are the invariants most often
 - **The budget error is a sentinel**, compared by identity. A program's own `error("…")` is never a budget loss.
 - **Determinism.**
   - No clock and no unseeded randomness.
-  - `pairs` iterates in a fixed order, `table.sort` is the stable merge sort, `tostring` prints no addresses.
+  - `pairs` iterates in a fixed order, `table.sort` is the stable merge sort, `tostring` and `string.format` print no addresses.
   - Every collection that reaches JSON is sorted.
   - The lupa version and `lupa.lua54` are pinned.
   - A fixture program run twice must give byte-identical traces.
