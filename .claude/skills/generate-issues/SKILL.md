@@ -68,7 +68,7 @@ fixes and hardening in earlier phases may have moved the code away from the docs
    module and function names, signatures, JSON fields, config keys and env var names.
 2. Read the earlier phases' `specification/implementation/*-execution-report.md` and `*code-review*.md`,
    especially their **"Fixes applied"** and **"Architecture impact"** notes. From v2.4 on, read the
-   v2.3 lupa spike note; from v3.1 on, the v2.4 design note.
+   v2.3 lupa spike note; from v3.1 on, the v2.5 design note.
 3. Where ARCHITECTURE.md or ROADMAP.md is stale relative to a landed fix, the **code is ground truth** for
    this phase's issues. Note the drift, and put the ARCHITECTURE.md correction into the issue that touches
    that contract.
@@ -79,7 +79,7 @@ fixes and hardening in earlier phases may have moved the code away from the docs
 
 ### Step 1: Decompose the phase
 
-Turn the phase's tasks into a small set of issues, typically **2–5**. A small phase such as v2.4 may be one
+Turn the phase's tasks into a small set of issues, typically **2–5**. A small phase such as v2.5 may be one
 or two issues. Don't pad. Each issue is a coherent, independently verifiable slice:
 
 - **Size** by complexity:

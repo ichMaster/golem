@@ -119,7 +119,7 @@ Step 4:
 - a status summary table;
 - a per-issue table (GOLEM id · title · status · commit · files · gates · manual);
 - detailed results;
-- design notes, for a phase that decides a design (v2.3, v2.4);
+- design notes, for a phase that decides a design (v2.3, v2.5);
 - next steps.
 
 There is no GitHub column. Commit it (`docs: vA.B execution report`, with the trailer) and push if a remote

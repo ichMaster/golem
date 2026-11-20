@@ -1,6 +1,6 @@
 # Roadmap — Golem
 
-Eight self-contained versions, one for each phase of the concept, built in order: **v1** Game core (the level format, the rules, save and replay) → **v2** Prototype (a text game screen over the server's WebSocket, Lua programs run step by step, the program swap) → **v3** Game screen (the "Clay and stone" design: the screen's data, the scene and the panels, the motion) → **v4** Interpreter (the full sandbox and the run report, then the stops and the snapshot) → **v5** Validator and journal (the HTTP API and the `golem` CLI, the validator and the journal, replay on the screen) → **v6** Agent (the orchestrator and the isolated workspace, then Scribe) → **v7** Experiments (tiers two and three and the hidden sets, then the metrics) → **v8** Several agents (several robots, messages between programs, the agents' channel, cooperative levels).
+Eight self-contained versions, one for each phase of the concept, built in order: **v1** Game core (the level format, the rules, save and replay) → **v2** Prototype (a text game screen over the server's WebSocket, Lua programs run step by step, programs run from the page, the program swap) → **v3** Game screen (the "Clay and stone" design: the screen's data, the scene and the panels, the motion) → **v4** Interpreter (the full sandbox and the run report, then the stops and the snapshot) → **v5** Validator and journal (the HTTP API and the `golem` CLI, the validator and the journal, replay on the screen) → **v6** Agent (the orchestrator and the isolated workspace, then Scribe) → **v7** Experiments (tiers two and three and the hidden sets, then the metrics) → **v8** Several agents (several robots, messages between programs, the agents' channel, cooperative levels).
 
 Phases inside a version are numbered `vA.B` (A = version, B = phase). Each phase lists a **Goal**, a short description, a **Tasks** list, a **Definition of Done (DoD)**, and the **Tests** that encode its DoD (see [ARCHITECTURE.md](ARCHITECTURE.md) §Testing and CI). Phases are built strictly in file order, and each one builds on the previous one's real code. Each version's DoD includes the concept's "done when" criterion for that phase.
 
@@ -8,16 +8,16 @@ Phases inside a version are numbered `vA.B` (A = version, B = phase). Each phase
 
 Many DoD items need a person or a live model: playing levels on the game screen, swapping a program by hand, watching a replay, and every live Scribe session, which spends the owner's Claude subscription. Those are **Manual (owner)** checks: the owner performs or confirms them, and only then do they count as passed. Everything automated runs with no network and no model: the server and the CLI are tested in-process, lupa runs for real (it is local and deterministic), and the agent is a fake script.
 
-**The riskiest steps come first.** Whether lupa can run a program one robot command at a time (v2.3), and how a swap starts a new program from the current world state (v2.4), decide how `memory` and the interpreter are built. So v2 is a prototype of the whole loop, from a person's arrow keys to a program swapped in mid-level, with the cheapest client: a text page.
+**The riskiest steps come first.** Whether lupa can run a program one robot command at a time (v2.3), and how a swap starts a new program from the current world state (v2.5), decide how `memory` and the interpreter are built. So v2 is a prototype of the whole loop, from a person's arrow keys to a program swapped in mid-level, with the cheapest client: a text page.
 - Nothing in v2 is polished beyond what its DoD asks.
-- The designed screen (v3) and the full interpreter (v4) are built only after v2.4 has proven the swap design.
+- The designed screen (v3) and the full interpreter (v4) are built only after v2.5 has proven the swap design.
 - The prototype's code is real code in its final modules. v4 extends it and does not rewrite it.
 
 ---
 
 ## Status
 
-v1 and v2.1 are built and released. Latest release: v2.1.0 (v2.1).
+v1 and v2.1–v2.3 are built and released. Latest release: v2.3.0 (v2.3).
 
 | Phase | Title | Status | Release |
 |---|---|---|---|
@@ -27,7 +27,8 @@ v1 and v2.1 are built and released. Latest release: v2.1.0 (v2.1).
 | v2.1 | The server and the human game over WebSocket | ✅ released | v2.1.0 |
 | v2.2 | The text game screen | ✅ released | v2.2.0 |
 | v2.3 | Lua runs: the lupa spike, a minimal sandbox and the driver | ✅ released | v2.3.0 |
-| v2.4 | The swap prototype: `memory` outside the program | ⏳ planned | — |
+| v2.4 | Programs on the text screen | ⏳ planned | — |
+| v2.5 | The swap prototype: `memory` outside the program | ⏳ planned | — |
 | v3.1 | The screen's data from the server, and ten levels | ⏳ planned | — |
 | v3.2 | The game screen: the scene and the panels | ⏳ planned | — |
 | v3.3 | The game screen: motion, the atlas and small windows | ⏳ planned | — |
@@ -105,11 +106,12 @@ The first code: the package, the gates, CI, and the level parser with its valida
 
 **Tests:** unit tests cover the JSON round trip; replay of every recorded solution to `solved`; save, restore and continue against an uninterrupted run over seeded random move sequences; and `state_key` equality and inequality.
 
-## v2 — Prototype: a text game screen, Lua runs and the program swap
+## v2 — Prototype: a text game screen, Lua runs, programs on the screen and the program swap
 
 The whole loop at its smallest, each part only as large as it must be to prove that it works:
 - a person plays the training levels with the arrow keys on a text page, over the server's WebSocket;
 - a hand-written Lua program drives the robot through the same core;
+- the owner runs programs from a folder on the text page and watches the robot's moves;
 - a second program, swapped in mid-level, finishes the level with the `memory` that the first one built.
 
 This version introduces the server process that every later client reaches. The designed screen comes in v3 and the full interpreter in v4. Depends on: v1.
@@ -194,7 +196,7 @@ The concept leaves the choice of Lua open, so this phase starts with a spike. Ev
   - `give_up(reason)`, with the reason cut to 200 characters; a program that returns counts as `give_up("program ended")`;
   - Lua errors, at load and at run time, with their line;
   - a driver exception ends the run as `failed` with `reason: internal`.
-- `golem/interp/report.py`: the short report, which holds the run report's `level`, `status`, `reason`, `steps`, `instructions` and `error` (ARCHITECTURE §Execution, budgets and the report). v2.4 and v4.1 add the other fields.
+- `golem/interp/report.py`: the short report, which holds the run report's `level`, `status`, `reason`, `steps`, `instructions` and `error` (ARCHITECTURE §Execution, budgets and the report). v2.5 and v4.1 add the other fields.
 - `golem/local.py`, run as `uv run golem-local run <level> <program.lua>`: runs in-process and prints the report as JSON. It is the hand tool for the interpreter until the `golem` CLI (v5.1).
 - Hand-written test programs in `tests/fixtures/programs/`:
   - `t1_solver.lua`, which solves a tier-one level;
@@ -213,7 +215,46 @@ The concept leaves the choice of Lua open, so this phase starts with a spike. Ev
 
 **Tests:** driver tests over the fixture programs, with real lupa; the step budget through `move`; the instruction budget, including a loop with no robot command; the names that must be absent and the bytecode refusal; and the run-twice check.
 
-### v2.4 — The swap prototype: `memory` outside the program
+### v2.4 — Programs on the text screen
+
+**Status:** ⏳ planned.
+
+**Goal:** the owner picks a Lua program from the `programs/` folder on the text page, reads its code, runs it on a training level, and watches the robot's moves played back step by step, ending with the run report.
+
+The server reads the programs and runs them; the page shows the code and plays back what the server computed. The page still holds no rules: every map it shows comes from the core.
+
+**Tasks:**
+- **The folder.** `programs/` at the repository root, committed, holds hand-written example programs, and `GOLEM_PROGRAMS_DIR` (default `programs`) can point elsewhere. A program is a `*.lua` file directly in the folder, named with lowercase letters, digits, `-` and `_`; its first comment line is its description. The examples:
+  - `t1_solver.lua`, which solves every tier-one level;
+  - an explorer that maps the room and gives up with what it saw;
+  - one demonstration of each ending: lost on steps, lost on deadlock, lost on instructions, `give_up`, and a Lua error.
+- **The driver records the moves.** A run can return, with its report, the world after each `move`. The maps are the core's `render`.
+- **The routes** (a contract):
+  - `GET /api/programs`: the programs, sorted by name, each with its name, description and size;
+  - `GET /api/programs/{name}`: the program's name and source;
+  - `POST /api/programs/{name}/run` with `{"level": "<training id>"}`: the run report and the frames, the starting map first and then one frame per `move`, each with the step, the direction, whether the robot moved, and the map.
+  - A name that is not a program in the folder gets `404 not_found`, and nothing outside the folder is read. A hidden or unknown level id gets the same `unknown level` error. A run happens off the event loop, so the human game stays responsive.
+- **The page.** A programs panel on the text page:
+  - the list of programs; choosing one shows its code with line numbers;
+  - a level picker (the training levels) and a Run button;
+  - the playback: the run's own map in a `<pre>`, one frame every 150 ms, with the step and the move, and a button that skips to the end;
+  - the run report at the end, with the status and its reason worded as on the human game, and the error text with its line;
+  - the human game and its keys are unaffected.
+
+**DoD:**
+- (Manual, owner) The owner sees the programs in `programs/` on the page and reads the code of each.
+- (Manual, owner) `t1_solver.lua` solves t1-01, t1-02 and t1-03, and the owner watches each run step by step.
+- (Manual, owner) The demonstration programs show each ending in the report: lost on steps, on deadlock and on instructions, `give_up`, and a Lua error with its line.
+- (Manual, owner) A program edited or added in `programs/` shows up after a page reload, without restarting the server.
+
+**Tests:**
+- the routes: the list, the source, the run; an unknown name, a name with a path, an encoded path and a name that is not `.lua` get 404; a symlink out of the folder is not read;
+- a hidden level id gets the same error as an unknown one, and no line of the fixture hidden level appears in any response;
+- the frames: the first is the starting map, each next one follows one `move`, and the last one equals the core's replay of the moves;
+- every program in `programs/` runs on every tier-one level and ends in a report, the solver solves them all, and a run twice gives byte-identical JSON;
+- the page loads only `/screen/` files and references no external URL.
+
+### v2.5 — The swap prototype: `memory` outside the program
 
 **Status:** ⏳ planned.
 
@@ -346,7 +387,7 @@ It takes three phases: what the screen needs from the server (v3.1), a playable 
 
 ## v4 — Interpreter: the full sandbox, the run report, the stops and the snapshot
 
-The prototype interpreter of v2.3–v2.4 becomes the full one:
+The prototype interpreter of v2.3–v2.5 becomes the full one:
 - the complete sandbox, with every determinism fix;
 - the full run report;
 - the stops. At a stop, the agent continues the program or swaps in a new one that starts from the current world with the same `memory` and the remaining budget. The level never restarts.

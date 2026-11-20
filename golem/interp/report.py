@@ -1,7 +1,7 @@
 """The short report (v2.3): the run report's first six fields, assembled from plain data.
 
 A run ends in exactly one ``Ending``. ``short_report`` turns it, the level id, the final world's
-step count and the instruction count into the report, with its keys in the contract's order. v2.4
+step count and the instruction count into the report, with its keys in the contract's order. v2.5
 and v4.1 add the run report's other fields (ARCHITECTURE §Execution, budgets and the report).
 """
 

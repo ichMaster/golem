@@ -32,7 +32,7 @@ Run it right before `/execute-issues-file`.
    function names, signatures, JSON fields, config keys, env var names and dependencies.
 3. **Earlier records:** read the earlier phases' `specification/implementation/*-execution-report.md` and
    `*code-review*.md`, especially **"Fixes applied"**, **"Architecture impact"** and **"Design notes"** (the
-   v2.3 lupa spike, the v2.4 swap prototype).
+   v2.3 lupa spike, the v2.5 swap prototype).
 4. **The spec:** read [specification/ROADMAP.md](../../../specification/ROADMAP.md) §vA.B (the DoD),
    [specification/ARCHITECTURE.md](../../../specification/ARCHITECTURE.md) (contracts) and `CLAUDE.md`.
 5. **Owner-run work:** check the local state read-only where possible (e.g. start the server and
@@ -51,7 +51,7 @@ Compare each issue's **assumptions** with reality:
 - **Contracts** that a landed fix moved past the spec: the sandbox allowlist, the stop rules, the JSON
   shapes, the journal schema, the tool rules.
 - **Design decisions** made after the issues were written: the v2.3 spike's answers (the lupa version, the
-  determinism fixes that were needed), the v2.4 prototype's findings about `memory` and swaps.
+  determinism fixes that were needed), the v2.5 prototype's findings about `memory` and swaps.
 - **Work already done:** the deliverable was already shipped by an earlier fix or phase, or an owner step
   was already performed.
 - **The code is ground truth** where it disagrees with the issue text or a stale spec.

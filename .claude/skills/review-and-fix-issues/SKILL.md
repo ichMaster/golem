@@ -84,7 +84,7 @@ defects, not restatements of what works.
   - Does a program that returns count as `give_up("program ended")`?
   - Does a driver exception end the run as `failed`/`internal` without taking down the server?
   - Is `last_actions` capped at `LAST_ACTIONS_N`?
-- **Stops and swaps (v2.4, v4.2):**
+- **Stops and swaps (v2.5, v4.2):**
   - After a swap, is `memory` the same table, are the counters carried over, and is the old coroutine
     impossible to resume?
   - Are `continue` after `error`/`give_up` and `swap` after `deadlock` refused?
@@ -93,6 +93,11 @@ defects, not restatements of what works.
   - Does the `memory` conversion survive cycles, functions, huge tables and number keys, and does it respect
     the cap?
   - Does the snapshot leak the robot's position or the map?
+- **Programs on the screen (v2.4):**
+  - Is a program read only by its name, from the programs folder, with no path, no `..`, no encoded
+    separator and no symlink that leaves the folder?
+  - Does a run refuse a hidden level id exactly as an unknown one, and leak no hidden text?
+  - Do the frames come from the core, and does a run stay off the event loop?
 - **The API and the CLI (v5.1):**
   - Is there exactly one open run per session?
   - Does `run` refuse hidden ids?

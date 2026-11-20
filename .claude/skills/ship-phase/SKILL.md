@@ -102,6 +102,7 @@ ignored.
 8. **Flag the owner's work up front.** Every version stops for the owner's test (step 4). Several phases
    also have **Manual (owner)** checks:
    - v2.2: playing on the text page;
+   - v2.4: running programs from the page;
    - v3.2: playing ten levels;
    - v3.3: the motion, the frame rate and the small windows;
    - v4.2: a swap by hand;
@@ -121,13 +122,13 @@ ignored.
    Then run. Don't re-confirm before each sub-step; pause only for the blockers in the rules below.
 
 **Worked example:** `/ship-phase v4.1,v3` on the branch `dev`, in a repo where v1 and v2 are released
-(tags `v1.3.0` and `v2.4.0`).
+(tags `v1.3.0` and `v2.5.0`).
 
 ```
 selectors : v4.1 · v3
 expanded  : v4.1 | v3.1 v3.2 v3.3
 filled    : (nothing missing below v4.1 beyond the set)
-skipped   : v1.1–v2.4                ← released (v1.3.0, v2.4.0)
+skipped   : v1.1–v2.5                ← released (v1.3.0, v2.5.0)
 ordered   : v3.1 → v3.2 → v3.3 → v4.1   (v4.1 was listed first; roadmap order is required)
 branch    : dev                      ← every commit, push and tag; no other branch is touched
 
@@ -143,7 +144,7 @@ Run the phases **strictly in sequence**: phase N+1 is generated only after phase
 each sub-skill through the **Skill tool** and follow its instructions fully.
 
 0. **RECONCILE.** This happens inside `generate-issues` (its Step 0.5). It reads the real code, the
-   earlier execution reports (including the design notes of v2.3 and v2.4), the earlier owner-test notes
+   earlier execution reports (including the design notes of v2.3 and v2.5), the earlier owner-test notes
    and the earlier code-review docs ("Fixes applied", "Architecture impact"). Where fixes moved the code
    away from ARCHITECTURE.md, the code is ground truth.
 1. **`generate-issues vA.B`** writes `specification/implementation/vA.B-issues.md`.
@@ -156,7 +157,7 @@ each sub-skill through the **Skill tool** and follow its instructions fully.
 
 - **v2.3** opens with the lupa spike. If the spike fails, stop the run and ask the owner to choose the
   alternative.
-- **v2.4** is the swap prototype. If it changes the design, ARCHITECTURE.md is updated in that phase, and
+- **v2.5** is the swap prototype. If it changes the design, ARCHITECTURE.md is updated in that phase, and
   the run continues only after the update is committed.
 
 ### Step 2: OWNER TEST — stop and let the owner test the version
@@ -267,7 +268,7 @@ stop must never leave work on one machine only.
 - **Pause for the owner.** The owner test, owner-run steps and manual DoD checks are confirmed by the owner,
   never assumed. Never launch a live Scribe session, and never read or write hidden levels, unless the
   owner asks.
-- **Pause for real decisions:** a failed lupa spike, a v2.4 design change, an id or tag collision, an
+- **Pause for real decisions:** a failed lupa spike, a v2.5 design change, an id or tag collision, an
   overwrite-or-append prompt, a held HARDEN finding, a branch that diverged from its upstream, a failure.
   Routine confirmations run straight through.
 - **Delegate, never duplicate.** This skill sequences `generate-issues`, `upload-issues`, `execute-issues`,

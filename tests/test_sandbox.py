@@ -92,7 +92,7 @@ def test_memory_is_one_plain_table_per_runtime():
     sandbox = new_sandbox(InterpSettings())
     stepper = sandbox.runtime.eval(STEPPER)
     stepper(sandbox.load("memory.seen = 'first'"))(None)
-    # a second program in the same runtime (a swap, from v2.4) sees the same memory
+    # a second program in the same runtime (a swap, from v2.5) sees the same memory
     assert stepper(sandbox.load("return memory.seen"))(None) == ("done", "first")
     assert sandbox.runtime.eval("getmetatable")(sandbox.runtime.eval("memory")) is None
     assert run("return memory.seen") == ([], ("done", None))  # a new runtime, a new memory

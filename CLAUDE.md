@@ -36,14 +36,14 @@ Read these before planning work. They are the project's contract with itself.
 
 ## Project status
 
-v1 (the game core), v2.1 (the server and the human game over WebSocket), v2.2 (the text game screen) and v2.3 (Lua runs: the lupa spike, a minimal sandbox and the driver) are built and released; v2.4, the swap prototype, is next. Golem is a Sokoban-style sandbox in which an AI agent writes, runs and rewrites its own Lua program that drives a robot through puzzle levels.
+v1 (the game core), v2.1 (the server and the human game over WebSocket), v2.2 (the text game screen) and v2.3 (Lua runs: the lupa spike, a minimal sandbox and the driver) are built and released; v2.4, programs run from the text page, is next, then v2.5, the swap prototype. Golem is a Sokoban-style sandbox in which an AI agent writes, runs and rewrites its own Lua program that drives a robot through puzzle levels.
 
 Latest release: v2.3.0 (phase v2.3 — Lua runs: the lupa spike, a minimal sandbox and the driver).
 
 | Version | Phases | What it delivers |
 |---|---|---|
 | `v1` Game core | v1.1 skeleton + level format · v1.2 rules · v1.3 save, restore, replay | the rules as pure Python; the gates and CI |
-| `v2` Prototype | v2.1 server + WebSocket · v2.2 text game screen · v2.3 Lua runs (lupa spike first) · v2.4 swap prototype | the whole loop at its smallest: the owner plays, a program runs, a swapped-in program finishes the level |
+| `v2` Prototype | v2.1 server + WebSocket · v2.2 text game screen · v2.3 Lua runs (lupa spike first) · v2.4 programs on the screen · v2.5 swap prototype | the whole loop at its smallest: the owner plays, a program runs, a swapped-in program finishes the level |
 | `v3` Game screen | v3.1 the screen's data + ten levels · v3.2 scene + panels · v3.3 motion + small windows | the owner plays ten levels on the "Clay and stone" screen |
 | `v4` Interpreter | v4.1 full sandbox + run report · v4.2 stops + snapshot | a program swapped in by hand at a stop finishes the level |
 | `v5` Validator and journal | v5.1 HTTP API + CLI · v5.2 validator + journal · v5.3 replay | `golem` from the shell; every version and run kept |
@@ -57,7 +57,7 @@ See ARCHITECTURE.md §Repository layout for the full tree. The commands, with th
 
 - Server (v2.1): `uv run golem-server`, which listens on `http://127.0.0.1:8700`. The game screen is at `/`.
   The owner's scripts run it in the background: `scripts/start.sh` (opens the page; `--no-open`), `scripts/stop.sh`, `scripts/restart.sh`.
-- Local runner (v2.3, `--swap` from v2.4, interactive at stops from v4.2): `uv run golem-local run <level> <program.lua> [--swap <program.lua>] [--stop-on …]`. Example: `uv run golem-local run training/tier1/t1-01 tests/fixtures/programs/t1_solver.lua`.
+- Local runner (v2.3, `--swap` from v2.5, interactive at stops from v4.2): `uv run golem-local run <level> <program.lua> [--swap <program.lua>] [--stop-on …]`. Example: `uv run golem-local run training/tier1/t1-01 tests/fixtures/programs/t1_solver.lua`.
 - The CLI (v5.1): `uv run golem levels | run | state | continue | swap | validate | versions | show`.
 - Orchestrator (v6.1): `uv run golem-orchestrate --set training/tier1 [--max-versions N] [--max-minutes M]`.
 - Owner tools: `uv run golem-levels check [--hidden]` (v7.1) and `uv run golem-metrics` (v7.2).
@@ -136,4 +136,4 @@ The list of contracts lives in **ARCHITECTURE.md §Contracts**: the level format
 
 - The server binds `127.0.0.1` only. Nothing in this project listens on the network.
 - Lua is lupa 2.8 with `lupa.lua54`, confirmed by the v2.3 spike and pinned exactly. lupa keeps a `python` table in the runtime's globals that reaches Python objects: the sandbox removes it, and no program ever sees the globals. C functions such as the pattern matcher run without the count hook; the owner decides how to bound them before v4.1.
-- v2.4 (the swap prototype) must prove the swap design before anything is built on it. v2 is a prototype: do not polish it beyond its DoD. Its code lives in the final modules, and v3 and v4 extend it rather than rewrite it.
+- v2.5 (the swap prototype) must prove the swap design before anything is built on it. v2 is a prototype: do not polish it beyond its DoD. Its code lives in the final modules, and v3 and v4 extend it rather than rewrite it.

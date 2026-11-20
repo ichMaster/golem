@@ -153,7 +153,7 @@ Implementation goes in eight phases, and the agent appears only in the sixth: be
 | Phase | What we build | Done when |
 | --- | --- | --- |
 | 1. Game core | World state, Sokoban rules, loading levels from the text format, saving and restoring state | A recorded sequence of moves always produces the same final state |
-| 2. Prototype | A text level screen with arrow-key control on top of the core; a minimal Lua sandbox that runs a program step by step on coroutines within its budgets; a prototype of swapping in a new program mid-level with the same memory | You play a level by hand, a hand-written program passes a tier-one level, and a program swapped in mid-level finishes it using the old map |
+| 2. Prototype | A text level screen with arrow-key control on top of the core; a minimal Lua sandbox that runs a program step by step on coroutines within its budgets; programs from a folder run from the text page and played back move by move; a prototype of swapping in a new program mid-level with the same memory | You play a level by hand, a hand-written program passes a tier-one level, and a program swapped in mid-level finishes it using the old map |
 | 3. Game screen | The designed level screen: the scene, the panels, the motion; ten training levels | You pass ten training levels by hand |
 | 4. Interpreter and stops | The full Lua sandbox with fixed behaviour, the run report, stop conditions, snapshot of memory and latest actions | A program swapped in by hand at a stop finishes the level using the old map |
 | 5. Validator and journal | HTTP API and command-line tool, runs over level sets, JSON report, traces, program versions, run replay on the game screen | One command gives a report for all levels, and any run can be replayed |
