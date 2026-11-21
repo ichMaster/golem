@@ -1,6 +1,28 @@
 Golem release notes
 ===================
 
+Version 2.5.0 (2026-11-21)
+---------------------------
+- v2.5 (GOLEM-027..034), the swap prototype: memory outside the program. It completes v2.
+- golem/interp/run.py: a Run holds one Lua runtime, the world, the counters and the versions.
+  swap(run, source) loads a second program into the same runtime: memory is the same table, the old
+  coroutine is closed and can never be resumed, the count hook goes onto the new coroutine, and the
+  world and the step and instruction counters carry over.
+- The report ends with versions: [1] without a swap, [1, 2] after one.
+- tests/fixtures/programs/explore.lua maps a tier-one level into memory and gives up; finish.lua solves it
+  from that map. Swapped, they solve t1-01, t1-02 and t1-03.
+- uv run golem-local run <level> <program.lua> --swap <program.lua>: the second program takes over when
+  the first one gives up or returns.
+- The swap on the text page (added at the owner's request): a "Swap in" select, the swap frame in the
+  playback, the versions in the report, and a run log with each program's ending and each swap. The
+  program route takes {"level", "swap"} and returns the frames (with version) and the swaps.
+- ARCHITECTURE describes the swap as built, including when a swap is allowed and refused.
+- Code review: a program text that does not fit in the free Lua memory is refused ("not enough memory
+  for the program text") instead of aborting the process with a Lua panic; this existed since v2.3 and a
+  swap made it reachable with small texts.
+- Backlog: explorer.lua and explore.lua are easy to confuse. Still open for the owner before v4.1: C
+  functions run without the count hook (spike R1).
+
 Version 2.4.0 (2026-11-21)
 ---------------------------
 - v2.4 (GOLEM-022..026), programs on the text screen; added at the owner's request, and the swap

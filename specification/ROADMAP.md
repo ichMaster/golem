@@ -28,7 +28,7 @@ v1 and v2.1–v2.3 are built and released. Latest release: v2.3.0 (v2.3).
 | v2.2 | The text game screen | ✅ released | v2.2.0 |
 | v2.3 | Lua runs: the lupa spike, a minimal sandbox and the driver | ✅ released | v2.3.0 |
 | v2.4 | Programs on the text screen | ✅ released | v2.4.0 |
-| v2.5 | The swap prototype: `memory` outside the program | ⏳ planned | — |
+| v2.5 | The swap prototype: `memory` outside the program | ✅ released | v2.5.0 |
 | v3.1 | The screen's data from the server, and ten levels | ⏳ planned | — |
 | v3.2 | The game screen: the scene and the panels | ⏳ planned | — |
 | v3.3 | The game screen: motion, the atlas and small windows | ⏳ planned | — |
@@ -256,7 +256,7 @@ The server reads the programs and runs them; the page shows the code and plays b
 
 ### v2.5 — The swap prototype: `memory` outside the program
 
-**Status:** ⏳ planned.
+**Status:** ✅ released in v2.5.0.
 
 **Goal:** a second program, started mid-level from the current world state, finishes the level with the `memory` that the first program built.
 
