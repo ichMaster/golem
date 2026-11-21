@@ -207,3 +207,13 @@ def test_two_identical_swapped_runs_give_byte_identical_json(tmp_path, swap_fold
     body = {"level": T1, "swap": "finish.lua"}
     first = client.post("/api/programs/explore.lua/run", json=body).content
     assert first == client.post("/api/programs/explore.lua/run", json=body).content
+
+
+def test_the_log_names_a_swap_only_when_it_happened(tmp_path, swap_folder):
+    client = client_for(tmp_path, swap_folder)
+    run(client, "explore.lua", {"level": T1, "swap": "finish.lua"})
+    run(client, "t1_solver.lua", {"level": T1, "swap": "finish.lua"})
+    lines = (tmp_path / "logs" / "server.log").read_text(encoding="utf-8").splitlines()
+    ran = [line.split(": ", 1)[1] for line in lines if " ran " in line]
+    assert ran[-2:] == [f"ran explore.lua with finish.lua swapped in on {T1}: solved None",
+                        f"ran t1_solver.lua on {T1}: solved None"]

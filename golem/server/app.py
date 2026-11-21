@@ -168,7 +168,8 @@ def _install_program_routes(app: FastAPI, settings: Settings) -> None:
             LOG.error("training level %s does not load: %s", level_id, error)
             return error_response(500, "level_error", str(error))
         report, frames = run_with_frames(level, budget, source, settings.interp, second=second)
-        swapped = f" with {second_name} swapped in" if second is not None else ""
+        # Name the swap only when it happened: a first program that solves never loads the second.
+        swapped = f" with {second_name} swapped in" if len(report["versions"]) > 1 else ""
         LOG.info("ran %s%s on %s: %s %s", name, swapped, level_id, report["status"],
                  report["reason"])
         return {"report": report, "frames": frames}
