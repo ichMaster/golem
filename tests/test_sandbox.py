@@ -1,6 +1,11 @@
 """The minimal sandbox (v2.3, a contract): the allowlist, text-only loading, the robot API wrappers
 that yield {cmd, arg}, one memory per runtime, and the runtime's trimmed globals. Real lupa."""
 
+import json
+import subprocess
+import sys
+from pathlib import Path
+
 import lupa.lua54 as lua54
 import pytest
 
@@ -11,7 +16,12 @@ from golem.interp.config import (
     InterpSettings,
     load_interp_settings,
 )
-from golem.interp.sandbox import REMOVED_GLOBALS, ProgramLoadError, new_sandbox
+from golem.interp.sandbox import (
+    PROGRAM_TOO_LARGE,
+    REMOVED_GLOBALS,
+    ProgramLoadError,
+    new_sandbox,
+)
 
 STEPPER = """function(chunk)
   local co = coroutine.create(chunk)
@@ -193,3 +203,66 @@ def test_lupa_is_imported_only_by_the_interpreter():
             elif isinstance(node, ast.ImportFrom) and node.module:
                 names = [node.module]
             assert not any(n.split(".")[0] == "lupa" for n in names), path
+
+
+# --- a program text that does not fit (v2.5 code review #1) -------------------------------------
+# lupa pushes the text outside a protected call, so a failed allocation there makes Lua abort the
+# whole process. These runs happen in a child process: a regression fails the test instead of
+# killing pytest.
+
+REPO = Path(__file__).resolve().parent.parent
+CHILD_PRELUDE = """
+import json
+from pathlib import Path
+from golem.core.levels import budget_for, load_budgets, load_level
+from golem.interp.config import InterpSettings
+from golem.interp.run import Run, run_program, swap
+LEVELS = Path("levels")
+T1 = "training/tier1/t1-01"
+LEVEL, BUDGET = load_level(T1, LEVELS), budget_for(T1, load_budgets(LEVELS))
+"""
+
+
+def in_child(code: str) -> dict:
+    done = subprocess.run([sys.executable, "-c", CHILD_PRELUDE + code], cwd=REPO,
+                          capture_output=True, text=True, timeout=120)
+    assert "PANIC" not in done.stderr and done.returncode == 0, done.stderr[-2000:]
+    return json.loads(done.stdout.strip().splitlines()[-1])
+
+
+def test_a_program_text_larger_than_the_memory_cap_is_refused_not_a_crash():
+    report = in_child("""
+small = InterpSettings(lua_max_memory=2 * 1024 * 1024)
+print(json.dumps(run_program(LEVEL, BUDGET, "x = '" + "y" * (3 * 1024 * 1024) + "'", small)))
+""")
+    assert (report["status"], report["reason"], report["error"]) == (
+        "failed", "error", PROGRAM_TOO_LARGE)
+
+
+def test_a_swapped_in_text_that_does_not_fit_in_the_room_left_is_refused_not_a_crash():
+    report = in_child("""
+run = Run(LEVEL, BUDGET, InterpSettings())
+run.start('give_up("first")')
+run.drive()
+runtime = run._sandbox.runtime
+# as if the first program had left memory nearly full
+runtime.set_max_memory(runtime.get_memory_used() + 1000)
+swap(run, "-- " + "z" * 5000 + "\\nmove('E')")
+run.drive()
+print(json.dumps(run.report()))
+""")
+    assert (report["status"], report["reason"], report["error"]) == (
+        "failed", "error", PROGRAM_TOO_LARGE)
+    assert report["versions"] == [1, 2]
+
+
+def test_garbage_is_collected_before_a_text_is_refused():
+    sandbox = new_sandbox(InterpSettings(lua_max_memory=2 * 1024 * 1024))
+    runtime = sandbox.runtime
+    # with the automatic collector stopped, the garbage stays until load() collects it
+    runtime.execute("collectgarbage('stop') "
+                    "local garbage = {} for i = 1, 1200 do garbage[i] = string.rep('g', 1000) end")
+    text = "-- " + "t" * (850 * 1024) + "\nreturn 1"
+    limit = runtime.get_max_memory()
+    assert runtime.get_memory_used() + len(text) > limit - 4096  # it fits only once collected
+    assert callable(sandbox.load(text))

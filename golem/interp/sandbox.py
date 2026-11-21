@@ -6,6 +6,11 @@ reaches Python objects (the v2.3 spike, F1), so the set-up chunk removes it, tog
 globals that nothing needs, before any program text is loaded. No Python object is ever passed into
 Lua: the set-up is Lua code, and Python passes in only strings.
 
+A program's text goes into Lua only when it fits in the free memory under the cap. lupa pushes a
+string outside a protected call, and a failed allocation there makes Lua abort the whole process
+(v2.5 code review #1), so ``Sandbox.load`` checks the room first, collects garbage once if needed,
+and otherwise refuses the text as a program that does not load.
+
 A program's globals are a fresh table, never ``_G``. Until v4.1 it holds only names whose behaviour
 is already deterministic; ``pairs``, ``tostring``, ``string.format``, ``table.sort`` and
 ``math.random`` arrive in v4.1 in their deterministic versions.
@@ -20,6 +25,10 @@ from golem.interp.config import InterpSettings
 # The runtime's own globals that nothing needs; "python" reaches Python objects (spike F1).
 REMOVED_GLOBALS = ("python", "io", "os", "package", "require", "dofile", "loadfile")
 
+# Room kept free, beyond the text itself, when a program text goes into Lua.
+LOAD_HEADROOM = 4096
+PROGRAM_TOO_LARGE = "not enough memory for the program text"
+
 # Names a program sees, besides the robot API, memory and the three library tables.
 BASE_NAMES = ("assert", "error", "ipairs", "select", "tonumber", "type", "unpack")
 
@@ -27,7 +36,7 @@ SETUP = r"""
 local removed = ...
 for i = 1, #removed do _G[removed[i]] = nil end
 
-local next, type, error, load = next, type, error, load
+local next, type, error, load, collectgarbage = next, type, error, load, collectgarbage
 local yield = coroutine.yield
 
 local function copy(library, drop)
@@ -112,7 +121,10 @@ local function load_program(source)
   return chunk
 end
 
-return load_program, safe_text
+-- collect(): a full garbage collection, called by Python with no argument, so nothing is pushed.
+local function collect() collectgarbage("collect") end
+
+return load_program, safe_text, collect
 """
 
 
@@ -130,13 +142,27 @@ class Sandbox:
     runtime: lua54.LuaRuntime
     _loader: object
     safe_text: object
+    _collect: object
 
     def load(self, source: str | bytes):
-        """The program's chunk (a Lua function), or ``ProgramLoadError`` with Lua's message."""
+        """The program's chunk (a Lua function), or ``ProgramLoadError`` with Lua's message.
+
+        A text that does not fit in the free memory under the cap, even after a full collection, is
+        refused with ``PROGRAM_TOO_LARGE`` before it reaches Lua.
+        """
+        size = len(source.encode("utf-8")) if isinstance(source, str) else len(source)
+        if not self._fits(size):
+            self._collect()
+            if not self._fits(size):
+                raise ProgramLoadError(PROGRAM_TOO_LARGE)
         chunk, message = _pair(self._loader(source))
         if chunk is None:
             raise ProgramLoadError(_text(message))
         return chunk
+
+    def _fits(self, size: int) -> bool:
+        limit = self.runtime.get_max_memory()
+        return not limit or self.runtime.get_memory_used() + size + LOAD_HEADROOM <= limit
 
 
 def new_sandbox(settings: InterpSettings) -> Sandbox:
@@ -147,8 +173,8 @@ def new_sandbox(settings: InterpSettings) -> Sandbox:
         max_memory=settings.lua_max_memory,
     )
     removed = runtime.table_from(list(REMOVED_GLOBALS))
-    loader, safe_text = runtime.execute(SETUP, removed)
-    return Sandbox(runtime=runtime, _loader=loader, safe_text=safe_text)
+    loader, safe_text, collect = runtime.execute(SETUP, removed)
+    return Sandbox(runtime=runtime, _loader=loader, safe_text=safe_text, _collect=collect)
 
 
 def _pair(result) -> tuple:
