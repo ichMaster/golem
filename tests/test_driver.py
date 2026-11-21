@@ -188,7 +188,9 @@ def test_the_frames_of_a_recorded_solution_are_the_cores_replay(name):
     assert [f["map"] for f in frames] == [render(world) for world in states]
     assert [f["step"] for f in frames] == list(range(len(moves) + 1))
     assert [f["dir"] for f in frames] == [None, *moves]
-    assert frames[0] == {"step": 0, "dir": None, "moved": None, "map": render(states[0])}
+    assert frames[0] == {"step": 0, "dir": None, "moved": None, "version": 1,
+                         "map": render(states[0])}
+    assert {f["version"] for f in frames} == {1}
 
 
 def test_a_bump_is_a_frame_with_the_same_map_and_a_counted_step():

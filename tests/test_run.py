@@ -10,7 +10,7 @@ import pytest
 
 from golem.core.levels import budget_for, load_budgets, load_level
 from golem.interp.config import InterpSettings
-from golem.interp.run import Run, SwapRefused, frame, run_program, swap
+from golem.interp.run import Run, SwapRefused, run_program, run_with_frames, swap
 
 REPO = Path(__file__).resolve().parent.parent
 LEVELS = REPO / "levels"
@@ -92,7 +92,7 @@ def test_the_frames_continue_across_a_swap():
     level = load_level(T1, LEVELS)
     steps = []
     run = swapped('move("N") move("S") give_up("x")', 'move("E") move("E")',
-                  on_move=lambda world, d, moved: steps.append(frame(world, d, moved)["step"]))
+                  on_move=lambda world, d, moved: steps.append(world.steps))
     assert steps == [1, 2, 3, 4]
     assert ending(run) == ("solved", None, None) and level.id == run.report()["level"]
 
@@ -211,12 +211,16 @@ def test_neither_program_reaches_the_driver_or_the_runtimes_globals():
 
 
 def test_a_swapped_run_twice_gives_byte_identical_reports_and_frames():
+    level = load_level(T1, LEVELS)
+    budget = budget_for(T1, load_budgets(LEVELS))
+
     def once() -> str:
-        frames = []
-        run = swapped('memory.n = 0 for i = 1, 5000 do memory.n = memory.n + 1 end '
-                      'move("N") move("S") give_up("n")',
-                      'move("E") if memory.n == 5000 then move("E") end',
-                      on_move=lambda world, d, moved: frames.append(frame(world, d, moved)))
-        return json.dumps([run.report(), run.versions, frames])
+        report, frames = run_with_frames(
+            level, budget,
+            'memory.n = 0 for i = 1, 5000 do memory.n = memory.n + 1 end '
+            'move("N") move("S") give_up("n")', SETTINGS,
+            second='move("E") if memory.n == 5000 then move("E") end')
+        assert (report["status"], report["versions"]) == ("solved", [1, 2])
+        return json.dumps([report, frames])
 
     assert once() == once()

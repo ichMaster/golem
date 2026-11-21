@@ -124,7 +124,7 @@ def _install_program_routes(app: FastAPI, settings: Settings) -> None:
     """
     folder, levels_dir = settings.programs_dir, settings.levels_dir
 
-    def source_of(name: str) -> str | JSONResponse:
+    def source_of(name: object) -> str | JSONResponse:
         try:
             return read_program(folder, name)
         except UnknownProgram:
@@ -145,10 +145,19 @@ def _install_program_routes(app: FastAPI, settings: Settings) -> None:
 
     @app.post("/api/programs/{name}/run")
     def run(name: str, body: Annotated[dict | None, Body()] = None):
+        fields = body if isinstance(body, dict) else {}
         source = source_of(name)
         if isinstance(source, JSONResponse):
             return source
-        level_id = body.get("level") if isinstance(body, dict) else None
+        # The program swapped in when the first one gives up or returns (v2.5); absent or null means
+        # no swap.
+        second_name = fields.get("swap")
+        second = None
+        if second_name is not None:
+            second = source_of(second_name)
+            if isinstance(second, JSONResponse):
+                return second
+        level_id = fields.get("level")
         # Training ids only; a hidden, unknown, missing or non-string id gets the same answer.
         if not isinstance(level_id, str) or level_id not in list_levels("training", levels_dir):
             return error_response(404, "unknown_level", "unknown level")
@@ -158,8 +167,10 @@ def _install_program_routes(app: FastAPI, settings: Settings) -> None:
         except (LevelError, BudgetsError, OSError) as error:
             LOG.error("training level %s does not load: %s", level_id, error)
             return error_response(500, "level_error", str(error))
-        report, frames = run_with_frames(level, budget, source, settings.interp)
-        LOG.info("ran %s on %s: %s %s", name, level_id, report["status"], report["reason"])
+        report, frames = run_with_frames(level, budget, source, settings.interp, second=second)
+        swapped = f" with {second_name} swapped in" if second is not None else ""
+        LOG.info("ran %s%s on %s: %s %s", name, swapped, level_id, report["status"],
+                 report["reason"])
         return {"report": report, "frames": frames}
 
 

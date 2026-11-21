@@ -11,7 +11,9 @@ made by the sandbox's set-up chunk, and every program environment points to it.
 - the count hook goes onto the new coroutine;
 - the world, the step count and the instruction count carry over, and the level never restarts.
 
-``run_program`` and ``run_with_frames`` run one program from the start of a level.
+``swap_on_give_up`` is the swap that ``golem-local --swap`` and the text page use (v2.5): a second
+program takes over when the first one gives up or returns. ``run_program`` runs one program from the
+start of a level, and ``run_with_frames`` runs one, or two with that swap, and keeps the frames.
 """
 
 import logging
@@ -41,10 +43,12 @@ class Run:
     """One run of a level: its runtime, world, counters and versions.
 
     ``on_move(world, direction, moved)``, when given, is called after every ``move`` of every
-    program (the v2.4 frames).
+    program (the v2.4 frames), and ``on_swap(world, version)`` at every swap.
     """
 
-    def __init__(self, level: Level, budget: Budget, settings: InterpSettings, on_move=None):
+    def __init__(
+        self, level: Level, budget: Budget, settings: InterpSettings, on_move=None, on_swap=None
+    ):
         self.level = level
         self.world: World = new_world(level, budget)
         self.instructions = 0
@@ -53,6 +57,7 @@ class Run:
         self._budget = budget
         self._settings = settings
         self._on_move = on_move
+        self._on_swap = on_swap
         self._sandbox = None
         self._step = self._install = self._resume_previous = None
         # A memory error escaped the program's protected call, or the driver failed: nothing may
@@ -137,7 +142,27 @@ def swap(run: Run, source: str) -> None:
     if not run.can_swap():
         raise SwapRefused("the run cannot take a new program now")
     run.versions.append(len(run.versions) + 1)
-    run._guarded(lambda: run._load(source))
+    run._guarded(lambda: _swap_in(run, source))
+
+
+def _swap_in(run: Run, source: str) -> None:
+    if run._on_swap is not None:
+        run._on_swap(run.world, run.versions[-1])
+    run._load(source)
+
+
+def swap_on_give_up(run: Run, source: str | None) -> None:
+    """When the run's program gave up or returned, swap ``source`` in and drive it to its end.
+
+    Any other ending (solved, lost, a Lua error, a failure) leaves the run as it is, and ``source``
+    is never loaded; a swap on a Lua error belongs to the stops of v4.2. This is the swap of
+    ``golem-local --swap`` and of the text page.
+    """
+    if source is None or run.ending is None:
+        return
+    if (run.ending.status, run.ending.reason) == ("failed", "give_up"):
+        swap(run, source)
+        run.drive()
 
 
 def run_program(level: Level, budget: Budget, source: str, settings: InterpSettings) -> dict:
@@ -149,26 +174,39 @@ def run_program(level: Level, budget: Budget, source: str, settings: InterpSetti
 
 
 def run_with_frames(
-    level: Level, budget: Budget, source: str, settings: InterpSettings
+    level: Level, budget: Budget, source: str, settings: InterpSettings, second: str | None = None
 ) -> tuple[dict, list[dict]]:
-    """Run like ``run_program``, and also return the frames: the map before the first move and after
-    every ``move``, rendered by the core.
+    """Run like ``run_program``, with ``second`` swapped in by ``swap_on_give_up`` when it is given,
+    and also return the frames: the map before the first move and after every ``move``, rendered by
+    the core.
 
-    Each frame is ``{"step", "dir", "moved", "map"}``; the first has ``step`` 0 and ``dir`` and
-    ``moved`` set to ``None``. ``look``, ``here`` and ``boxes_left`` change nothing on the map and
-    add no frame, so the frames are bounded by the step budget.
+    Each frame is ``{"step", "dir", "moved", "version", "map"}``, where ``version`` is the program
+    that was driving. The first has step 0, ``dir`` and ``moved`` set to ``None``, and version 1.
+    A swap adds a frame at the swap point: the same step and map, ``dir`` and ``moved`` set to
+    ``None``, and the new version. ``look``, ``here`` and ``boxes_left`` add no frame, so the frames
+    are bounded by the step budget plus one, plus one for each swap.
     """
-    frames = [frame(new_world(level, budget), None, None)]
+    frames = [frame(new_world(level, budget), None, None, 1)]
+    versions: list[int] = []
 
     def on_move(world: World, direction: str, moved: bool) -> None:
-        frames.append(frame(world, direction, moved))
+        frames.append(frame(world, direction, moved, versions[-1]))
 
-    run = Run(level, budget, settings, on_move=on_move)
+    def on_swap(world: World, version: int) -> None:
+        frames.append(frame(world, None, None, version))
+
+    run = Run(level, budget, settings, on_move=on_move, on_swap=on_swap)
+    versions = run.versions
     run.start(source)
     run.drive()
+    swap_on_give_up(run, second)
     return run.report(), frames
 
 
-def frame(world: World, direction: str | None, moved: bool | None) -> dict:
-    """One frame of the playback: the step, the move, and the map rendered by the core."""
-    return {"step": world.steps, "dir": direction, "moved": moved, "map": core.render(world)}
+def frame(world: World, direction: str | None, moved: bool | None, version: int) -> dict:
+    """One frame of the playback: the step, the move, the program's version, and the map rendered
+    by the core."""
+    return {
+        "step": world.steps, "dir": direction, "moved": moved, "version": version,
+        "map": core.render(world),
+    }

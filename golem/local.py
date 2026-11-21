@@ -28,7 +28,7 @@ from pathlib import Path
 from golem.core.level import LevelError
 from golem.core.levels import BudgetsError, budget_for, list_levels, load_budgets, load_level
 from golem.interp.config import InterpConfigError, load_interp_settings
-from golem.interp.run import Run, swap
+from golem.interp.run import Run, swap_on_give_up
 
 DEFAULT_LEVELS_DIR = "levels"
 
@@ -95,10 +95,8 @@ def _run(level_id: str, program: Path, environ: Mapping[str, str], second: Path 
     second_source = _read_program(second) if second is not None else None
     run = Run(level, budget, settings)
     run.start(source)
-    ending = run.drive()
-    if second_source is not None and (ending.status, ending.reason) == ("failed", "give_up"):
-        swap(run, second_source)
-        run.drive()
+    run.drive()
+    swap_on_give_up(run, second_source)
     return run.report()
 
 
