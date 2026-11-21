@@ -270,6 +270,28 @@ def test_the_game_keys_skip_form_controls():
 def test_the_page_has_the_programs_panel():
     page = (SCREEN_DIR / "index.html").read_text(encoding="utf-8")
     for element_id in ("program-list", "program-name", "program-code", "program-error",
-                       "run-level", "run-button", "skip-button", "run-board", "run-step",
-                       "run-report"):
+                       "run-level", "swap-program", "run-button", "skip-button", "run-board",
+                       "run-step", "run-report"):
         assert f'id="{element_id}"' in page, element_id
+
+
+# --- the swap on the programs panel (v2.5) ------------------------------------------------------
+
+
+def test_the_swap_select_starts_with_none():
+    page = (SCREEN_DIR / "index.html").read_text(encoding="utf-8")
+    assert re.search(r'<select id="swap-program"><option value="">none</option></select>', page)
+
+
+def test_the_run_sends_swap_only_when_a_program_is_chosen():
+    run = function_body(SCRIPT.read_text(encoding="utf-8"), "runProgram")
+    assert "const request = { level: view.runLevel.value };" in run
+    assert re.search(r'if \(view\.swapProgram\.value !== ""\) \{\s*request\.swap = ', run)
+    assert "body: JSON.stringify(request)" in run
+
+
+def test_a_frame_with_no_move_is_the_start_or_a_swap_and_the_report_names_the_versions():
+    text = SCRIPT.read_text(encoding="utf-8")
+    step = function_body(text, "stepText")
+    assert "frame.version === 1" in step and "swap → " in step
+    assert "report.versions.length > 1" in function_body(text, "reportText")

@@ -133,6 +133,8 @@ def test_the_solver_solves_every_tier_one_level(level_id):
         ("gives_up.lua", "failed", "give_up"),
         ("explorer.lua", "failed", "give_up"),
         ("runtime_error.lua", "failed", "error"),
+        ("explore.lua", "failed", "give_up"),
+        ("finish.lua", "failed", "give_up"),
     ],
 )
 def test_each_demonstration_ends_as_its_name_says_on_t1_01(name, status, reason):
@@ -142,3 +144,20 @@ def test_each_demonstration_ends_as_its_name_says_on_t1_01(name, status, reason)
         assert report["error"].startswith("program:6: ")
     if name == "explorer.lua":
         assert report["error"] == "?#####?/#     #/# @$ .#/#     #/?#####?"
+
+
+FIXTURES = REPO / "tests" / "fixtures" / "programs"
+
+
+@pytest.mark.parametrize("name", ["explore.lua", "finish.lua"])
+def test_the_pages_swap_examples_are_the_swap_fixtures(name):
+    # v2.5: the page offers the same pair that golem-local --swap and the tests use, byte for byte
+    assert (PROGRAMS / name).read_bytes() == (FIXTURES / name).read_bytes()
+
+
+def test_the_pair_solves_t1_01_when_the_second_is_swapped_in():
+    level = load_level(TIER1[0], LEVELS)
+    report, frames = run_with_frames(
+        level, budget_for(TIER1[0], load_budgets(LEVELS)), read_program(PROGRAMS, "explore.lua"),
+        InterpSettings(), second=read_program(PROGRAMS, "finish.lua"))
+    assert (report["status"], report["versions"]) == ("solved", [1, 2])

@@ -1,4 +1,4 @@
--- explore.lua: maps a tier-one level into memory without pushing the box, then gives up "mapped".
+-- Maps a tier-one level into memory, then gives up "mapped": swap in finish.lua to solve it.
 -- It is the first half of a swap (v2.5): finish.lua, swapped in on that give-up, solves the level
 -- from the map alone.
 --

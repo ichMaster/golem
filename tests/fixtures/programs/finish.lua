@@ -1,4 +1,4 @@
--- finish.lua: solves a tier-one level from the map that explore.lua left in memory, never looking.
+-- Solves a tier-one level from the map explore.lua left in memory, without looking around.
 -- It is the second half of a swap (v2.5). Run alone, it finds no map and gives up.
 --
 -- It searches the pushes breadth-first over (robot cell, box cell) states on the map in memory.

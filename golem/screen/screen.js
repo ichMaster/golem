@@ -1,6 +1,7 @@
 // The text page (v2.2): the socket and its reconnect, the keys, and each state drawn as text.
 // The programs panel (v2.4): the programs from the server, their code, a run on a training level,
-// and the playback of the run's frames. The page holds no rules: it sends keys and draws the states
+// and the playback of the run's frames. The swap (v2.5): a second program, chosen in "Swap in",
+// takes over when the first one gives up or returns; the playback marks the swap. The page holds no rules: it sends keys and draws the states
 // and frames that the server sends back. v3.2 replaces the drawing and keeps the socket.
 "use strict";
 
@@ -31,6 +32,7 @@ const view = {
   programCode: document.getElementById("program-code"),
   programError: document.getElementById("program-error"),
   runLevel: document.getElementById("run-level"),
+  swapProgram: document.getElementById("swap-program"),
   runButton: document.getElementById("run-button"),
   skipButton: document.getElementById("skip-button"),
   runBoard: document.getElementById("run-board"),
@@ -44,7 +46,7 @@ let levelsShown = false;
 let programsShown = false;
 let selectedProgram = null;
 let runLevelChosen = false; // the owner picked a level in the select; stop following the game
-let playback = null; // {frames, index, report, timer} while a run is being played back
+let playback = null; // {frames, index, report, names, timer} while a run is being played back
 let running = false; // a run request is in flight; Run stays disabled until it answers
 
 // --- The socket ---------------------------------------------------------------------------------
@@ -249,10 +251,19 @@ async function loadPrograms() {
     return;
   }
   view.programList.replaceChildren(...programs.map(programButton));
+  view.swapProgram.replaceChildren(swapOption("", "none"),
+    ...programs.map((program) => swapOption(program.name, program.name)));
   programsShown = true;
   if (programs.length === 0) {
     view.programName.textContent = "No programs in the programs folder.";
   }
+}
+
+function swapOption(value, label) {
+  const option = document.createElement("option");
+  option.value = value;
+  option.textContent = label;
+  return option;
 }
 
 function programButton(program) {
@@ -315,12 +326,19 @@ async function runProgram() {
   view.runReport.className = "line";
   running = true;
   updateRunButton();
+  // The programs' names by version, for the playback and the report: 1 runs first, 2 is swapped in.
+  const names = { 1: selectedProgram };
+  const request = { level: view.runLevel.value };
+  if (view.swapProgram.value !== "") {
+    request.swap = view.swapProgram.value;
+    names[2] = view.swapProgram.value;
+  }
   let body;
   try {
     const response = await fetch(`/api/programs/${encodeURIComponent(selectedProgram)}/run`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ level: view.runLevel.value }),
+      body: JSON.stringify(request),
     });
     body = await response.json();
     if (!response.ok) {
@@ -334,14 +352,14 @@ async function runProgram() {
     running = false;
     updateRunButton();
   }
-  startPlayback(body.frames, body.report);
+  startPlayback(body.frames, body.report, names);
 }
 
 // --- The playback -------------------------------------------------------------------------------
 
-function startPlayback(frames, report) {
+function startPlayback(frames, report, names) {
   stopPlayback(); // one playback at a time: an earlier timer never keeps running (code review #1)
-  playback = { frames, index: 0, report, timer: null };
+  playback = { frames, index: 0, report, names, timer: null };
   drawFrame(frames[0]);
   if (frames.length === 1) {
     finishPlayback();
@@ -371,7 +389,7 @@ function skipToEnd() {
 function finishPlayback() {
   clearInterval(playback.timer);
   view.skipButton.disabled = true;
-  view.runReport.textContent = reportText(playback.report);
+  view.runReport.textContent = reportText(playback.report, playback.names);
   view.runReport.className = `line ${playback.report.status}`;
   playback = null;
 }
@@ -386,12 +404,21 @@ function stopPlayback() {
 
 function drawFrame(frame) {
   view.runBoard.textContent = frame.map.join("\n");
-  view.runStep.textContent = frame.dir === null
-    ? "start"
-    : `step ${frame.step} · ${frame.moved ? "move" : "bump"} ${frame.dir}`;
+  view.runStep.textContent = stepText(frame, playback.names);
 }
 
-function reportText(report) {
+function stepText(frame, names) {
+  if (frame.dir !== null) {
+    return `step ${frame.step} · ${frame.moved ? "move" : "bump"} ${frame.dir}`;
+  }
+  // A frame with no move is the start (version 1) or a swap point (a later version).
+  if (frame.version === 1) {
+    return "start";
+  }
+  return `step ${frame.step} · swap → ${names[frame.version] ?? `version ${frame.version}`}`;
+}
+
+function reportText(report, names) {
   let outcome;
   if (report.status === "solved") {
     outcome = `solved in ${report.steps} steps`;
@@ -404,7 +431,12 @@ function reportText(report) {
   } else {
     outcome = report.error ?? report.status;
   }
-  return `${outcome} · ${report.steps} steps · ${report.instructions} instructions`;
+  let text = `${outcome} · ${report.steps} steps · ${report.instructions} instructions`;
+  if (report.versions.length > 1) {
+    const programs = report.versions.map((v) => names[v] ?? `version ${v}`).join(" → ");
+    text += ` · versions ${report.versions.join(", ")} (${programs})`;
+  }
+  return text;
 }
 
 view.runLevel.addEventListener("change", () => {
