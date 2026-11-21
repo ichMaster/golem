@@ -271,7 +271,7 @@ def test_the_page_has_the_programs_panel():
     page = (SCREEN_DIR / "index.html").read_text(encoding="utf-8")
     for element_id in ("program-list", "program-name", "program-code", "program-error",
                        "run-level", "swap-program", "run-button", "skip-button", "run-board",
-                       "run-step", "run-report"):
+                       "run-step", "run-report", "run-log"):
         assert f'id="{element_id}"' in page, element_id
 
 
@@ -295,3 +295,15 @@ def test_a_frame_with_no_move_is_the_start_or_a_swap_and_the_report_names_the_ve
     step = function_body(text, "stepText")
     assert "frame.version === 1" in step and "swap → " in step
     assert "report.versions.length > 1" in function_body(text, "reportText")
+
+
+def test_the_run_log_is_built_from_the_swaps_and_grows_with_the_playback():
+    # owner test: the swap frame alone shows for 150 ms; the run log keeps where and why it happened
+    text = SCRIPT.read_text(encoding="utf-8")
+    assert "startPlayback(body.frames, body.report, names, body.swaps)" in function_body(
+        text, "runProgram")
+    lines = function_body(text, "logLines")
+    assert "swap.ended" in lines and "swap → " in lines and "carried over" in lines
+    for name in ("startPlayback", "nextFrame", "finishPlayback"):
+        assert "showLog(" in function_body(text, name), name
+    assert ".filter((line) => line.at <= index)" in function_body(text, "showLog")

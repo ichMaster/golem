@@ -1,7 +1,8 @@
 // The text page (v2.2): the socket and its reconnect, the keys, and each state drawn as text.
 // The programs panel (v2.4): the programs from the server, their code, a run on a training level,
 // and the playback of the run's frames. The swap (v2.5): a second program, chosen in "Swap in",
-// takes over when the first one gives up or returns; the playback marks the swap. The page holds no rules: it sends keys and draws the states
+// takes over when the first one gives up or returns; the playback marks the swap, and the run log
+// keeps where each program started, how it ended, and the swap. The page holds no rules: it sends keys and draws the states
 // and frames that the server sends back. v3.2 replaces the drawing and keeps the socket.
 "use strict";
 
@@ -38,6 +39,7 @@ const view = {
   runBoard: document.getElementById("run-board"),
   runStep: document.getElementById("run-step"),
   runReport: document.getElementById("run-report"),
+  runLog: document.getElementById("run-log"),
 };
 
 let socket = null;
@@ -46,7 +48,7 @@ let levelsShown = false;
 let programsShown = false;
 let selectedProgram = null;
 let runLevelChosen = false; // the owner picked a level in the select; stop following the game
-let playback = null; // {frames, index, report, names, timer} while a run is being played back
+let playback = null; // {frames, index, report, names, log, timer} while a run is being played back
 let running = false; // a run request is in flight; Run stays disabled until it answers
 
 // --- The socket ---------------------------------------------------------------------------------
@@ -324,6 +326,7 @@ async function runProgram() {
   view.programError.textContent = "";
   view.runReport.textContent = "";
   view.runReport.className = "line";
+  view.runLog.textContent = "";
   running = true;
   updateRunButton();
   // The programs' names by version, for the playback and the report: 1 runs first, 2 is swapped in.
@@ -352,15 +355,17 @@ async function runProgram() {
     running = false;
     updateRunButton();
   }
-  startPlayback(body.frames, body.report, names);
+  startPlayback(body.frames, body.report, names, body.swaps);
 }
 
 // --- The playback -------------------------------------------------------------------------------
 
-function startPlayback(frames, report, names) {
+function startPlayback(frames, report, names, swaps) {
   stopPlayback(); // one playback at a time: an earlier timer never keeps running (code review #1)
-  playback = { frames, index: 0, report, names, timer: null };
+  playback = { frames, index: 0, report, names, log: logLines(frames, report, names, swaps),
+               timer: null };
   drawFrame(frames[0]);
+  showLog(0);
   if (frames.length === 1) {
     finishPlayback();
     return;
@@ -372,6 +377,7 @@ function startPlayback(frames, report, names) {
 function nextFrame() {
   playback.index += 1;
   drawFrame(playback.frames[playback.index]);
+  showLog(playback.index);
   if (playback.index === playback.frames.length - 1) {
     finishPlayback();
   }
@@ -388,6 +394,7 @@ function skipToEnd() {
 
 function finishPlayback() {
   clearInterval(playback.timer);
+  showLog(playback.frames.length - 1);
   view.skipButton.disabled = true;
   view.runReport.textContent = reportText(playback.report, playback.names);
   view.runReport.className = `line ${playback.report.status}`;
@@ -418,19 +425,62 @@ function stepText(frame, names) {
   return `step ${frame.step} · swap → ${names[frame.version] ?? `version ${frame.version}`}`;
 }
 
-function reportText(report, names) {
-  let outcome;
-  if (report.status === "solved") {
-    outcome = `solved in ${report.steps} steps`;
-  } else if (report.status === "lost") {
-    outcome = `lost — ${LOSS_REASONS[report.reason] ?? report.reason}`;
-  } else if (report.reason === "give_up") {
-    outcome = `gave up: ${report.error}`;
-  } else if (report.reason === "error") {
-    outcome = `error: ${report.error}`;
-  } else {
-    outcome = report.error ?? report.status;
+// --- The run log (v2.5) ------------------------------------------------------------------------
+
+function logLines(frames, report, names, swaps) {
+  // Each line appears when the playback reaches its frame: `at` is that frame's index.
+  const name = (version) => names[version] ?? `version ${version}`;
+  const lines = [{ at: 0, text: `step 0 · ${name(1)} starts` }];
+  for (const swap of swaps ?? []) {
+    const index = frames.findIndex((f) => f.dir === null && f.version === swap.version);
+    const at = Math.max(index, 0);
+    lines.push({
+      at,
+      text: `step ${swap.step} · ${name(swap.version - 1)} ${endingText(swap.ended)} · ` +
+        `${swap.instructions} instructions`,
+    });
+    lines.push({
+      at,
+      text: `step ${swap.step} · swap → ${name(swap.version)} (version ${swap.version}): ` +
+        "memory and counters carried over",
+    });
   }
+  const last = report.versions[report.versions.length - 1];
+  lines.push({
+    at: frames.length - 1,
+    text: `step ${report.steps} · ${name(last)} ${endingText(report)} · ` +
+      `${report.instructions} instructions`,
+  });
+  return lines;
+}
+
+function showLog(index) {
+  view.runLog.textContent = playback.log
+    .filter((line) => line.at <= index)
+    .map((line) => line.text)
+    .join("\n");
+}
+
+function endingText(ending) {
+  if (ending.status === "solved") {
+    return "solved";
+  }
+  if (ending.status === "lost") {
+    return `lost — ${LOSS_REASONS[ending.reason] ?? ending.reason}`;
+  }
+  if (ending.reason === "give_up") {
+    return `gave up: ${ending.error}`;
+  }
+  if (ending.reason === "error") {
+    return `error: ${ending.error}`;
+  }
+  return ending.error ?? ending.status;
+}
+
+function reportText(report, names) {
+  const outcome = report.status === "solved"
+    ? `solved in ${report.steps} steps`
+    : endingText(report);
   let text = `${outcome} · ${report.steps} steps · ${report.instructions} instructions`;
   if (report.versions.length > 1) {
     const programs = report.versions.map((v) => names[v] ?? `version ${v}`).join(" → ");

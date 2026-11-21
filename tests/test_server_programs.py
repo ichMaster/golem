@@ -53,13 +53,13 @@ def test_the_list_and_the_source(tmp_path, folder):
 
 def test_a_run_returns_the_report_and_the_drivers_frames(tmp_path, folder):
     status, body = run(client_for(tmp_path, folder), "t1_solver.lua", {"level": T1})
-    assert status == 200 and set(body) == {"report", "frames"}
+    assert status == 200 and set(body) == {"report", "frames", "swaps"}
     assert body["report"]["status"] == "solved"
     level = load_level(T1, LEVELS)
     source = (folder / "t1_solver.lua").read_text(encoding="utf-8")
-    report, frames = run_with_frames(level, budget_for(T1, load_budgets(LEVELS)), source,
-                                     InterpSettings())
-    assert body == {"report": report, "frames": frames}
+    report, frames, swaps = run_with_frames(level, budget_for(T1, load_budgets(LEVELS)), source,
+                                            InterpSettings())
+    assert body == {"report": report, "frames": frames, "swaps": swaps} and swaps == []
 
 
 def test_two_identical_runs_give_byte_identical_json(tmp_path, folder):
@@ -153,13 +153,15 @@ def test_a_run_with_a_swap_returns_the_drivers_report_and_frames(tmp_path, swap_
     assert status == 200
     assert (body["report"]["status"], body["report"]["versions"]) == ("solved", [1, 2])
     level = load_level(T1, LEVELS)
-    report, frames = run_with_frames(
+    report, frames, swaps = run_with_frames(
         level, budget_for(T1, load_budgets(LEVELS)),
         (FIXTURES / "explore.lua").read_text(encoding="utf-8"), InterpSettings(),
         second=(FIXTURES / "finish.lua").read_text(encoding="utf-8"))
-    assert body == {"report": report, "frames": frames}
-    swaps = [f for f in body["frames"][1:] if f["dir"] is None]
-    assert len(swaps) == 1 and swaps[0]["version"] == 2
+    assert body == {"report": report, "frames": frames, "swaps": swaps}
+    swap_frames = [f for f in body["frames"][1:] if f["dir"] is None]
+    assert len(swap_frames) == 1 and swap_frames[0]["version"] == 2
+    assert [(s["step"], s["version"], s["ended"]) for s in body["swaps"]] == [
+        (swap_frames[0]["step"], 2, {"status": "failed", "reason": "give_up", "error": "mapped"})]
 
 
 def test_a_null_swap_is_no_swap(tmp_path, swap_folder):
@@ -215,5 +217,6 @@ def test_the_log_names_a_swap_only_when_it_happened(tmp_path, swap_folder):
     run(client, "t1_solver.lua", {"level": T1, "swap": "finish.lua"})
     lines = (tmp_path / "logs" / "server.log").read_text(encoding="utf-8").splitlines()
     ran = [line.split(": ", 1)[1] for line in lines if " ran " in line]
-    assert ran[-2:] == [f"ran explore.lua with finish.lua swapped in on {T1}: solved None",
-                        f"ran t1_solver.lua on {T1}: solved None"]
+    assert ran[-2:] == [
+        f"ran explore.lua with finish.lua swapped in at step 26 on {T1}: solved None",
+        f"ran t1_solver.lua on {T1}: solved None"]

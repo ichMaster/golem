@@ -53,6 +53,8 @@ class Run:
         self.world: World = new_world(level, budget)
         self.instructions = 0
         self.versions: list[int] = []
+        # One entry per swap: where it happened and how the program before it ended (the run log).
+        self.swaps: list[dict] = []
         self.ending: Ending | None = None
         self._budget = budget
         self._settings = settings
@@ -141,8 +143,20 @@ def swap(run: Run, source: str) -> None:
     """
     if not run.can_swap():
         raise SwapRefused("the run cannot take a new program now")
+    run.swaps.append(swap_entry(run.world.steps, len(run.versions) + 1, run.instructions,
+                                run.ending))
     run.versions.append(len(run.versions) + 1)
     run._guarded(lambda: _swap_in(run, source))
+
+
+def swap_entry(step: int, version: int, instructions: int, ended: Ending) -> dict:
+    """One swap of the run log: the step and the instruction count at the swap point, the version
+    swapped in, and how the program before it ended (its give-up reason or error text in ``error``,
+    cut as in the report)."""
+    return {
+        "step": step, "version": version, "instructions": instructions,
+        "ended": {"status": ended.status, "reason": ended.reason, "error": ended.error},
+    }
 
 
 def _swap_in(run: Run, source: str) -> None:
@@ -175,10 +189,10 @@ def run_program(level: Level, budget: Budget, source: str, settings: InterpSetti
 
 def run_with_frames(
     level: Level, budget: Budget, source: str, settings: InterpSettings, second: str | None = None
-) -> tuple[dict, list[dict]]:
+) -> tuple[dict, list[dict], list[dict]]:
     """Run like ``run_program``, with ``second`` swapped in by ``swap_on_give_up`` when it is given,
-    and also return the frames: the map before the first move and after every ``move``, rendered by
-    the core.
+    and return the report, the frames and the swaps (``swap_entry``, empty without a swap). The
+    frames are the map before the first move and after every ``move``, rendered by the core.
 
     Each frame is ``{"step", "dir", "moved", "version", "map"}``, where ``version`` is the program
     that was driving. The first has step 0, ``dir`` and ``moved`` set to ``None``, and version 1.
@@ -200,7 +214,7 @@ def run_with_frames(
     run.start(source)
     run.drive()
     swap_on_give_up(run, second)
-    return run.report(), frames
+    return run.report(), frames, [dict(entry) for entry in run.swaps]
 
 
 def frame(world: World, direction: str | None, moved: bool | None, version: int) -> dict:

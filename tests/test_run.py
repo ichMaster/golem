@@ -176,6 +176,10 @@ def test_a_swapped_in_program_that_does_not_load_ends_the_run_with_its_error():
     swap(run, 'move("E") move("E")')
     run.drive()
     assert ending(run) == ("solved", None, None) and run.versions == [1, 2, 3]
+    # the run log holds both swaps, and the second says how the program that did not load ended
+    assert [(s["step"], s["version"], s["ended"]["reason"]) for s in run.swaps] == [
+        (0, 2, "give_up"), (0, 3, "error")]
+    assert run.swaps[1]["ended"]["error"].startswith("program:2: ")
 
 
 # --- the versions in the report (GOLEM-028) ----------------------------------------------------
@@ -215,12 +219,12 @@ def test_a_swapped_run_twice_gives_byte_identical_reports_and_frames():
     budget = budget_for(T1, load_budgets(LEVELS))
 
     def once() -> str:
-        report, frames = run_with_frames(
+        report, frames, swaps = run_with_frames(
             level, budget,
             'memory.n = 0 for i = 1, 5000 do memory.n = memory.n + 1 end '
             'move("N") move("S") give_up("n")', SETTINGS,
             second='move("E") if memory.n == 5000 then move("E") end')
         assert (report["status"], report["versions"]) == ("solved", [1, 2])
-        return json.dumps([report, frames])
+        return json.dumps([report, frames, swaps])
 
     assert once() == once()

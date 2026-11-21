@@ -98,7 +98,7 @@ def framed(name: str, level_id: str) -> tuple[dict, list[dict]]:
     level = load_level(level_id, LEVELS)
     source = read_program(PROGRAMS, name)
     return run_with_frames(level, budget_for(level_id, load_budgets(LEVELS)), source,
-                           InterpSettings())
+                           InterpSettings())[:2]
 
 
 def test_the_examples_are_listed_with_descriptions():
@@ -157,7 +157,7 @@ def test_the_pages_swap_examples_are_the_swap_fixtures(name):
 
 def test_the_pair_solves_t1_01_when_the_second_is_swapped_in():
     level = load_level(TIER1[0], LEVELS)
-    report, frames = run_with_frames(
+    report, _, _ = run_with_frames(
         level, budget_for(TIER1[0], load_budgets(LEVELS)), read_program(PROGRAMS, "explore.lua"),
         InterpSettings(), second=read_program(PROGRAMS, "finish.lua"))
     assert (report["status"], report["versions"]) == ("solved", [1, 2])

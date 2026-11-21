@@ -26,6 +26,8 @@
     #program-list button { display: block; text-align: left; }
     .program-description { color: #555; }
     .columns { display: flex; flex-wrap: wrap; gap: 1.5rem; align-items: flex-start; }
+    #run-log { font-family: ui-monospace, Menlo, monospace; font-size: 0.85rem; margin: 0.25rem 0;
+               white-space: pre-wrap; }
     #program-code { font-family: ui-monospace, Menlo, monospace; font-size: 0.85rem;
                     background: #f7f7f7; padding: 0.5rem 0.75rem; margin: 0.5rem 0; max-height: 32rem;
                     overflow: auto; min-width: 20rem; }
@@ -62,6 +64,8 @@
         <pre id="run-board" class="board"></pre>
         <div id="run-step" class="line"></div>
         <div id="run-report" class="line"></div>
+        <div class="line">Run log</div>
+        <pre id="run-log"></pre>
       </div>
     </div>
   </section>

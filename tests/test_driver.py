@@ -174,7 +174,7 @@ def recorded(name: str) -> str:
 
 def framed(source: str, level_id: str = T1) -> tuple[dict, list[dict]]:
     level = load_level(level_id, LEVELS)
-    return run_with_frames(level, budget_for(level_id, load_budgets(LEVELS)), source, SETTINGS)
+    return run_with_frames(level, budget_for(level_id, load_budgets(LEVELS)), source, SETTINGS)[:2]
 
 
 @pytest.mark.parametrize("name", ["t1-01", "t1-02", "t1-03"])
