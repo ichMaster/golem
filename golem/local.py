@@ -23,7 +23,7 @@ from pathlib import Path
 from golem.core.level import LevelError
 from golem.core.levels import BudgetsError, budget_for, list_levels, load_budgets, load_level
 from golem.interp.config import InterpConfigError, load_interp_settings
-from golem.interp.driver import run_program
+from golem.interp.run import run_program
 
 DEFAULT_LEVELS_DIR = "levels"
 

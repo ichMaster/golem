@@ -10,7 +10,7 @@ from fastapi.testclient import TestClient
 
 from golem.core.levels import budget_for, load_budgets, load_level
 from golem.interp.config import InterpSettings
-from golem.interp.driver import run_with_frames
+from golem.interp.run import run_with_frames
 from golem.server.app import create_app
 from golem.server.config import Settings
 

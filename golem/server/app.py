@@ -20,7 +20,7 @@ from starlette.exceptions import HTTPException
 import golem
 from golem.core.level import LevelError
 from golem.core.levels import BudgetsError, budget_for, list_levels, load_budgets, load_level
-from golem.interp.driver import run_with_frames
+from golem.interp.run import run_with_frames
 from golem.server.config import ConfigError, Settings, load_settings
 from golem.server.programs import BadProgram, UnknownProgram, list_programs, read_program
 from golem.server.ws import install_ws

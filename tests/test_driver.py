@@ -10,7 +10,7 @@ from golem.core.levels import budget_for, load_budgets, load_level
 from golem.core.replay import replay
 from golem.core.world import boxes_left, here, look, render
 from golem.interp.config import InterpSettings
-from golem.interp.driver import run_program, run_with_frames
+from golem.interp.run import run_program, run_with_frames
 
 REPO = Path(__file__).resolve().parent.parent
 LEVELS = REPO / "levels"

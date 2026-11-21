@@ -1,4 +1,4 @@
-"""The driver (v2.3): one program on one level, one robot command at a time, ending in one report.
+"""The driver (v2.3, the swap from v2.5): a program's coroutine, one robot command at a time.
 
 The program runs in a Lua coroutine. Each robot command yields ``{cmd, arg}``; the driver applies
 it through the core and resumes the coroutine with the result. A small driver chunk, run in the
@@ -9,34 +9,25 @@ in its upvalues, where the program cannot reach them:
   counter reaches the level's instruction budget;
 - the sentinel is recognized in Lua with ``rawequal`` (Python cannot compare Lua tables by identity,
   see the v2.3 spike), so a program's own ``error("instruction budget exhausted")`` is an ordinary
-  error.
+  error;
+- ``install(chunk)`` makes a chunk the running program. A swap (v2.5) installs a second chunk into
+  the same closure: the old coroutine is closed, the hook goes onto the new one, and the counter
+  carries over.
 
-Every way a run can end, including a bug in this module, becomes a report; nothing escapes.
+``golem.interp.run`` builds a run on this module: the runtime, the world and the programs that drive
+it. Every way a run can end, including a bug here, becomes a report there; nothing escapes.
 """
 
-import logging
-
-import lupa.lua54 as lua54
-
 from golem.core import world as core
-from golem.core.level import Level
-from golem.core.levels import Budget
-from golem.core.world import PLAYING, World, new_world
-from golem.interp.config import InterpSettings
+from golem.core.world import PLAYING, World
 from golem.interp.report import (
-    INTERNAL,
     LOST_ON_INSTRUCTIONS,
-    OUT_OF_MEMORY,
     PROGRAM_ENDED,
     Ending,
     from_world,
     gave_up,
     lua_error,
-    short_report,
 )
-from golem.interp.sandbox import ProgramLoadError, new_sandbox
-
-LOG = logging.getLogger("golem.interp")
 
 # A give_up reason is cut to 200 characters and an error text to 500; at most 4 bytes a character,
 # so no more than 800 and 2000 bytes of them ever cross into Python.
@@ -44,23 +35,35 @@ GIVE_UP_BYTES_MAX = 800
 ERROR_BYTES_MAX = 2000
 
 DRIVER = r"""
-local chunk, every, budget, safe_text, reason_bytes, error_bytes = ...
+local every, budget, safe_text, reason_bytes, error_bytes = ...
 local SENTINEL = {}
 local counter = 0
-local co = coroutine.create(chunk)
-debug.sethook(co, function()
+local co, previous
+
+local function hook()
   counter = counter + every
   if counter >= budget then error(SENTINEL, 0) end
-end, "", every)
+end
 
 local function describe(value)
   if type(value) == "string" then return safe_text(string.sub(value, 1, error_bytes)) end
   return "(error object is a " .. type(value) .. " value)"
 end
 
+-- install(chunk): the chunk becomes the program's coroutine, with the count hook on it. A coroutine
+-- installed before is closed, so it can never be resumed again; the counter carries over.
+local function install(chunk)
+  if co ~= nil then
+    coroutine.close(co)
+    previous = co
+  end
+  co = coroutine.create(chunk)
+  debug.sethook(co, hook, "", every)
+end
+
 -- step(result) -> "command", cmd, arg, counter | "budget", counter | "error", text, counter
 --               | "ended", counter
-return function(result)
+local function step(result)
   local ok, value = coroutine.resume(co, result)
   if not ok then
     if rawequal(value, SENTINEL) then return "budget", counter end
@@ -71,62 +74,19 @@ return function(result)
   if value.cmd == "give_up" then arg = safe_text(string.sub(arg, 1, reason_bytes)) end
   return "command", value.cmd, arg, counter
 end
+
+-- resume_previous() -> false, message: the coroutine that a swap closed, resumed again. Only the
+-- tests call it, to show that a swapped-out program can never run again.
+local function resume_previous()
+  return coroutine.resume(previous)
+end
+
+return step, install, resume_previous
 """
 
 
-def run_program(level: Level, budget: Budget, source: str, settings: InterpSettings) -> dict:
-    """Run ``source`` on ``level`` within ``budget`` and return the short report."""
-    return _run(level, budget, source, settings, on_move=None)
-
-
-def run_with_frames(
-    level: Level, budget: Budget, source: str, settings: InterpSettings
-) -> tuple[dict, list[dict]]:
-    """Run like ``run_program``, and also return the frames: the map before the first move and after
-    every ``move``, rendered by the core.
-
-    Each frame is ``{"step", "dir", "moved", "map"}``; the first has ``step`` 0 and ``dir`` and
-    ``moved`` set to ``None``. ``look``, ``here`` and ``boxes_left`` change nothing on the map and
-    add no frame, so the frames are bounded by the step budget.
-    """
-    start = new_world(level, budget)
-    frames = [_frame(start, None, None)]
-
-    def on_move(world: World, direction: str, moved: bool) -> None:
-        frames.append(_frame(world, direction, moved))
-
-    report = _run(level, budget, source, settings, on_move=on_move)
-    return report, frames
-
-
-def _frame(world: World, direction: str | None, moved: bool | None) -> dict:
-    return {"step": world.steps, "dir": direction, "moved": moved, "map": core.render(world)}
-
-
-def _run(level: Level, budget: Budget, source: str, settings: InterpSettings, on_move) -> dict:
-    world = new_world(level, budget)
-    instructions = 0
-    try:
-        sandbox = new_sandbox(settings)
-        try:
-            chunk = sandbox.load(source)
-        except ProgramLoadError as error:
-            return short_report(level.id, world, 0, lua_error(str(error)))
-        step = sandbox.runtime.execute(
-            DRIVER, chunk, settings.hook_every, budget.instructions, sandbox.safe_text,
-            GIVE_UP_BYTES_MAX, ERROR_BYTES_MAX,
-        )
-        ending, world, instructions = _drive(step, world, on_move)
-    except lua54.LuaMemoryError:
-        ending = OUT_OF_MEMORY
-    except Exception:
-        LOG.exception("the driver failed on %s", level.id)
-        ending = INTERNAL
-    return short_report(level.id, world, instructions, ending)
-
-
-def _drive(step, world: World, on_move=None) -> tuple[Ending, World, int]:
-    """Resume the program until the run ends; return the ending, the last world and the count.
+def drive(step, world: World, on_move=None) -> tuple[Ending, World, int]:
+    """Resume the installed program until it ends; return the ending, the last world and the count.
 
     ``on_move(world, direction, moved)``, when given, is called after every ``move``.
     """
