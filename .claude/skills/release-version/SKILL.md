@@ -64,7 +64,9 @@ Touch only files that exist, except `VERSION` and `RELEASE.txt`, which are creat
 1. **`VERSION`:** the bare version string, e.g. `1.1.0`.
 2. **`pyproject.toml`:** the `[project]` `version` field. Then run `uv lock` so `uv.lock` records the new
    project version; otherwise the next `uv run` rewrites the lock and dirties the tree.
-3. **`README.md`:** update it only if it already carries a version string. Never add one.
+3. **`README.md`:** update it only if it already carries a version string. Never add one. Its `Status:`
+   line names the phases built and the one that is next: make sure it never calls a phase the release
+   covers "next". `tests/test_roadmap.py` checks this against `VERSION`.
 4. **`CLAUDE.md`:** update the `Latest release:` line under **Project status**, e.g.
    `Latest release: v1.1.0 (phase v1.1 — project skeleton and the level format).`
 5. **`specification/ROADMAP.md`:** mark every phase the release covers as released, both in the status

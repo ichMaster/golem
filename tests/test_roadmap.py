@@ -1,5 +1,6 @@
 """The roadmap follows the releases: every phase up to VERSION's A.B is marked released, and no
-later phase is (v2.3 code review #3: v2.2 still read "planned" after v2.2.0)."""
+later phase is (v2.3 code review #3: v2.2 still read "planned" after v2.2.0). README's status line
+never calls a released phase next (v2.4 code review #2)."""
 
 import re
 from pathlib import Path
@@ -37,3 +38,16 @@ def test_the_status_table_and_the_phase_sections_agree_with_the_version():
         released = phase(name) <= current
         assert status.startswith(RELEASED) == released, f"table: {name} is '{status}'"
         assert lines[name].startswith(RELEASED) == released, f"section: {name} is '{lines[name]}'"
+
+
+def test_the_readme_never_calls_a_released_phase_next():
+    readme = (REPO / "README.md").read_text(encoding="utf-8")
+    status = re.search(r"^Status: (.+)$", readme, re.M)
+    assert status, "README.md has no Status: line"
+    built, _, rest = status.group(1).partition(" are built;")
+    upcoming = re.findall(r"\b(v\d+\.\d+)\b", rest.split(". ")[0])
+    assert upcoming, "README's status names no next phase"
+    for name in upcoming:
+        assert phase(name) > version(), f"README calls {name} next, but VERSION is past it"
+    built_phases = [phase(name) for name in re.findall(r"\b(v\d+\.\d+)\b", built)]
+    assert built_phases and max(built_phases) >= version(), "README's built list is behind VERSION"
