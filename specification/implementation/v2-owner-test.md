@@ -117,3 +117,36 @@ None reported.
 
 The owner answered (translated): "testing is finished; do the review and the release". No problem was
 reported.
+
+## v2.4 (`/ship-phase v2.4`)
+
+**Date:** 2026-11-21
+**Branch:** v2-dev
+**Built:** v2.4 (GOLEM-022…026), commits 3befc7c…6f4a0ad
+
+### What was handed over for testing
+
+- The gates: `uv run ruff check . && uv run pytest -q` (616 tests, CI green).
+- `scripts/restart.sh` (or `scripts/start.sh`), then the text page at http://127.0.0.1:8700/, with the steps
+  of GOLEM-026 (#26):
+  1. click each program in Programs and read its code;
+  2. run `t1_solver.lua` on t1-01, t1-02 and t1-03 and watch the playback;
+  3. run `lost_on_steps.lua`, `lost_on_deadlock.lua` (t1-01), `endless_loop.lua`, `gives_up.lua` and
+     `runtime_error.lua`, and see each ending, the error with its line (`program:6:`);
+  4. edit or add a program in `programs/`, reload the page, and see the change without a restart.
+
+Before the handover, Claude checked the routes on a live server and the panel in a node harness.
+
+### Problems found and fixed
+
+None reported.
+
+### Moved to later work
+
+- **R1** now also reaches the server: a pathological program in `programs/` could hold one worker thread.
+  It stays the owner's decision before v4.1 (ARCHITECTURE §Open decisions).
+
+### End of testing
+
+The owner answered (translated): "Release it." No problem was reported. Claude records GOLEM-026's four
+Manual (owner) checks as confirmed by the owner on these words.
