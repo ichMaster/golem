@@ -1,5 +1,6 @@
-"""``golem-local run`` (v2.3, a contract): the phase DoD end to end, in-process, over the fixture
-programs; refusals exit 1; usage errors exit 2; a second run prints byte-identical output."""
+"""``golem-local run`` (v2.3, ``--swap`` from v2.5, a contract): the phase DoD end to end,
+in-process, over the fixture programs; refusals exit 1; usage errors exit 2; a second run prints
+byte-identical output."""
 
 import json
 from pathlib import Path
@@ -86,6 +87,66 @@ def test_the_report_has_the_short_reports_keys_in_order(capsys):
     assert report["versions"] == [1]
 
 
+# --- the swap (v2.5) ---------------------------------------------------------------------------
+
+
+def swapped_report(capsys, level: str, first: str, second: str) -> dict:
+    code, out, err = local(capsys, "run", level, str(PROGRAMS / first),
+                           "--swap", str(PROGRAMS / second))
+    assert (code, err) == (0, "")
+    assert out.endswith("\n") and out.count("\n") == 1
+    return json.loads(out)
+
+
+@pytest.mark.parametrize("level", ["t1-01", "t1-02", "t1-03"])
+def test_explore_then_finish_solves_tier_one_with_two_versions(capsys, level):
+    report = swapped_report(capsys, f"training/tier1/{level}", "explore.lua", "finish.lua")
+    assert (report["status"], report["reason"], report["error"]) == ("solved", None, None)
+    assert report["versions"] == [1, 2]
+
+
+@pytest.mark.parametrize(
+    ("first", "status", "reason"),
+    [("t1_solver.lua", "solved", None), ("infinite_loop.lua", "lost", "instructions"),
+     ("runtime_error.lua", "failed", "error")])
+def test_a_first_program_that_does_not_give_up_is_never_swapped(capsys, first, status, reason):
+    # the --swap program has a syntax error: it is never even loaded
+    report = swapped_report(capsys, T1, first, "syntax_error.lua")
+    assert (report["status"], report["reason"], report["versions"]) == (status, reason, [1])
+
+
+def test_a_program_that_returns_is_swapped_like_one_that_gives_up(capsys, tmp_path):
+    returns = tmp_path / "returns.lua"
+    returns.write_text('memory.map = nil move("N")\n', encoding="utf-8")
+    code, out, _ = local(capsys, "run", T1, str(returns), "--swap", str(PROGRAMS / "give_up.lua"))
+    report = json.loads(out)
+    assert code == 0 and (report["status"], report["error"]) == ("failed", "x")
+    assert (report["steps"], report["versions"]) == (1, [1, 2])
+
+
+def test_an_endless_loop_swapped_in_is_lost_on_instructions_and_the_runner_survives(capsys):
+    report = swapped_report(capsys, T1, "explore.lua", "infinite_loop.lua")
+    assert (report["status"], report["reason"], report["versions"]) == (
+        "lost", "instructions", [1, 2])
+    assert report_of(capsys, T1, "t1_solver.lua")["status"] == "solved"
+
+
+def test_the_swapped_command_prints_byte_identical_output_twice(capsys):
+    argv = ("run", T1, str(PROGRAMS / "explore.lua"), "--swap", str(PROGRAMS / "finish.lua"))
+    first, second = local(capsys, *argv), local(capsys, *argv)
+    assert first == second and first[0] == 0
+
+
+def test_a_missing_or_non_utf8_swap_program_is_refused(capsys, tmp_path):
+    first = str(PROGRAMS / "give_up.lua")
+    missing = refusal(capsys, "run", T1, first, "--swap", str(tmp_path / "nope.lua"))
+    assert missing["error"] == "bad_program" and "nope.lua" in missing["detail"]
+    binary = tmp_path / "binary.lua"
+    binary.write_bytes(b"\xff\xfe\x00 not text")
+    refused = refusal(capsys, "run", T1, first, "--swap", str(binary))
+    assert refused["error"] == "bad_program" and "binary.lua: not UTF-8" in refused["detail"]
+
+
 # --- refusals and usage ------------------------------------------------------------------------
 
 
@@ -125,7 +186,8 @@ def test_a_bad_setting_is_refused(capsys, monkeypatch):
     assert refusal(capsys, "run", T1, str(PROGRAMS / "give_up.lua"))["error"] == "bad_setting"
 
 
-@pytest.mark.parametrize("argv", [[], ["run"], ["run", T1], ["walk", T1, "x.lua"]])
+@pytest.mark.parametrize(
+    "argv", [[], ["run"], ["run", T1], ["walk", T1, "x.lua"], ["run", T1, "x.lua", "--swap"]])
 def test_a_usage_error_exits_2(capsys, argv):
     with pytest.raises(SystemExit) as stop:
         main(argv)

@@ -21,6 +21,15 @@ Run a Lua program on a training level, in-process, and print its report:
 uv run golem-local run training/tier1/t1-01 programs/t1_solver.lua
 ```
 
+Swap a second program into the same run when the first one gives up or returns. Here `explore.lua`
+maps the level into `memory` and gives up, and `finish.lua` solves it from that map; the report
+ends with `"versions": [1, 2]`:
+
+```sh
+uv run golem-local run training/tier1/t1-01 tests/fixtures/programs/explore.lua \
+  --swap tests/fixtures/programs/finish.lua
+```
+
 ## Programs on the page
 
 The page's Programs panel lists the Lua programs in `programs/` (or in `GOLEM_PROGRAMS_DIR`), shows the
