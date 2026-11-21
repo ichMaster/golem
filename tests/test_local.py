@@ -81,7 +81,9 @@ def test_every_fixture_program_prints_byte_identical_output_twice(capsys, progra
 
 def test_the_report_has_the_short_reports_keys_in_order(capsys):
     report = report_of(capsys, T1, "t1_solver.lua")
-    assert list(report) == ["level", "status", "reason", "steps", "instructions", "error"]
+    assert list(report) == [
+        "level", "status", "reason", "steps", "instructions", "error", "versions"]
+    assert report["versions"] == [1]
 
 
 # --- refusals and usage ------------------------------------------------------------------------

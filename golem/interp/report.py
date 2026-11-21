@@ -1,15 +1,16 @@
-"""The short report (v2.3): the run report's first six fields, assembled from plain data.
+"""The short report (v2.3, `versions` from v2.5), assembled from plain data.
 
 A run ends in exactly one ``Ending``. ``short_report`` turns it, the level id, the final world's
-step count and the instruction count into the report, with its keys in the contract's order. v2.5
-and v4.1 add the run report's other fields (ARCHITECTURE §Execution, budgets and the report).
+step count, the instruction count and the program versions that drove the run into the report, with
+its keys in the contract's order. v4.1 inserts ``last_actions`` and ``final_map`` before
+``versions`` (ARCHITECTURE §Execution, budgets and the report).
 """
 
 from dataclasses import dataclass
 
 from golem.core.world import World
 
-REPORT_KEYS = ("level", "status", "reason", "steps", "instructions", "error")
+REPORT_KEYS = ("level", "status", "reason", "steps", "instructions", "error", "versions")
 GIVE_UP_REASON_MAX = 200
 ERROR_TEXT_MAX = 500
 
@@ -51,7 +52,10 @@ def lua_error(message: str) -> Ending:
     return Ending("failed", "error", message[:ERROR_TEXT_MAX])
 
 
-def short_report(level_id: str, world: World, instructions: int, ending: Ending) -> dict:
+def short_report(
+    level_id: str, world: World, instructions: int, ending: Ending, versions: list[int]
+) -> dict:
+    """The report; ``versions`` lists the program versions that drove the run, in order."""
     return {
         "level": level_id,
         "status": ending.status,
@@ -59,4 +63,5 @@ def short_report(level_id: str, world: World, instructions: int, ending: Ending)
         "steps": world.steps,
         "instructions": instructions,
         "error": ending.error,
+        "versions": list(versions),
     }

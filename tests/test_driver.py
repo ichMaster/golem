@@ -46,7 +46,7 @@ def test_the_recorded_solution_solves_the_level_with_the_cores_step_count():
     final, _ = replay(load_level(T1, LEVELS), "EE", budget_for(T1, load_budgets(LEVELS)))
     report = run(PROGRAMS["solve"])
     assert report == {"level": T1, "status": "solved", "reason": None, "steps": final.steps,
-                      "instructions": 0, "error": None}
+                      "instructions": 0, "error": None, "versions": [1]}
 
 
 def test_look_here_and_boxes_left_answer_as_the_core_does():

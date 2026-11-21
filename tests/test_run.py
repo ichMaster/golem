@@ -178,6 +178,20 @@ def test_a_swapped_in_program_that_does_not_load_ends_the_run_with_its_error():
     assert ending(run) == ("solved", None, None) and run.versions == [1, 2, 3]
 
 
+# --- the versions in the report (GOLEM-028) ----------------------------------------------------
+
+
+def test_the_report_names_the_versions_that_drove_the_run():
+    level = load_level(T1, LEVELS)
+    single = run_program(level, budget_for(T1, load_budgets(LEVELS)), 'move("E")', SETTINGS)
+    assert single["versions"] == [1]
+    assert swapped('give_up("a")', 'move("E") move("E")').report()["versions"] == [1, 2]
+    # a swapped-in program that does not load still counts: the error in the report is its own
+    assert swapped('give_up("a")', "x = = 1").report()["versions"] == [1, 2]
+    report = swapped('give_up("a")', 'give_up("b")', 'move("E") move("E")').report()
+    assert (report["status"], report["versions"]) == ("solved", [1, 2, 3])
+
+
 # --- the sandbox and determinism ---------------------------------------------------------------
 
 HIDDEN_NAMES = ("install", "step", "resume_previous", "previous", "co", "counter", "SENTINEL",

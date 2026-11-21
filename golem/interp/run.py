@@ -87,7 +87,8 @@ class Run:
         """The run's short report; the run must have ended."""
         if self.ending is None:
             raise RuntimeError("the run has not ended")
-        return short_report(self.level.id, self.world, self.instructions, self.ending)
+        return short_report(
+            self.level.id, self.world, self.instructions, self.ending, self.versions)
 
     def resume_previous(self) -> tuple:
         """Resume the coroutine that the last swap closed; only the tests call it."""

@@ -226,7 +226,7 @@ loop:
 - `last_actions` holds the last `LAST_ACTIONS_N` (20) robot commands with their results.
 - `versions` lists the program versions that drove the run.
 
-**The short report** (v2.3) is the first six fields, `level` through `error`, in that order. v2.5 adds `versions`, and v4.1 adds `last_actions` and `final_map`.
+**The short report** is the run report without `last_actions` and `final_map`: the six fields `level` through `error` (v2.3), then `versions` (v2.5), in that order. v4.1 inserts `last_actions` and `final_map` between `error` and `versions`, as the full report orders them. Until the journal (v5.2) numbers a session's versions, a run numbers its programs 1, 2, … in the order they were loaded: a run with no swap reports `[1]`, and a swapped-in program that does not load still counts, so the report shows whose error it carries.
 
 **Frames** (v2.4, a contract) are what the screen plays back: the map before the first move, then the map after every `move`, rendered by the core. A frame is `{"step": n, "dir": "N" | "E" | "S" | "W", "moved": true | false, "map": [...]}`; the first has `step` 0 and `dir` and `moved` set to `null`. `look`, `here` and `boxes_left` change nothing on the map and add no frame, so the frames are bounded by the step budget. A run that never moves has only the first frame.
 

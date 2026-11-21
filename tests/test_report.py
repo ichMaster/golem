@@ -1,4 +1,5 @@
-"""The short report (v2.3, a contract): the run report's first six fields, from plain data."""
+"""The short report (v2.3, a contract): the run report's first six fields and `versions` (v2.5),
+from plain data."""
 
 from pathlib import Path
 
@@ -43,9 +44,10 @@ def world_after(moves: str):
     ],
 )
 def test_every_ending_fills_the_report_in_the_contracts_key_order(ending, expected):
-    report = short_report(T1, world_after("E"), 3000, ending)
+    report = short_report(T1, world_after("E"), 3000, ending, [1, 2])
     assert tuple(report) == REPORT_KEYS == (
-        "level", "status", "reason", "steps", "instructions", "error")
+        "level", "status", "reason", "steps", "instructions", "error", "versions")
+    assert report["versions"] == [1, 2]
     assert (report["level"], report["steps"], report["instructions"]) == (T1, 1, 3000)
     assert (report["status"], report["reason"], report["error"]) == expected
 
