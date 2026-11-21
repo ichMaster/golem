@@ -45,6 +45,7 @@ let programsShown = false;
 let selectedProgram = null;
 let runLevelChosen = false; // the owner picked a level in the select; stop following the game
 let playback = null; // {frames, index, report, timer} while a run is being played back
+let running = false; // a run request is in flight; Run stays disabled until it answers
 
 // --- The socket ---------------------------------------------------------------------------------
 
@@ -301,18 +302,19 @@ function numberedLines(source) {
 }
 
 function updateRunButton() {
-  view.runButton.disabled = selectedProgram === null || view.runLevel.value === "";
+  view.runButton.disabled = running || selectedProgram === null || view.runLevel.value === "";
 }
 
 async function runProgram() {
-  if (selectedProgram === null || view.runLevel.value === "") {
+  if (running || selectedProgram === null || view.runLevel.value === "") {
     return;
   }
   stopPlayback();
   view.programError.textContent = "";
   view.runReport.textContent = "";
   view.runReport.className = "line";
-  view.runButton.disabled = true;
+  running = true;
+  updateRunButton();
   let body;
   try {
     const response = await fetch(`/api/programs/${encodeURIComponent(selectedProgram)}/run`, {
@@ -329,6 +331,7 @@ async function runProgram() {
     view.programError.textContent = "The run did not reach the server.";
     return;
   } finally {
+    running = false;
     updateRunButton();
   }
   startPlayback(body.frames, body.report);
@@ -337,6 +340,7 @@ async function runProgram() {
 // --- The playback -------------------------------------------------------------------------------
 
 function startPlayback(frames, report) {
+  stopPlayback(); // one playback at a time: an earlier timer never keeps running (code review #1)
   playback = { frames, index: 0, report, timer: null };
   drawFrame(frames[0]);
   if (frames.length === 1) {

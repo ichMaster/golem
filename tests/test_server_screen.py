@@ -239,6 +239,25 @@ def test_the_playback_shows_one_frame_every_150_ms():
     assert re.search(r"\bconst PLAYBACK_MS = 150;", SCRIPT.read_text(encoding="utf-8"))
 
 
+def function_body(text: str, name: str) -> str:
+    start = text.index(f"function {name}(")
+    end = text.find("\nfunction ", start + 1)
+    return text[start:end if end != -1 else len(text)]
+
+
+def test_one_run_and_one_playback_at_a_time():
+    # code review #1: Run was enabled again while a run was in flight, and a second playback left
+    # the first one's timer running, throwing on every tick until the page was reloaded.
+    text = SCRIPT.read_text(encoding="utf-8")
+    assert re.search(r"\bdisabled = running \|\|", function_body(text, "updateRunButton"))
+    run = function_body(text, "runProgram")
+    assert re.search(r"if \(running \|\|", run)
+    assert run.index("running = true") < run.index("await fetch")
+    assert re.search(r"finally \{\s*running = false;", run)
+    start = function_body(text, "startPlayback")
+    assert start.index("stopPlayback()") < start.index("playback = {")
+
+
 def test_the_game_keys_skip_form_controls():
     text = SCRIPT.read_text(encoding="utf-8")
     controls = re.search(r"FORM_CONTROLS = new Set\(\[(.*?)\]\)", text)
