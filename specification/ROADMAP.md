@@ -273,11 +273,17 @@ A deliberately small phase: prove the swap design before anything is built on it
 - The report gains `versions`, the program versions that drove the run.
 - `golem-local run <level> <first.lua> --swap <second.lua>`: when the first program gives up or returns, the second one takes over. This lets the owner try the swap before the stops of v4.2.
 - A short design note in the phase's execution report: what the prototype confirmed or changed.
+- **The swap on the text page** (added at the owner's request on 2026-11-21, during the owner test):
+  - the programs panel names an optional second program, "Swap in";
+  - `POST /api/programs/{name}/run` takes `{"level", "swap": "<program name>"}`, and swaps the second program in when the first one gives up or returns, as `golem-local --swap` does;
+  - the frames mark the swap point, the playback shows it, and the report shows the versions;
+  - `explore.lua` and `finish.lua` are also in `programs/`.
 
 **DoD** (the concept's phase 2, third part):
 - Running `explore.lua` and then swapping in `finish.lua` solves the level. The step count continues from the swap point, and the old coroutine can no longer be resumed.
 - `golem-local run training/tier1/t1-01 tests/fixtures/programs/explore.lua --swap tests/fixtures/programs/finish.lua` reports `solved` with `versions` `[1, 2]`.
 - ARCHITECTURE §Stops, snapshots and program swaps matches what the prototype built.
+- **Manual (owner):** on the text page, `explore.lua` with `finish.lua` swapped in solves t1-01; the playback marks the swap point and the report shows versions 1 and 2.
 
 **Tests:**
 - the explore-then-finish swap;
@@ -285,7 +291,8 @@ A deliberately small phase: prove the swap design before anything is built on it
 - the old coroutine dead;
 - the instruction hook active after the swap: an infinite loop swapped in ends on the instruction budget;
 - `golem-local --swap`;
-- the swapped run run twice, with byte-identical reports.
+- the swapped run run twice, with byte-identical reports;
+- the program route with a swap: the solve, the swap frame, an unknown or invalid swap program refused, and byte-identical JSON twice.
 
 ## v3 — Game screen: the "Clay and stone" design
 
