@@ -1,6 +1,26 @@
 Golem release notes
 ===================
 
+Version 2.4.0 (2026-11-21)
+---------------------------
+- v2.4 (GOLEM-022..026), programs on the text screen; added at the owner's request, and the swap
+  prototype moved to v2.5.
+- The driver records the moves: run_with_frames gives the report and the frames, the map before the
+  first move and after every move, rendered by the core.
+- programs/ holds seven example programs: t1_solver.lua solves all three tier-one levels, explorer.lua
+  maps the room, and one demonstration of each ending (steps, deadlock, instructions, give_up, an error
+  with its line). GOLEM_PROGRAMS_DIR sets the folder.
+- The program routes: GET /api/programs, GET /api/programs/{name} and POST /api/programs/{name}/run.
+  Programs are read by name only, from the folder only; runs take training levels only and run off the
+  event loop.
+- The text page's Programs panel: the list with descriptions, the code with line numbers, a level select,
+  Run, and the playback every 150 ms with a skip to the end and the report. The arrows in the select never
+  move the robot.
+- Code review: one run and one playback at a time on the page; README covers the programs panel, and a
+  test keeps its status line in step with VERSION.
+- Still open for the owner before v4.1: C functions run without the count hook (spike R1), which now also
+  reaches a server worker thread through a program in programs/.
+
 Version 2.3.0 (2026-11-20)
 ---------------------------
 - v2.3 (GOLEM-018..021): the lupa spike (GO; lupa 2.8 with lupa.lua54 pinned): Python-driven coroutines,

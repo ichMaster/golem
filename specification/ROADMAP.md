@@ -27,7 +27,7 @@ v1 and v2.1–v2.3 are built and released. Latest release: v2.3.0 (v2.3).
 | v2.1 | The server and the human game over WebSocket | ✅ released | v2.1.0 |
 | v2.2 | The text game screen | ✅ released | v2.2.0 |
 | v2.3 | Lua runs: the lupa spike, a minimal sandbox and the driver | ✅ released | v2.3.0 |
-| v2.4 | Programs on the text screen | ⏳ planned | — |
+| v2.4 | Programs on the text screen | ✅ released | v2.4.0 |
 | v2.5 | The swap prototype: `memory` outside the program | ⏳ planned | — |
 | v3.1 | The screen's data from the server, and ten levels | ⏳ planned | — |
 | v3.2 | The game screen: the scene and the panels | ⏳ planned | — |
@@ -217,7 +217,7 @@ The concept leaves the choice of Lua open, so this phase starts with a spike. Ev
 
 ### v2.4 — Programs on the text screen
 
-**Status:** ⏳ planned.
+**Status:** ✅ released in v2.4.0.
 
 **Goal:** the owner picks a Lua program from the `programs/` folder on the text page, reads its code, runs it on a training level, and watches the robot's moves played back step by step, ending with the run report.
 
