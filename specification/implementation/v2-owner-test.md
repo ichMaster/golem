@@ -150,3 +150,59 @@ None reported.
 
 The owner answered (translated): "Release it." No problem was reported. Claude records GOLEM-026's four
 Manual (owner) checks as confirmed by the owner on these words.
+
+## v2.5 (`/ship-phase v2.5`)
+
+**Date:** 2026-11-21
+**Branch:** v2-dev
+**Built:** v2.5 (GOLEM-027…034), commits fbdcb16…df57218
+
+### What was handed over for testing
+
+- The gates: `uv run ruff check . && uv run pytest -q` (667 tests at the first handover, 699 at the
+  second; CI green).
+- `uv run golem-local run training/tier1/<t1-01|t1-02|t1-03> tests/fixtures/programs/explore.lua --swap
+  tests/fixtures/programs/finish.lua`, `explore.lua` and `finish.lua` alone, a first program that solves on
+  its own, and `infinite_loop.lua` swapped in.
+- After the owner's request, the swap on the text page (GOLEM-034, #34): `explore.lua` with `finish.lua`
+  in "Swap in" on t1-01, t1-02 and t1-03, and `t1_solver.lua` with a swap chosen.
+
+Before each handover, Claude checked the route on a scratch server (port 8711) and the panel in a node
+harness.
+
+### Added at the owner's request during the test
+
+- **The swap on the text page** (GOLEM-032…034, 302afab…04fe979). The owner asked: "can this
+  functionality be moved to the web interface?". The owner chose to add it to v2.5, as a swap in one run
+  with both programs chosen before Run. ROADMAP §v2.5 gained the task, a Manual (owner) DoD item and its
+  tests.
+- **The run log on the page** (df57218). The owner asked: "I want to see the swap log". The swap frame
+  showed for 150 ms only, and the first program's give-up reason never reached the page.
+  - The program route now returns `swaps`: the step, the instruction count, the version swapped in and
+    how the program before it ended.
+  - The page's run log lists the start, each ending, each swap and the outcome.
+  - The server log names the swap's step, never a program's text.
+  - Tests: `tests/test_swap.py::test_the_swap_log_says_where_and_why_the_second_program_took_over`,
+    `tests/test_server_programs.py`, `tests/test_server_screen.py::test_the_run_log_is_built_from_the_swaps_and_grows_with_the_playback`.
+
+### Problems found and fixed
+
+- **The server log named a swap that had not happened** (found by Claude's live check, not by the owner):
+  `ran t1_solver.lua with finish.lua swapped in` for a run solved by the first program. Fixed in 2df93fd;
+  test `tests/test_server_programs.py::test_the_log_names_a_swap_only_when_it_happened`.
+
+### Moved to later work
+
+- **`explorer.lua` and `explore.lua` are easy to confuse.** The owner ran `explorer.lua` (the v2.4 example,
+  which reports its map in the give-up text) with `finish.lua` swapped in. The run log showed it correctly:
+  `finish.lua gave up: no map in memory`. Claude offered to rename `explorer.lua` and to make
+  `finish.lua`'s message name `explore.lua`. The owner released without choosing, so this stays in the
+  backlog.
+- **R1** still stands for the owner before v4.1.
+- **The Lua panic on a program text larger than the memory cap** (found in GOLEM-027, pre-existing since
+  v2.3) goes to the v2.5 code review.
+
+### End of testing
+
+The owner answered (translated): "Release it." Claude records GOLEM-034's Manual (owner) check as
+confirmed by the owner on these words.
