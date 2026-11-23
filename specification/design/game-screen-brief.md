@@ -129,8 +129,8 @@ Within that, there is plenty of room.
   | `+` | robot standing on a goal | the goal must stay visible under the robot |
 
 - `inside` says which cells lie inside the walls, so the floor can be drawn differently from the
-  surroundings. Its exact shape is fixed when the screen is built (v3.1), for example a mask with the same
-  rows as `map`.
+  surroundings. Its exact shape was fixed in v3.1, as a mask with the same rows as `map`: see
+  ARCHITECTURE.md §HTTP API, WebSocket `/ws`.
 - `steps` against `budget`: every key press costs one step, **even when nothing moves** (bumping a wall or
   pushing a blocked box). The level is lost when `steps` reaches `budget`.
 - `status` is `playing`, `solved` or `lost`. When the level is lost, `reason` is `steps` (out of steps) or

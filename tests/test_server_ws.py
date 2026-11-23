@@ -9,9 +9,9 @@ from fastapi.testclient import TestClient
 from starlette.websockets import WebSocketDisconnect
 
 from golem.core.level import parse_level
-from golem.core.levels import Budget, budget_for, load_budgets, load_level
+from golem.core.levels import Budget, budget_for, list_levels, load_budgets, load_level
 from golem.core.replay import replay
-from golem.core.world import World, new_world, render, to_json
+from golem.core.world import World, inside_rows, new_world, render, to_json
 from golem.server.app import create_app
 from golem.server.config import Settings
 from golem.server.ws import handle
@@ -31,6 +31,7 @@ def expected(world: World) -> dict:
         "type": "state",
         "level": world.level.id,
         "map": render(world),
+        "inside": inside_rows(world.level),
         "steps": world.steps,
         "budget": world.step_budget,
         "status": world.status,
@@ -94,6 +95,51 @@ def test_moves_after_the_end_change_nothing_and_restart_starts_again(tmp_path):
         restarted = send(ws, {"type": "restart"})
     assert after == solved == expected(states[-1])
     assert restarted == expected(states[0])
+
+
+# --- inside (v3.1): every state says which cells lie inside the walls ---------------------------
+
+SOLUTIONS = REPO / "tests" / "fixtures" / "solutions"
+
+
+def recorded(level_id: str) -> str:
+    text = (SOLUTIONS / f"{level_id}.txt").read_text(encoding="utf-8")
+    return "".join("".join(line.split()) for line in text.splitlines() if not line.startswith(";"))
+
+
+def inside_matches(state: dict, level) -> bool:
+    """``inside`` has the shape of ``map``, with ``1`` exactly on the level's inside cells."""
+    rows = state["inside"]
+    ones = {(r, c) for r, row in enumerate(rows) for c, char in enumerate(row) if char == "1"}
+    return ([len(row) for row in rows] == [len(row) for row in state["map"]]
+            and set("".join(rows)) <= {"0", "1"} and ones == level.inside)
+
+
+@pytest.mark.parametrize("level_id", list_levels("training", LEVELS))
+def test_every_state_of_a_played_level_carries_its_inside_mask(tmp_path, level_id):
+    level = load_level(level_id, LEVELS)
+    with client_for(LEVELS, tmp_path).websocket_connect("/ws") as ws:
+        states = [send(ws, {"type": "load", "level": level_id})]
+        states += [send(ws, {"type": "move", "dir": d}) for d in recorded(level_id)]
+        states.append(send(ws, {"type": "restart"}))
+    assert states[-2]["status"] == "solved"
+    assert all(inside_matches(state, level) for state in states)
+    assert list(states[0]) == ["type", "level", "map", "inside", "steps", "budget", "status",
+                               "reason"]
+
+
+def test_the_state_on_connect_and_after_a_restore_carry_the_same_mask_as_load(tmp_path):
+    game_file = tmp_path / "human-game.json"
+    level = load_level("training/tier2/t2-05", LEVELS)
+    client = saving_client(LEVELS, tmp_path, game_file)
+    loaded = play(client, [{"type": "load", "level": level.id}])[0]
+    with client.websocket_connect("/ws") as ws:
+        on_connect = state_on_connect(ws)
+    with saving_client(LEVELS, tmp_path, game_file).websocket_connect("/ws") as ws:
+        restored = state_on_connect(ws)
+    assert loaded["inside"] == on_connect["inside"] == restored["inside"]
+    assert inside_matches(restored, level)
+    assert "inside" not in game_file.read_text(encoding="utf-8")
 
 
 # --- errors keep the connection open ------------------------------------------------------------

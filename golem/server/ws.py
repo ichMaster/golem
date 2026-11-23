@@ -28,7 +28,7 @@ from golem.core.levels import (
     load_budgets,
     load_level,
 )
-from golem.core.world import World, from_json, move, new_world, render, to_json
+from golem.core.world import World, from_json, inside_rows, move, new_world, render, to_json
 
 LOG = logging.getLogger("golem.ws")
 UNKNOWN_LEVEL = "unknown level"
@@ -49,6 +49,7 @@ def state_message(game: Game) -> dict:
         "type": "state",
         "level": game.level.id,
         "map": render(world),
+        "inside": inside_rows(game.level),
         "steps": world.steps,
         "budget": world.step_budget,
         "status": world.status,

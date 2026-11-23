@@ -141,6 +141,22 @@ def render(world: World) -> list[str]:
     return lines
 
 
+def inside_rows(level: Level) -> list[str]:
+    """Which cells lie inside the walls, in the shape of ``render``'s rows.
+
+    One string per row: ``1`` for a cell in ``level.inside``, ``0`` for a wall or a cell outside
+    the walls. Every inside cell has a wall to its east on its own row, so a rendered row ends at
+    its last wall (``""`` for a row with none), and the mask is the same in every state.
+    """
+    lengths = [0] * level.height
+    for r, c in level.walls:
+        lengths[r] = max(lengths[r], c + 1)
+    return [
+        "".join("1" if (r, c) in level.inside else "0" for c in range(length))
+        for r, length in enumerate(lengths)
+    ]
+
+
 # --- save, restore and the state key -----------------------------------------------------------
 
 JSON_KEYS = ("level", "robot", "boxes", "steps", "step_budget", "status", "loss_reason")

@@ -1,4 +1,4 @@
-"""The robot's view (look, here, boxes_left) and the rendered map."""
+"""The robot's view (look, here, boxes_left), the rendered map and the inside mask."""
 
 from pathlib import Path
 
@@ -6,7 +6,16 @@ import pytest
 
 from golem.core.level import parse_level
 from golem.core.levels import Budget, list_levels, load_level
-from golem.core.world import World, boxes_left, here, look, move, new_world, render
+from golem.core.world import (
+    World,
+    boxes_left,
+    here,
+    inside_rows,
+    look,
+    move,
+    new_world,
+    render,
+)
 
 LEVELS = Path(__file__).resolve().parent.parent / "levels"
 BUDGET = Budget(steps=100, instructions=1000)
@@ -126,3 +135,40 @@ def test_render_after_moves_shows_the_robot_and_the_boxes():
 def test_render_shows_the_robot_on_a_goal():
     world, _ = move(world_of("#######\n#@. $ #\n#######\n"), "E")
     assert render(world) == ["#######", "# + $ #", "#######"]
+
+
+# --- the inside mask (v3.1): which cells of the rendered map lie inside the walls ---------------
+
+# Leading spaces outside the walls, a blank row, and a closed room the robot can never reach.
+IRREGULAR = "  #####\n###   #\n#@$ . #\n#######\n\n ###\n # #\n ###\n"
+
+
+def test_inside_rows_marks_the_reachable_cells_and_nothing_else():
+    assert inside_rows(world_of(IRREGULAR).level) == [
+        "0000000",
+        "0001110",
+        "0111110",
+        "0000000",
+        "",
+        "0000",
+        "0000",
+        "0000",
+    ]
+
+
+def test_the_inside_mask_has_the_shape_of_the_rendered_map_before_and_after_moves():
+    world = world_of(IRREGULAR)
+    for direction in "EENWSS":
+        assert [len(row) for row in inside_rows(world.level)] == [len(row) for row in render(world)]
+        world, _ = move(world, direction)
+
+
+@pytest.mark.parametrize("level_id", list_levels("training", LEVELS))
+def test_the_inside_mask_of_every_committed_training_level_is_level_inside(level_id):
+    level = load_level(level_id, LEVELS)
+    rows = inside_rows(level)
+    assert [len(row) for row in rows] == [len(row) for row in render(new_world(level, BUDGET))]
+    ones = {(r, c) for r, row in enumerate(rows) for c, char in enumerate(row) if char == "1"}
+    assert ones == level.inside
+    assert set("".join(rows)) <= {"0", "1"}
+    assert all(rows[r][c] == "0" for r, c in level.walls)
