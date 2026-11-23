@@ -27,7 +27,7 @@ solution replays to `solved`.
 ## Tiers
 
 1. One box in an open room.
-2. Several boxes and corridors (from v7.1).
+2. Several boxes and corridors (from v3.1; more in v7.1).
 3. Levels with traps, where a careless push during exploration loses the level at once (from v7.1).
 
 ## Sources and licences
@@ -37,3 +37,10 @@ solution replays to `solved`.
 | `training/tier1/t1-01` | written for this project | MIT, as the repository |
 | `training/tier1/t1-02` | written for this project | MIT, as the repository |
 | `training/tier1/t1-03` | written for this project | MIT, as the repository |
+| `training/tier1/t1-04` | adapted from a sample map in the design handoff (`specification/design/golem-clay/`), with one box | MIT, as the repository |
+| `training/tier1/t1-05` | adapted from a sample map in the design handoff (`specification/design/golem-clay/`), with one box | MIT, as the repository |
+| `training/tier2/t2-01` | a sample map in the design handoff (`specification/design/golem-clay/`), unchanged | MIT, as the repository |
+| `training/tier2/t2-02` | a sample map in the design handoff (`specification/design/golem-clay/`), unchanged | MIT, as the repository |
+| `training/tier2/t2-03` | adapted from a sample map in the design handoff (`specification/design/golem-clay/`); the sample showed a game in progress, so the boxes and goals were placed anew | MIT, as the repository |
+| `training/tier2/t2-04` | a sample map in the design handoff (`specification/design/golem-clay/`), unchanged | MIT, as the repository |
+| `training/tier2/t2-05` | adapted from a sample map in the design handoff (`specification/design/golem-clay/`); one wall was opened, because no box could reach the sample's lower goals | MIT, as the repository |

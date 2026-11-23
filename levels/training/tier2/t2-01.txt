@@ -1,0 +1,9 @@
+; t2-01: three boxes around a wall in the middle of the room
+#########
+#   #   #
+# $ . $ #
+#  ###  #
+# .   . #
+#  $@   #
+#       #
+#########

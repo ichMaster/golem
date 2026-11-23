@@ -1,0 +1,10 @@
+; t2-05: four boxes; two goals lie in a pocket that a box enters only from the top right
+   #########
+   #   .   #
+#### $ ##  #
+#  . $  $  #
+# ###  #   #
+#   $ @#.  #
+###    # . #
+  #        #
+  ##########

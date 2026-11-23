@@ -1,0 +1,2 @@
+; t1-05: 11 moves, found by a push search and replayed through the core
+NENESSESWWW

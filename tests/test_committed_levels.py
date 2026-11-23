@@ -11,23 +11,28 @@ ROOT = Path(__file__).resolve().parent.parent / "levels"
 TRAINING = list_levels("training", ROOT)
 
 
-def test_the_first_three_tier_one_levels_are_listed():
-    assert {
-        "training/tier1/t1-01",
-        "training/tier1/t1-02",
-        "training/tier1/t1-03",
-    } <= set(TRAINING)
+def test_the_training_set_is_the_ten_levels_of_tiers_one_and_two():
+    assert TRAINING == [
+        *(f"training/tier1/t1-0{n}" for n in range(1, 6)),
+        *(f"training/tier2/t2-0{n}" for n in range(1, 6)),
+    ]
 
 
 @pytest.mark.parametrize("level_id", TRAINING)
 def test_every_training_level_parses(level_id):
     level = load_level(level_id, ROOT)
     assert level.id == level_id
+    assert len(level.boxes) == len(level.goals)
 
 
 @pytest.mark.parametrize("level_id", [i for i in TRAINING if i.split("/")[1] == "tier1"])
 def test_tier_one_levels_have_one_box(level_id):
     assert len(load_level(level_id, ROOT).boxes) == 1
+
+
+@pytest.mark.parametrize("level_id", [i for i in TRAINING if i.split("/")[1] == "tier2"])
+def test_tier_two_levels_have_several_boxes(level_id):
+    assert len(load_level(level_id, ROOT).boxes) > 1
 
 
 def test_the_committed_budgets_define_three_tiers():

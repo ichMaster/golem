@@ -1,0 +1,9 @@
+; t2-03: three boxes; one starts in a one-cell slot and comes out only from above
+   ######
+   #  . #
+####$#  #
+#  .    #
+# ## $  ##
+#   @$ . #
+####   ###
+   #####

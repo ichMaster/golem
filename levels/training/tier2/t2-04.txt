@@ -1,0 +1,10 @@
+; t2-04: three boxes; two travel from the top-left room through the bottom room to the top-right one
+###########
+#    #    #
+# $$ # .. #
+#    #    #
+##  ###  ##
+ #   @   #
+ # $   . #
+ #       #
+ #########

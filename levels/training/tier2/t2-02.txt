@@ -1,0 +1,9 @@
+; t2-02: three boxes, two of them in one column, among short walls that make corridors
+  ########
+  #   .  #
+### $##  #
+#   $  . #
+# #  ##  #
+#  @ $ . #
+####     #
+   #######

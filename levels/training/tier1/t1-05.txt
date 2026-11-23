@@ -1,0 +1,8 @@
+; t1-05: the robot starts between two pillars; the box goes down the east side, then west to the goal
+#########
+#   #   #
+#     $ #
+#  #@#  #
+#  .    #
+#       #
+#########

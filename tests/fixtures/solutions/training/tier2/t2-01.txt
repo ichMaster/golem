@@ -1,0 +1,2 @@
+; t2-01: 34 moves, found by a push search and replayed through the core
+NWWNWNEEWSSEEEENENNWSSESSSWWWWNENW

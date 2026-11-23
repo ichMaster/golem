@@ -1,0 +1,8 @@
+; t1-04: the box sits in a niche north of the robot, so the robot walks round and pushes it out from above
+  ######
+  #    #
+###$#  #
+#  @   #
+# .    #
+#      #
+########
