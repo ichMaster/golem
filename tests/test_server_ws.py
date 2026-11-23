@@ -44,7 +44,7 @@ def send(ws, message) -> dict:
     return ws.receive_json()
 
 
-PING_ERROR = {"type": "error", "detail": "unknown message type; use load, move or restart"}
+PING_ERROR = {"type": "error", "detail": "unknown message type; use load, move, restart or levels"}
 
 
 def state_on_connect(ws) -> dict:
@@ -148,7 +148,7 @@ ERRORS = [
     ("{not json", "the message is not JSON"),
     ("[1, 2]", "the message is not a JSON object"),
     ('"load"', "the message is not a JSON object"),
-    ({"type": "jump"}, "unknown message type; use load, move or restart"),
+    ({"type": "jump"}, "unknown message type; use load, move, restart or levels"),
     ({}, "the message has no type"),
     ({"type": "load"}, "unknown level"),
     ({"type": "load", "level": 5}, "unknown level"),

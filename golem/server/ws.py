@@ -29,9 +29,11 @@ from golem.core.levels import (
     load_level,
 )
 from golem.core.world import World, from_json, inside_rows, move, new_world, render, to_json
+from golem.server.levels import LevelListError, training_levels
 
 LOG = logging.getLogger("golem.ws")
 UNKNOWN_LEVEL = "unknown level"
+LEVELS_UNAVAILABLE = "the level list cannot be loaded"
 
 
 @dataclass(frozen=True)
@@ -73,6 +75,8 @@ def handle(text: str, game: Game | None, levels_dir: Path) -> tuple[dict, Game |
     kind = data.get("type")
     if kind == "load":
         return _load(data.get("level"), game, levels_dir)
+    if kind == "levels":
+        return levels_message(levels_dir), game
     if kind in ("move", "restart") and game is None:
         return error_message("no level is loaded; send load first"), game
     if kind == "move":
@@ -90,7 +94,22 @@ def handle(text: str, game: Game | None, levels_dir: Path) -> tuple[dict, Game |
         return state_message(restarted), restarted
     if kind is None:
         return error_message("the message has no type"), game
-    return error_message("unknown message type; use load, move or restart"), game
+    return error_message("unknown message type; use load, move, restart or levels"), game
+
+
+def levels_message(levels_dir: Path) -> dict:
+    """The level picker's list (v3.1): every training level with its start map and its mask.
+
+    Only the training set is listed. A level or a ``budgets.toml`` that does not load gets one fixed
+    error; the cause goes only to the log.
+    """
+    try:
+        return {"type": "levels", "levels": training_levels(levels_dir, with_maps=True)}
+    except LevelListError:
+        return error_message(LEVELS_UNAVAILABLE)
+    except OSError as error:
+        LOG.error("the level list cannot be loaded: %s", error)
+        return error_message(LEVELS_UNAVAILABLE)
 
 
 def _load(level_id: object, game: Game | None, levels_dir: Path) -> tuple[dict, Game | None]:

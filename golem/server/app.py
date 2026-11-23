@@ -22,6 +22,7 @@ from golem.core.level import LevelError
 from golem.core.levels import BudgetsError, budget_for, list_levels, load_budgets, load_level
 from golem.interp.run import run_with_frames
 from golem.server.config import ConfigError, Settings, load_settings
+from golem.server.levels import LevelListError, training_levels
 from golem.server.programs import BadProgram, UnknownProgram, list_programs, read_program
 from golem.server.ws import install_ws
 
@@ -91,29 +92,12 @@ def _setup_logging(log_dir: Path) -> None:
 
 def _install_level_routes(app: FastAPI, levels_dir: Path) -> None:
     @app.get("/api/levels")
-    def training_levels():
+    def levels():
         """The training levels with their tier, size and budgets; never a map, never a hidden id."""
         try:
-            budgets = load_budgets(levels_dir)
-        except (BudgetsError, OSError) as error:
-            LOG.error("budgets.toml does not load: %s", error)
-            return error_response(500, "budgets_error", str(error))
-        entries = []
-        for level_id in list_levels("training", levels_dir):
-            try:
-                level = load_level(level_id, levels_dir)
-                budget = budget_for(level_id, budgets)
-            except (LevelError, BudgetsError) as error:
-                LOG.error("training level %s does not load: %s", level_id, error)
-                return error_response(500, "level_error", str(error))
-            entries.append({
-                "id": level_id,
-                "tier": level_id.split("/")[1],
-                "width": level.width,
-                "height": level.height,
-                "budget": {"steps": budget.steps, "instructions": budget.instructions},
-            })
-        return {"levels": entries}
+            return {"levels": training_levels(levels_dir)}
+        except LevelListError as error:
+            return error_response(500, error.code, error.detail)
 
 
 def _install_program_routes(app: FastAPI, settings: Settings) -> None:

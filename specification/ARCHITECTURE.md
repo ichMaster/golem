@@ -328,7 +328,7 @@ Every response is JSON. An error is `{"error": "<code>", "detail": "<text>"}` wi
              "budget": {"steps": 200, "instructions": 1000000}}]}
 ```
 
-A training level that doesn't parse gives `500 level_error` with the parse error as the detail, and a `budgets.toml` broken while the server runs gives `500 budgets_error`.
+A training level that doesn't parse gives `500 level_error` with the parse error as the detail, and a `budgets.toml` broken while the server runs gives `500 budgets_error`. The same entries, with each level's start map and mask, reach the screen through the WebSocket's `levels` message (v3.1); the route itself never carries a map.
 
 `run` accepts training level ids only, so a hidden level is reachable only through `validate`. The session comes from the `X-Golem-Session` header, which the CLI fills from `GOLEM_SESSION`, or is `manual` when the header is absent. When `GOLEM_WORKSPACE` is set, the CLI reads a program file only if its resolved path, after symlinks, lies inside that directory.
 
@@ -348,9 +348,21 @@ A training level that doesn't parse gives `500 level_error` with the parse error
 
 - `{"type": "load", "level": "<id>"}`, for training ids only;
 - `{"type": "move", "dir": "N"}`;
-- `{"type": "restart"}`.
+- `{"type": "restart"}`;
+- `{"type": "levels"}` (v3.1), for the screen's level picker.
 
 The server answers each message with `{"type": "state", "level": …, "map": […], "inside": […], "steps": n, "budget": n, "status": "playing" | "solved" | "lost", "reason": …}`, or with `{"type": "error", "detail": …}`, and the connection stays open. Every state comes from the core: `map` is `render(world)`, `budget` is the step budget, and `reason` is the loss reason or `null`. `inside` (v3.1) is `inside_rows(level)`: one string per row of `map`, as long as that row, with `1` for a cell inside the walls and `0` for a wall or a cell outside them, so the page draws the floor only where it is `1` and never computes it. It is not part of the saved game; a restored game computes it from its level.
+
+**The level list** (v3.1). `levels` is answered with every training level, sorted by id, whether a game is loaded or not, and the game stays as it was:
+
+```json
+{"type": "levels", "levels": [{"id": "training/tier1/t1-01", "tier": "tier1", "width": 7, "height": 5,
+  "budget": {"steps": 200, "instructions": 1000000},
+  "map": ["#######", "#     #", "# @$ .#", "#     #", "#######"],
+  "inside": ["0000000", "0111110", "0111110", "0111110", "0000000"]}]}
+```
+
+Each entry has the fields of `GET /api/levels`, plus the level's start `map` (`render` of its start) and its `inside`, so the picker can draw a miniature of every level. Hidden levels are never listed. The map travels only over the WebSocket: `GET /api/levels` also serves `golem levels` (v5.1), and the agent must not get a level's map before it runs the level, while the agent never uses the screen's channel. A training level or a `budgets.toml` that does not load gets `{"type": "error", "detail": "the level list cannot be loaded"}`, with the cause only in the server log.
 
 - **Origin.** A handshake is accepted only without an `Origin` header (a non-browser client) or from the server's own page: `http://127.0.0.1:<port>`, `http://localhost:<port>` or `http://[::1]:<port>`. Any other origin is closed with code 1008 before it is accepted, so a web page from another site cannot drive the game.
 - **One game, kept in the server.** The server holds one human game at a time. When a game is loaded, a client that connects first receives its current `state`, so a page that reconnects finds the game where it was.
